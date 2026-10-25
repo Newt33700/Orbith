@@ -36,7 +36,10 @@ describe('orbith update', () => {
     await writeFile(path.join(root, '.orbith/config.yaml'), cfgBefore);
     await writeFile(path.join(root, 'CLAUDE.md'), '# Perso\n');
 
+    const logs: string[] = [];
+    vi.mocked(console.log).mockImplementation((...a: unknown[]) => void logs.push(a.join(' ')));
     await runUpdate({ cwd: root, yes: true });
+    expect(logs.join('\n')).toContain('.orbith/contexte-projet.md');
 
     expect(await read('.orbith/agents/po.md')).not.toBe('modifié à la main');
     expect(await read('.orbith/custom/mon-fichier.md')).toBe('perso');

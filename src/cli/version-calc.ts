@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { gitCommitsSince, gitTags, storyStatus, type Artifact, type RawCommit } from '../core/index.js';
+import { gitCommitsSince, gitReachableTags, gitTags, storyStatus, type Artifact, type RawCommit } from '../core/index.js';
 import { mentions } from './trace-report.js';
 
 /** Story label that forces a major bump (case-insensitive). */
@@ -38,10 +38,10 @@ export function maxBump(a: Bump | undefined, b: Bump): Bump {
   return a && RANK[a] >= RANK[b] ? a : b;
 }
 
-/** Latest `vX.Y.Z` tag (pre-releases and other tags are ignored). */
+/** Highest `vX.Y.Z` tag reachable from HEAD (pre-releases, other tags and tags only on other branches are ignored). */
 export async function lastReleaseTag(root: string): Promise<{ tag: string; version: SemVer } | null> {
   let best: { tag: string; version: SemVer } | null = null;
-  for (const tag of await gitTags(root)) {
+  for (const tag of await gitReachableTags(root)) {
     const version = parseSemVer(tag);
     if (version && /^v?\d+\.\d+\.\d+$/.test(tag) && (!best || compareSemVer(version, best.version) > 0)) best = { tag, version };
   }

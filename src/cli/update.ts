@@ -39,7 +39,7 @@ export async function runUpdate(opts: UpdateOptions): Promise<void> {
   }
   ui.ok(`${files.length} fichier(s) du cœur Orbith remis à jour, ${adapterFiles.length} fichier(s) de plateforme régénérés.`);
   ui.ok(avant === version ? `Version d'Orbith : ${version}` : `Version d'Orbith : ${avant} → ${version}`);
-  ui.info('Conservés tels quels : .orbith/config.yaml, .orbith/config/, .orbith/csr/ (hors synchronisation de csr.source), .orbith/custom/, .orbith/validations.json');
+  ui.info('Conservés tels quels : .orbith/config.yaml, .orbith/config/, .orbith/csr/ (hors synchronisation de csr.source), .orbith/custom/, .orbith/contexte-projet.md, .orbith/validations.json');
   ui.rappelNouvelleSession();
 }
 

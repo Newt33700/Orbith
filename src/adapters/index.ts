@@ -1,6 +1,7 @@
 import type { OrbithConfig, Plateforme } from '../core/index.js';
 import { gemini } from './gemini/index.js';
 import { claude } from './claude/index.js';
+import { copilot } from './copilot/index.js';
 
 export interface Adapter {
   id: Plateforme;
@@ -9,7 +10,7 @@ export interface Adapter {
   generate(root: string, cfg: OrbithConfig): Promise<string[]>;
 }
 
-export const adapters: Record<Plateforme, Adapter> = { gemini, claude };
+export const adapters: Record<Plateforme, Adapter> = { gemini, claude, copilot };
 export { AGENTS } from './agents.js';
 
 /** Runs every adapter selected in the config; returns the deduplicated file list. */

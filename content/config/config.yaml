@@ -12,6 +12,7 @@ projet:
 # Plateformes d'IA pour lesquelles Orbith génère les commandes.
 #   gemini : Gemini CLI (commandes /orbith:po, etc.)
 #   claude : Claude Code (commandes /orbith-po, etc.)
+#   copilot : GitHub Copilot dans VS Code (facultatif ; .github/prompts/orbith-po.prompt.md, etc.)
 plateformes: [gemini, claude]
 
 # Piste par défaut, selon le type de travail :
@@ -52,7 +53,7 @@ finops:
 # Exemple : [backlog-md]
 plugins: []
 
-# Gouvernance (facultatif, désactivée par défaut) : voir docs/guide/changements-roles.md
+# Gouvernance (facultatif, désactivée par défaut) : voir le guide Orbith en ligne : https://github.com/Newt33700/Orbith/blob/main/docs/guide/changements-roles.md
 # changements:
 #   exiger_pour_deploiement: true     # `orbith deploiement` exige une demande de changement validée
 # roles:
@@ -62,7 +63,7 @@ plugins: []
 #     change: ["Bob Martin"]
 
 # Cibles DORA (facultatif) comparées aux valeurs mesurées par `npx orbith metriques` :
-# voir docs/guide/metriques.md. Une clé inconnue ou une valeur non numérique est refusée.
+# voir le guide Orbith en ligne : https://github.com/Newt33700/Orbith/blob/main/docs/guide/metriques.md. Une clé inconnue ou une valeur non numérique est refusée.
 # dora:
 #   cibles:
 #     frequence_par_semaine: 1        # au moins
@@ -71,7 +72,7 @@ plugins: []
 #     retablissement_heures: 24       # au plus
 
 # Politique de licences (facultatif), contrôlée par `npx orbith check` à partir du SBOM :
-# voir docs/guide/integrite-sbom.md. S'ajoute à la catégorie « Licences » du CSR.
+# voir le guide Orbith en ligne : https://github.com/Newt33700/Orbith/blob/main/docs/guide/integrite-sbom.md. S'ajoute à la catégorie « Licences » du CSR.
 # sbom:
 #   licences_interdites: [AGPL-3.0, GPL-3.0]
 

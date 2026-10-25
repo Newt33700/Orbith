@@ -34,7 +34,7 @@ Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée 
 
 - Du code dans `src/` (ou l'arborescence du projet), des tests dans `tests/` (ou la convention du projet)
 - Des fichiers `.feature` tagués `@US-xxx`, ou des tests dont le nom/commentaire mentionne `US-xxx`
-- La documentation que ton code rend fausse ou incomplète : README, guides (`docs/guide/` ou équivalent), commentaires
+- La documentation que ton code rend fausse ou incomplète : README, guides (le dossier de guides du projet, par exemple `docs/guide/`), commentaires
   du code, documentation technique (une décision d'architecture passe par l'architecte et un ADR)
 - Des commits `feat(US-xxx): …` (et `docs(US-xxx): …` si la documentation part dans un commit séparé)
 - Dans le corps de la US : tu peux compléter **`## Notes techniques`** (ce qui a été fait, points d'attention).
