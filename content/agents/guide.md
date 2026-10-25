@@ -88,6 +88,10 @@ ou l'agent de la première étape.
 | Tester et relire | `/orbith:qa` | `/orbith-qa` |
 | Environnements et pipeline CI/CD | `/orbith:devops` | `/orbith-devops` |
 | Faire discuter plusieurs agents | `/orbith:atelier` | `/orbith-atelier` |
+| Créer un agent propre au projet | `/orbith:creer-agent` | `/orbith-creer-agent` |
+
+Les agents personnalisés du projet (dans `.orbith/custom/agents/`) ont aussi leur commande : lance
+`npx orbith agent list` pour les voir.
 
 Commandes terminal : `npx orbith next` (que faire ensuite), `npx orbith valider <fichier>` (valider un
 document), `npx orbith check` (conformité au CSR, validations, secrets), `npx orbith trace [US-xxx]`

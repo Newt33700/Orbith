@@ -3,6 +3,7 @@ import type { OrbithConfig } from '../../core/index.js';
 import { AGENTS, GEMINI_IGNORE, RULES } from '../agents.js';
 import { upsertBlockFile, writeIfChanged } from '../blocks.js';
 import { ensureContexteProjet } from '../contexte.js';
+import { agentsDuProjet } from '../agents-perso.js';
 
 const tomlEscape = (s: string): string => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
@@ -31,7 +32,7 @@ export const gemini: Adapter = {
   async generate(root, cfg) {
     const written: string[] = [];
     await ensureContexteProjet(root);
-    for (const agent of AGENTS) {
+    for (const agent of await agentsDuProjet(root)) {
       const name = agent.gemini.split(':')[1] as string;
       written.push(await writeIfChanged(root, `.gemini/commands/orbith/${name}.toml`, commandToml(agent)));
     }

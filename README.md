@@ -83,8 +83,8 @@ Pour un premier pas détaillé, lisez [docs/guide/demarrage.md](docs/guide/demar
 
 ## Les agents
 
-Orbith installe 14 commandes : 10 agents et 4 workflows (atelier, rétrospective, relecture adverse, changement de
-cap). Chaque commande existe en deux syntaxes, selon l'outil utilisé. Si vous avez activé GitHub Copilot
+Orbith installe 15 commandes : 10 agents et 5 workflows (atelier, rétrospective, relecture adverse, changement de
+cap, création d'agent). Chaque commande existe en deux syntaxes, selon l'outil utilisé. Si vous avez activé GitHub Copilot
 (facultatif, voir [agents avancés](docs/guide/agents-avances.md)), utilisez dans son chat le nom de la colonne
 Claude Code (`/orbith-po`, etc.).
 
@@ -104,6 +104,10 @@ Claude Code (`/orbith-po`, etc.).
 | Rétrospective | Bilan après une livraison, à partir des métriques et des constats QA | `/orbith:retro` | `/orbith-retro` |
 | Relecture adverse | Passe critique avant de valider un PRD, une architecture ou une US | `/orbith:relecture-adverse` | `/orbith-relecture-adverse` |
 | Changement de cap | Impact d'un changement de besoin sur les epics et les US | `/orbith:changement-de-cap` | `/orbith-changement-de-cap` |
+| Clara (création d'agent) | Concevoir, question par question, un agent propre au projet | `/orbith:creer-agent` | `/orbith-creer-agent` |
+
+Vos agents personnalisés (`.orbith/custom/agents/<nom>.md`) ont aussi leurs commandes, par exemple
+`/orbith:juriste-rgpd` et `/orbith-juriste-rgpd` : voir [creer-un-agent.md](docs/guide/creer-un-agent.md).
 
 Exemple : pour demander au PO de rédiger le brief, tapez `/orbith:po rédige le brief de mon appli de
 réservation de salles` dans Gemini CLI, ou `/orbith-po rédige le brief de mon appli de réservation de
@@ -165,7 +169,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith install` | Installe Orbith dans le projet (agents, commandes Gemini et Claude, configuration) |
 | `npx orbith next` | Indique la prochaine action recommandée (sans IA) |
 | `npx orbith valider <fichier>` | Marque un document comme validé, après confirmation humaine |
-| `npx orbith check` | Vérifie le projet : CSR, validations (et chaîne d'audit des registres, rôles), traçabilité, documentation, secrets, licences. Échoue en cas d'erreur |
+| `npx orbith check` | Vérifie le projet : CSR, validations (et chaîne d'audit des registres, rôles), traçabilité, documentation, secrets, licences, agents personnalisés. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
 | `npx orbith version <numéro>` | Crée une version (exemple : `1.1.0.0`) : y ajoute les user stories fusionnées depuis la version précédente et prépare le brouillon des notes de version |
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
@@ -182,6 +186,8 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith update` | Met à jour les agents, workflows, modèles et règles (et les commandes Gemini et Claude), sans toucher à votre configuration, à votre CSR, à `custom/`, au contexte projet ni aux registres |
 | `npx orbith plugin add <nom>` | Installe un plugin, par exemple `backlog-md` |
 | `npx orbith plugin list` | Liste les plugins disponibles et ceux déjà activés |
+| `npx orbith agent new <cle>` | Crée le squelette d'un agent personnalisé dans `.orbith/custom/agents/` et génère ses commandes, sans jamais écraser un agent du cœur (voir [creer-un-agent.md](docs/guide/creer-un-agent.md)) |
+| `npx orbith agent list` | Liste les agents du cœur et les agents personnalisés du projet, avec leurs commandes |
 
 Options utiles : `--yes` (sans question, pour les scripts ; réservé à un usage humain pour `valider`, `deploiement` et
 `release`), `--cwd <dossier>` (travailler sur un autre dossier, accepté par toutes les commandes), `--format json`
@@ -564,6 +570,7 @@ Fichier `.orbith/contexte-projet.md` qui garde les conventions, les patterns et 
 | [contexte-preparation.md](docs/guide/contexte-preparation.md) | Leads tech, POs | Contexte projet, projet existant, check de préparation |
 | [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
+| [creer-un-agent.md](docs/guide/creer-un-agent.md) | Leads tech, PO | Créer un agent personnalisé du projet, ses commandes, les règles obligatoires |
 
 ## Feuille de route
 

@@ -73,7 +73,7 @@ describe('adaptateur claude', () => {
     expect(await read('CLAUDE.md')).toContain('@.orbith/csr/CSR.md');
     const settings = JSON.parse(await read('.claude/settings.json'));
     expect(settings.permissions.deny).toContain('Read(./.env)');
-    expect(AGENTS).toHaveLength(14);
+    expect(AGENTS).toHaveLength(15);
   });
 
   it('frontmatter des commandes md est du YAML valide', () => {

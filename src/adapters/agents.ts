@@ -25,6 +25,7 @@ export const AGENTS: AgentDef[] = [
   { key: 'retro', file: 'workflows/retro.md', gemini: 'orbith:retro', claude: 'orbith-retro', description: 'Rétrospective après livraison, à partir des métriques et des constats QA' },
   { key: 'relecture-adverse', file: 'workflows/relecture-adverse.md', gemini: 'orbith:relecture-adverse', claude: 'orbith-relecture-adverse', description: 'Relecture adverse : passe critique avant de valider PRD, architecture ou US' },
   { key: 'changement-de-cap', file: 'workflows/changement-de-cap.md', gemini: 'orbith:changement-de-cap', claude: 'orbith-changement-de-cap', description: 'Changement de cap : impact d\'un changement de besoin sur les epics et les US' },
+  { key: 'creer-agent', file: 'workflows/creer-agent.md', gemini: 'orbith:creer-agent', claude: 'orbith-creer-agent', description: 'Créer un agent : concevoir, question par question, un agent personnalisé du projet' },
 ];
 
 export const RULES = [
