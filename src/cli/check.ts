@@ -10,6 +10,7 @@ const CATEGORIES: { id: CheckCategorie; titre: string }[] = [
   { id: 'documentation', titre: 'Documentation' },
   { id: 'secrets', titre: 'Secrets' },
   { id: 'sbom', titre: 'Licences (SBOM)' },
+  { id: 'amelioration', titre: 'Amélioration continue' },
 ];
 
 function ligne(r: CheckResult): string {
@@ -39,6 +40,8 @@ export function register(program: Command): void {
       }
       for (const c of CATEGORIES) {
         const rs = resultats.filter((r) => r.categorie === c.id);
+        // Rubrique facultative : affichée seulement quand elle a quelque chose à dire.
+        if (c.id === 'amelioration' && rs.length === 0) continue;
         console.log('\n' + pc.bold(pc.cyan(c.titre)));
         if (!rs.some((r) => r.niveau !== 'info')) console.log(`  ${pc.green('✅')} Rien à signaler`);
         for (const r of rs) console.log(ligne(r));

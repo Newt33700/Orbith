@@ -171,6 +171,8 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
 | `npx orbith version` (sans numéro) / `npx orbith release <version>` | Propose le prochain numéro SemVer (commits, US, étiquette `breaking`), puis prépare la version : `CHANGELOG.md`, notes validées, tag Git local après confirmation, sans jamais pousser (voir [versions.md](docs/guide/versions.md)) |
 | `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés, avec cibles, tendances, découpage de l'attente, taille des changements et export `--format csv` (voir [metriques.md](docs/guide/metriques.md)) |
+| `npx orbith metriques` (fiabilité) | Taux de reprise des déploiements (5e indicateur DORA) et, avec `sla` dans `.orbith/config.yaml` (facultatif), objectifs de service comparés aux incidents et bugs de production : atteint, non atteint ou non mesurable (voir [metriques.md](docs/guide/metriques.md)) |
+| `npx orbith trace` (connaissance) | Actions d'amélioration `AMEL-NNN` et liens (`liens`, `cause`) entre incidents, bugs, ADR, actions et US ; `check` signale les actions en retard et les liens introuvables (voir [amelioration-continue.md](docs/guide/amelioration-continue.md)) |
 | `npx orbith valider <fichier>` (rôles) | Avec `roles` et `changements` dans `.orbith/config.yaml` (facultatifs) : matrice des rôles, quatre yeux et demande de changement exigée avant `deploiement` (voir [changements-roles.md](docs/guide/changements-roles.md)) |
 | `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith init-context` | Crée le contexte projet d'un projet existant (stack, arborescence, scripts, tests), à compléter par un agent (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
@@ -346,8 +348,9 @@ mon-projet/
 ├── docs/
 │   ├── produit/                  # brief.md, prd.md, ux.md, epics/EPIC-001-*.md
 │   ├── architecture/             # architecture.md, environnements.md, menaces.md, strategie-test.md, adr/ADR-001-*.md
-│   └── livraisons/               # release-notes-<version>.md, retro-<version>.md, changes/CHG-001-*.md,
-│                                 # incidents/INC-001-*.md, audit-AAAA-MM-JJ.html
+│   ├── livraisons/               # release-notes-<version>.md, retro-<version>.md, changes/CHG-001-*.md,
+│   │                             # incidents/INC-001-*.md, audit-AAAA-MM-JJ.html
+│   └── amelioration/             # Actions d'amélioration suivies AMEL-001-*.md (facultatif)
 ├── backlog/tasks/                # Les user stories (us-001 - Titre.md, une par fichier)
 ├── src/  tests/                  # Votre code et vos tests (tests/features/ : squelettes de `orbith tests`)
 ├── .gitlab-ci.yml                # Lance `npx orbith check` ; complété par l'agent DevOps (environnements)
@@ -561,6 +564,7 @@ Fichier `.orbith/contexte-projet.md` qui garde les conventions, les patterns et 
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
 | [integrite-sbom.md](docs/guide/integrite-sbom.md) | Sécurité, conformité | Journal d'audit chaîné, SBOM, licences |
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
+| [amelioration-continue.md](docs/guide/amelioration-continue.md) | Scrum Masters, chefs de projet, DevOps | Actions d'amélioration suivies, liens de connaissance |
 | [contexte-preparation.md](docs/guide/contexte-preparation.md) | Leads tech, POs | Contexte projet, projet existant, check de préparation |
 | [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |

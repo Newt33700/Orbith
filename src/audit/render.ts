@@ -47,6 +47,7 @@ const CATEGORIES: [string, string][] = [
   ['documentation', 'Documentation'],
   ['secrets', 'Secrets'],
   ['sbom', 'Licences (SBOM)'],
+  ['amelioration', 'Amélioration continue'],
 ];
 
 function badge(kind: 'ok' | 'warn' | 'err' | 'info', text: string): string {
@@ -84,6 +85,7 @@ export function renderHtml(d: AuditData): string {
 
   const controles = CATEGORIES.map(([id, titre]) => {
     const rs = d.controles.filter((c) => c.categorie === id);
+    if (id === 'amelioration' && rs.length === 0) return '';
     const rows = rs.length
       ? rs
           .map(
@@ -94,6 +96,21 @@ export function renderHtml(d: AuditData): string {
       : `<tr><td>${badge('ok', 'ok')}</td><td>Rien à signaler</td><td>—</td></tr>`;
     return `<table><caption>${e(titre)}</caption><thead><tr><th scope="col">Niveau</th><th scope="col">Constat</th><th scope="col">Fichier</th></tr></thead><tbody>${rows}</tbody></table>`;
   }).join('\n');
+
+  const k = d.connaissance;
+  const sectionConnaissance = k
+    ? `
+<section id="amelioration" aria-labelledby="h-amelioration">
+<h2 id="h-amelioration">Amélioration continue et liens de connaissance</h2>
+<table><caption>Actions d'amélioration</caption>
+<thead><tr><th scope="col">Action</th><th scope="col">Titre</th><th scope="col">Avancement</th><th scope="col">Échéance</th><th scope="col">Validation</th></tr></thead>
+<tbody>${k.ameliorations.map((a) => `<tr${a.enRetard ? ' class="pb"' : ''}><td>${e(a.id || '—')}</td><td>${e(a.titre || '—')}<br><code>${e(a.chemin)}</code></td><td>${e(a.avancement || '—')}</td><td>${e(a.echeance || '—')}${a.enRetard ? ` ${badge('warn', 'en retard')}` : ''}</td><td>${etatBadge(a.etat, a.etat)}</td></tr>`).join('') || '<tr><td colspan="5">Aucune action.</td></tr>'}</tbody></table>
+<table><caption>Liens entre incidents, bugs, ADR, actions et US</caption>
+<thead><tr><th scope="col">Élément</th><th scope="col">Type</th><th scope="col">Mène à</th><th scope="col">Cité par</th></tr></thead>
+<tbody>${k.liens.map((n) => `<tr><th scope="row">${e(n.cle)}<br><small>${e(n.libelle)}</small></th><td>${e(n.type)}</td><td>${list(n.sortants.map((l) => `${e(l.cible)}${l.existe ? '' : ` ${badge('warn', 'introuvable')}`}`))}</td><td>${list(n.entrants.map((l) => e(l.source)))}</td></tr>`).join('') || '<tr><td colspan="4">Aucun lien.</td></tr>'}</tbody></table>
+</section>
+`
+    : '';
 
   const couverture = s.couvertureTracabilite === null ? 'n/a' : `${s.couvertureTracabilite} %`;
 
@@ -149,7 +166,7 @@ ${kpi(couverture, `couverture de traçabilité (${s.usTraceesTerminees}/${s.usTe
 <tbody>${traceRows || '<tr><td colspan="6">Aucune user story.</td></tr>'}</tbody></table>
 </section>
 
-<section id="conformite" aria-labelledby="h-conformite">
+${sectionConnaissance}<section id="conformite" aria-labelledby="h-conformite">
 <h2 id="h-conformite">Conformité CSR et contrôles</h2>
 ${controles}
 </section>

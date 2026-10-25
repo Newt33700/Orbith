@@ -5,6 +5,7 @@ import { OrbithError, gitLogDated, isGitRepo, loadConfig, requireProjectRoot, sc
 import { dateTerminee, loadDeploiements } from './deploiement.js';
 import { calculerMetriques, type CibleMesuree, type Metriques, type Niveau, type Tendance } from './metriques-calc.js';
 import { mentions } from './trace-report.js';
+import { lignesCsvFiabilite, renderReprise, renderSla } from './fiabilite-render.js';
 
 export interface MetriquesOptions {
   cwd?: string;
@@ -72,6 +73,7 @@ export function renderMetriquesCsv(m: Metriques): string {
   const att = (famille: string, nom: string, e: { medianeJours: number | null; us: number }): void => {
     rows.push([famille, nom, e.medianeJours ?? NM, 'jour(s)', e.us, ...vide]);
   };
+  rows.push(...lignesCsvFiabilite(m.reprise, m.sla));
   att('attente', 'Attente avant mise en production (médiane)', m.attente);
   att('attente', 'dont revue (médiane)', m.decoupageAttente.revue);
   att('attente', 'dont recette (médiane)', m.decoupageAttente.recette);
@@ -103,6 +105,7 @@ export function renderMetriques(m: Metriques, projet: string): string {
     for (const c of m.cibles) L.push(`| ${c.libelle} | ${nm(c.valeur, c.unite)} | ${cibleTexte(c)} |`);
     L.push('');
   }
+  L.push(...renderReprise(m.reprise), ...renderSla(m.sla, m.fiabilite ?? []));
   L.push(`## Tendances (période précédente : du ${m.precedent.debut} au ${m.precedent.fin})`, '');
   L.push('| Indicateur | Cette période | Période précédente | Évolution |', '|---|---|---|---|');
   for (const t of m.tendances) L.push(`| ${t.libelle} | ${nm(t.valeur, t.unite)} | ${nm(t.precedent, t.unite)} | ${tendanceTexte(t)} |`);
@@ -169,6 +172,7 @@ export async function runMetriques(opts: MetriquesOptions = {}): Promise<Metriqu
     terminees,
     ...(commits ? { commits } : {}),
     ...(config.dora?.cibles ? { cibles: config.dora.cibles } : {}),
+    ...(config.sla ? { sla: config.sla } : {}),
     ...(opts.aujourdhui ? { aujourdhui: opts.aujourdhui } : {}),
   });
   const out =

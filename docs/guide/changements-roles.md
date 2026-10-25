@@ -64,6 +64,9 @@ tant qu'aucune demande de changement **validée** ne porte la même `version`. L
 Le modèle `.orbith/templates/incident.md` (à ranger dans `docs/livraisons/incidents/INC-NNN-*.md`) structure un
 post-mortem **sans blâme** : on cherche ce que le système a rendu possible, pas qui s'est trompé. Il se valide comme
 tout autre document et peut citer la demande de changement à l'origine de l'incident (`change: CHG-001`).
+Les actions décidées pendant le post-mortem deviennent des actions suivies `docs/amelioration/AMEL-NNN-*.md`, et
+`npx orbith metriques` compare les incidents à vos objectifs de service (section `sla`) : voir
+[Amélioration continue et liens de connaissance](amelioration-continue.md) et [Métriques](metriques.md).
 
 ## La matrice des rôles
 
@@ -81,7 +84,7 @@ roles:
 ```
 
 Les types sont ceux du champ `type` des documents : `brief`, `prd`, `ux`, `architecture`, `adr`, `epic`, `story`,
-`release-notes`, `environnements`, `change`, `incident`, `menaces`, `strategie-test`, `retro`. Un type absent de la matrice (et sans entrée `"*"`) reste
+`release-notes`, `environnements`, `change`, `incident`, `menaces`, `strategie-test`, `retro`, `amelioration`. Un type absent de la matrice (et sans entrée `"*"`) reste
 libre.
 
 - `npx orbith valider` refuse la validation si la personne n'est pas dans la liste.

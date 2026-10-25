@@ -7,6 +7,7 @@ gravite: <1 critique | 2 majeure | 3 mineure>
 detecte_le: <AAAA-MM-JJ HH:MM>
 retabli_le: <AAAA-MM-JJ HH:MM>
 change: CHG-XXX              # demande de changement à l'origine de l'incident, si elle est connue
+liens: []                    # facultatif : identifiants liés (AMEL-001, ADR-002, US-012…)
 ---
 
 # Incident et post-mortem : <titre>
@@ -44,6 +45,9 @@ change: CHG-XXX              # demande de changement à l'origine de l'incident,
 
 ## Actions d'amélioration
 
-| Action | Responsable | Échéance | US ou ticket |
+<!-- Chaque action retenue par l'humain devient une action suivie docs/amelioration/AMEL-NNN-*.md
+     (modèle .orbith/templates/amelioration.md, `source: incident`, `source_ref: INC-XXX`). -->
+
+| Action | Responsable | Échéance | AMEL, US ou ticket |
 |---|---|---|---|
 |  |  |  |  |
