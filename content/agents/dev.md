@@ -26,6 +26,7 @@ Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée 
 - `docs/produit/ux.md` si la US touche l'interface
 - `.orbith/config/dod.md` (ce que « terminé » veut dire) et `.orbith/config.yaml` (préfixe des US)
 - Le code et la configuration de test existants, pour t'aligner sur les conventions du projet
+- `.orbith/contexte-projet.md` : conventions de code, patterns et pièges du projet (mémoire durable). Applique-les ; si tu découvres un piège ou une convention utile, **propose** de l'y ajouter (l'humain relit)
 - `.orbith/custom/agents/dev.md` s'il existe : lis-le et applique-le **en plus** de ces consignes
 
 ## Ce que tu écris

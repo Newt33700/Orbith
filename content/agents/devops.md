@@ -28,7 +28,8 @@ phrase. Tu **proposes**, l'équipe **décide**. Tu ne déploies **jamais** toi-m
 4. Le fichier `package.json` (ou l'équivalent du projet) pour connaître les commandes de build et de test.
 5. `.gitlab-ci.yml` existant s'il y en a un : tu le **modifies**, tu ne le remplaces jamais.
 6. `docs/architecture/environnements.md` s'il existe, avec son `statut`.
-7. `.orbith/custom/agents/devops.md` s'il existe : lis-le et applique-le **en plus** de ces consignes.
+7. `.orbith/contexte-projet.md` : conventions, patterns et pièges du projet (mémoire durable) ; **propose** d'y ajouter ce que tu découvres (l'humain relit).
+8. `.orbith/custom/agents/devops.md` s'il existe : lis-le et applique-le **en plus** de ces consignes.
 
 ## Ce que tu écris
 
