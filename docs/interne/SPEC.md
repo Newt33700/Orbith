@@ -96,6 +96,11 @@ csr:
   fichier: .orbith/csr/CSR.md
   source: null                  # git+https/git+ssh repo, https URL or local file (`orbith csr sync`)
 plugins: []                     # e.g. [backlog-md]
+# Optional keys (absent = feature off, see section 11 "Change requests and role matrix"):
+changements: { exiger_pour_deploiement: false }
+roles:
+  quatre_yeux: false            # validator must not be the author of the file's last commit
+  valideurs: { prd: [alice@corp.fr, "Bob Martin"], change: [ops@corp.fr] }   # type (or "*") -> emails / git names
 ```
 
 ### 3.2 Artifacts and the `statut` field
@@ -103,7 +108,7 @@ plugins: []                     # e.g. [backlog-md]
 Every Orbith document has YAML frontmatter with at least:
 
 ```yaml
-type: brief | prd | ux | architecture | adr | epic | story | release-notes
+type: brief | prd | ux | architecture | adr | epic | story | release-notes | environnements | change | incident
 statut: brouillon | en-revue | validé
 ```
 
@@ -123,6 +128,8 @@ Canonical locations (used by `next`, `check`, `trace`):
 | adr | docs/architecture/adr/ADR-NNN-*.md |
 | story | backlog/tasks/*.md (frontmatter `type: story`) |
 | release-notes | docs/livraisons/release-notes-*.md |
+| change | docs/livraisons/changes/CHG-NNN-*.md |
+| incident | docs/livraisons/incidents/INC-NNN-*.md |
 
 Scanning uses the frontmatter `type` (files without it are ignored), the table above is where agents write.
 
@@ -542,3 +549,26 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   dependency, context file absent or still marked `a-completer`. Otherwise PASS.
 - `orbith next` inserts a secondary action `npx orbith preparation` right after the `dev` action while no story
   is `En cours`/`En revue`/`Terminée`.
+
+## 11. Change requests and role matrix (all optional, off by default)
+
+- **Artifact `change`** (`content/templates/change.md`, `docs/livraisons/changes/CHG-NNN-*.md`, id `CHG-NNN`).
+  Frontmatter: `changement: standard|normal|urgent`, `risque: faible|moyen|élevé`, `version` (release version
+  concerned), `fenetre_debut`/`fenetre_fin`, `approbateurs` (emails or git names), `demandeur`. Body section
+  « Plan de retour arrière » is mandatory. Helpers in `src/core/changes.ts` (`changeType`, `changeRisque`,
+  `planRetourArriere`, `changesPourVersion`, `refusChangement`).
+- **Artifact `incident`** (`content/templates/incident.md`, `docs/livraisons/incidents/INC-NNN-*.md`): blameless
+  post-mortem template; scanned and validated like any other artifact, no other behaviour.
+- **Config `changements.exiger_pour_deploiement: true`**: `orbith deploiement <version>` (env `production` only)
+  fails unless a `change` with that `version` is `validé`; the id is stored as `change` in `deploiements.json`.
+  `orbith next` suggests creating/validating the change once release notes are validated.
+- **Config `roles.valideurs`** (map type or `*` -> list of emails / git names, case-insensitive): `orbith valider`
+  refuses anyone else. For a `change`, a non-empty `approbateurs` list is an additional restriction.
+- **Config `roles.quatre_yeux: true`**: `orbith valider` refuses when the validator is the author (name or email)
+  of the last commit touching the file (`gitLastAuthor`); unknown author (untracked file) = allowed. The author is
+  recorded in the registry (`auteur`, `auteur_email`, optional fields) so that `check` can report violations later.
+- **`orbith check`** (category `validations`, `src/checks/gouvernance.ts`): warnings for incomplete change requests
+  (type, risk, version, rollback plan, window and approvers unless `standard`); errors for a validation recorded by
+  someone outside the role matrix / approvers, or breaking the four-eyes principle.
+- **`orbith trace`** appends a « Demandes de changement » table; `orbith audit` lists changes with other artifacts.
+- Logic: `src/core/roles.ts` (`valideursDuType`, `refusRole`, `refusQuatreYeux`).

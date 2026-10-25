@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { Command } from 'commander';
 import { OrbithError, loadConfig, requireProjectRoot, scanArtifacts, ui } from '../core/index.js';
-import { buildTraces, renderDetail, renderMatrix } from './trace-report.js';
+import { buildTraces, renderChanges, renderDetail, renderMatrix } from './trace-report.js';
 
 export interface TraceOptions {
   cwd?: string;
@@ -14,14 +14,15 @@ export async function runTrace(id: string | undefined, opts: TraceOptions = {}):
   const cwd = path.resolve(opts.cwd ?? process.cwd());
   const root = await requireProjectRoot(cwd);
   const config = await loadConfig(root);
-  const traces = await buildTraces(root, await scanArtifacts(root));
+  const arts = await scanArtifacts(root);
+  const traces = await buildTraces(root, arts);
   let out: string;
   if (id) {
     const t = traces.find((x) => x.id.toLowerCase() === id.toLowerCase());
     if (!t) throw new OrbithError(`User story introuvable : ${id}`);
     out = renderDetail(t);
   } else {
-    out = renderMatrix(traces, config.projet.nom);
+    out = renderMatrix(traces, config.projet.nom) + renderChanges(arts);
   }
   if (opts.sortie) {
     const file = path.resolve(cwd, opts.sortie);

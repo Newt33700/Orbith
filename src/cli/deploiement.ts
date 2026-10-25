@@ -5,10 +5,13 @@ import { confirm, isCancel } from '@clack/prompts';
 import {
   ORBITH_DIR,
   OrbithError,
+  changesPourVersion,
   gitLastStatusChange,
   gitLogDated,
   gitUser,
   isGitRepo,
+  loadConfig,
+  refusChangement,
   parseDoc,
   readDoc,
   requireProjectRoot,
@@ -29,6 +32,8 @@ export interface Deploiement {
   email: string;
   /** Ids des US livrées (celles citées dans les notes de version). */
   us: string[];
+  /** Demande de changement validée qui couvrait ce déploiement (si la gestion des changements est activée). */
+  change?: string;
 }
 
 export interface DeploiementOptions {
@@ -102,6 +107,14 @@ export async function runDeploiement(version: string, opts: DeploiementOptions =
   if (notes.etat !== 'validé') {
     throw new OrbithError(`Les notes de version ${notes.chemin} ne sont pas validées. Relis-les puis lance : npx orbith valider ${notes.chemin}`);
   }
+  // Gestion des changements (facultative) : pas de mise en production sans demande de changement validée.
+  const config = await loadConfig(root).catch(() => null);
+  let change: Artifact | undefined;
+  if (config?.changements?.exiger_pour_deploiement === true && env === 'production') {
+    const refus = refusChangement(arts, version);
+    if (refus) throw new OrbithError(refus);
+    change = changesPourVersion(arts, version).find((c) => c.etat === 'validé');
+  }
   const deja = await loadDeploiements(root);
   if (deja.some((d) => d.version === version && d.env === env)) {
     ui.info(`La version ${version} est déjà enregistrée en ${env}. Rien à faire.`);
@@ -132,7 +145,7 @@ export async function runDeploiement(version: string, opts: DeploiementOptions =
     }
   }
 
-  const dep: Deploiement = { version, env, date, par: user.name, email: user.email, us: stories.map((s) => s.id) };
+  const dep: Deploiement = { version, env, date, par: user.name, email: user.email, us: stories.map((s) => s.id), ...(change ? { change: change.id ?? change.chemin } : {}) };
   await saveDeploiements(root, [...deja, dep]);
 
   if (env === 'production') {

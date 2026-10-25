@@ -1,6 +1,6 @@
 import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
 import { mentions } from './trace-report.js';
-import { hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
+import { changesPourVersion, hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
 
 export interface Action {
   kind: 'probleme' | 'agent' | 'valider' | 'humain' | 'fini';
@@ -77,7 +77,7 @@ function gate(
   return null;
 }
 
-function storyActions(arts: Artifact[]): Action[] {
+function storyActions(arts: Artifact[], config?: OrbithConfig): Action[] {
   const stories = ofType(arts, 'story');
   const actions: Action[] = [];
   const open = stories.filter((s) => status(s) !== 'Terminée');
@@ -125,6 +125,15 @@ function storyActions(arts: Artifact[]): Action[] {
       actions.push(valider(aValider, `Relis les notes de version (${aValider.chemin}) puis valide-les avant de livrer.`));
     } else if (aDeployer) {
       const version = aDeployer.data['version'] != null ? String(aDeployer.data['version']) : '<version>';
+      const changes = changesPourVersion(arts, version);
+      if (config?.changements?.exiger_pour_deploiement === true && !changes.some((c) => c.etat === 'validé')) {
+        const enAttente = changes[0];
+        actions.push(
+          enAttente
+            ? valider(enAttente, `Relis la demande de changement (${enAttente.chemin}) puis valide-la : elle est exigée avant la mise en production.`)
+            : agent('devops', `Prépare la demande de changement de la version ${version} (modèle change.md) : elle est exigée avant la mise en production.`),
+        );
+      }
       actions.push({
         kind: 'humain',
         message: 'Notes de version validées : après la mise en production réelle, enregistre-la (dates des US, indicateurs DORA).',
@@ -216,7 +225,7 @@ export function computeNext(
   if (blocked) {
     candidates.push(blocked);
   } else {
-    candidates.push(...storyActions(artifacts));
+    candidates.push(...storyActions(artifacts, config));
     insertPreparationHint(artifacts, candidates);
     if (piste === 'projet') candidates.push(...devopsHints(artifacts));
   }

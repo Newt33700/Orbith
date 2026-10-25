@@ -32,6 +32,10 @@ export interface OrbithConfig {
   finops: { devise: string; prix: Record<string, { entree: number; sortie: number }> };
   /** Facultatif : cibles DORA comparées aux valeurs mesurées par `orbith metriques`. */
   dora?: { cibles?: DoraCibles };
+  /** Facultatif : gestion des changements (désactivée par défaut). */
+  changements?: { exiger_pour_deploiement: boolean };
+  /** Facultatif : matrice des rôles et principe des quatre yeux (désactivés par défaut). */
+  roles?: { quatre_yeux: boolean; valideurs: Record<string, string[]> };
 }
 
 function lireCiblesDora(raw: unknown): DoraCibles | undefined {
@@ -97,7 +101,7 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
   }
   const r = raw as Partial<OrbithConfig>;
   const def = defaultConfig(r.projet?.nom ?? path.basename(root));
-  return {
+  const cfg: OrbithConfig = {
     version: 1,
     orbith_version: r.orbith_version ?? def.orbith_version,
     projet: { nom: r.projet?.nom ?? def.projet.nom },
@@ -115,6 +119,22 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
     },
     ...(r.dora?.cibles != null ? { dora: { cibles: lireCiblesDora(r.dora.cibles)! } } : {}),
   };
+  if (r.changements && typeof r.changements === 'object') {
+    cfg.changements = { exiger_pour_deploiement: r.changements.exiger_pour_deploiement === true };
+  }
+  if (r.roles && typeof r.roles === 'object') {
+    const valideurs: Record<string, string[]> = {};
+    const brut = (r.roles as { valideurs?: unknown }).valideurs;
+    if (brut && typeof brut === 'object') {
+      for (const [type, liste] of Object.entries(brut as Record<string, unknown>)) {
+        valideurs[type] = (Array.isArray(liste) ? liste : [liste])
+          .filter((x) => x != null && String(x).trim())
+          .map((x) => String(x).trim());
+      }
+    }
+    cfg.roles = { quatre_yeux: (r.roles as { quatre_yeux?: unknown }).quatre_yeux === true, valideurs };
+  }
+  return cfg;
 }
 
 export async function saveConfig(root: string, cfg: OrbithConfig): Promise<void> {

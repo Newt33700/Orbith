@@ -14,6 +14,9 @@ export interface ValidationEntry {
   par: string;
   email: string;
   le: string;
+  /** Auteur du dernier commit du fichier au moment de la validation (principe des quatre yeux). */
+  auteur?: string;
+  auteur_email?: string;
 }
 
 export function hashBody(body: string): string {

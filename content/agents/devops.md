@@ -37,6 +37,8 @@ phrase. Tu **proposes**, l'équipe **décide**. Tu ne déploies **jamais** toi-m
 |---|---|---|
 | Environnements | `docs/architecture/environnements.md` | `.orbith/templates/environnements.md` |
 | Pipeline | `.gitlab-ci.yml` (à la racine du projet) | — (tu pars de l'existant) |
+| Demande de changement (si demandée, ou exigée par `changements.exiger_pour_deploiement`) | `docs/livraisons/changes/CHG-NNN-*.md` | `.orbith/templates/change.md` |
+| Incident et post-mortem sans blâme | `docs/livraisons/incidents/INC-NNN-*.md` | `.orbith/templates/incident.md` |
 
 Le document d'environnements naît en `statut: brouillon`, puis passe en `en-revue` quand tu demandes la relecture.
 **Jamais `validé`.** Le pipeline n'est pas un document Orbith : il part dans une **merge request** relue par un humain.

@@ -165,6 +165,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
 | `npx orbith version` / `npx orbith release <version>` | Propose le prochain numéro SemVer (commits, US, étiquette `breaking`), puis prépare la version : `CHANGELOG.md`, notes validées, tag Git local après confirmation, sans jamais pousser (voir [versions.md](docs/guide/versions.md)) |
 | `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés, avec cibles, tendances, découpage de l'attente, taille des changements et export `--format csv` (voir [metriques.md](docs/guide/metriques.md)) |
+| `npx orbith valider <fichier>` (rôles) | Avec `roles` et `changements` dans `.orbith/config.yaml` (facultatifs) : matrice des rôles, quatre yeux et demande de changement exigée avant `deploiement` (voir [changements-roles.md](docs/guide/changements-roles.md)) |
 | `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith init-context` | Crée le contexte projet d'un projet existant (stack, arborescence, scripts, tests), à compléter par un agent (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
 | `npx orbith preparation` | Vérifie la préparation à l'implémentation (brief, PRD, architecture, epics, US) : PASS, CONCERNS ou FAIL (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
@@ -500,6 +501,7 @@ Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à 
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
 | [contexte-preparation.md](docs/guide/contexte-preparation.md) | Leads tech, POs | Contexte projet, projet existant, check de préparation |
+| [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
 
 ## Feuille de route (V2)
