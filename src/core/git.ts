@@ -43,3 +43,16 @@ export async function gitLsFiles(root: string): Promise<string[] | null> {
   if (out === null) return null;
   return out.split('\0').filter(Boolean);
 }
+
+/** Commits du plus ancien au plus récent, avec la date (AAAA-MM-JJ, date de commit). */
+export async function gitLogDated(root: string): Promise<{ hash: string; date: string; subject: string }[]> {
+  const out = await git(root, ['log', '--reverse', '--pretty=format:%H%x09%cI%x09%s']);
+  if (!out) return [];
+  return out
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((l) => {
+      const [hash = '', date = '', ...rest] = l.split('\t');
+      return { hash, date: date.slice(0, 10), subject: rest.join('\t') };
+    });
+}

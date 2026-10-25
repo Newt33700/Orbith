@@ -242,6 +242,25 @@ Deterministic (no AI) test skeletons: for each story with `statut: validé` and 
 (`<id>-2.feature`… for extra blocks), adding `@ID`, a `Fonctionnalité:` line and `# language: fr` when missing.
 Existing files are kept unless `--force`. Non-validated stories are skipped (human validation first).
 
+### 4.6c `orbith deploiement <version> [--env production] [--date AAAA-MM-JJ] [--yes]`
+Human command run after a real deployment. Requires validated release notes for the version (frontmatter
+`version`, else `release-notes-<version>.md`). Appends `{version, env, date, par, email, us[]}` to
+`.orbith/deploiements.json` (idempotent per version+env); `us` = story ids mentioned in the notes. For
+`production`: writes `mis_en_prod_le` (and `debut_dev_le` from the first commit mentioning the id, if missing)
+in each story, and `mis_en_prod_le` in the notes. Frontmatter only: body hashes, hence validations, are unchanged.
+`orbith next` asks for it once validated notes cover all done stories and have no `mis_en_prod_le`.
+
+### 4.6d `orbith metriques [--jours 90] [--format texte|json] [--sortie f]`
+DORA metrics over the period, production deployments only:
+- deployment frequency (per week); lead time = median(`mis_en_prod_le` − `debut_dev_le` or first commit) of
+  non-bug stories deployed in the period;
+- change failure rate = production deployments containing a story named in the `cause` of a bug
+  (`labels: [bug]`, `origine: production`) / production deployments;
+- time to restore = median(bug `mis_en_prod_le` − `detecte_le`), in hours.
+Levels (élite/élevé/moyen/faible) use DORA-report thresholds. Also a per-story table (created_date,
+updated_date, début dev, mise en prod, lead time, AI cost) and AI costs: sum of `couts_ia[].cout`, per agent.
+`couts_ia` entries are appended by the agents (rule `couts-ia`), self-estimated with `finops.prix` from config.
+
 ### 4.7 `orbith csr import <fichier.xlsx> [--sortie <fichier>]` (default: `csr.fichier` from config)
 Reads an Excel workbook with exceljs. Each sheet → a `## <sheet name>` section and a markdown table.
 Expected columns (case/accents-insensitive matching): Outil, Version min, Statut, Commentaire (extra columns kept).

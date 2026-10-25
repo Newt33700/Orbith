@@ -93,8 +93,14 @@ describe('computeNext', () => {
   it('tout Terminée -> sm puis livré', () => {
     const s = story('US-001', 'Terminée');
     expect(computeNext([s], cfg('evolution')).principal.claude).toBe('/orbith-sm');
-    const notes = art('release-notes', { body: 'Livré : US-001' });
-    expect(computeNext([s, notes], cfg('evolution')).principal.kind).toBe('fini');
+    const brouillon = art('release-notes', { body: 'Livré : US-001', etat: 'non-validé', data: { version: '1.0.0' } });
+    expect(computeNext([s, brouillon], cfg('evolution')).principal.cli).toContain('valider');
+    const notes = art('release-notes', { body: 'Livré : US-001', data: { version: '1.0.0' } });
+    const r = computeNext([s, notes], cfg('evolution')).principal;
+    expect(r.kind).toBe('humain');
+    expect(r.cli).toBe('npx orbith deploiement 1.0.0');
+    const livrees = art('release-notes', { body: 'Livré : US-001', data: { version: '1.0.0', mis_en_prod_le: '2026-10-25' } });
+    expect(computeNext([s, livrees], cfg('evolution')).principal.kind).toBe('fini');
   });
   it('tout Terminée, notes qui ne couvrent que US-12 -> pas fini, sm', () => {
     const a = [story('US-1', 'Terminée'), story('US-12', 'Terminée'), art('release-notes', { body: 'Livré : US-12' })];

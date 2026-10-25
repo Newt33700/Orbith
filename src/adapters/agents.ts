@@ -27,6 +27,7 @@ export const RULES = [
   'confidentialite',
   'tracabilite',
   'nouvelle-session',
+  'couts-ia',
 ] as const;
 
 export const CLAUDE_DENY = [
