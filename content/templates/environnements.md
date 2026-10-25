@@ -19,6 +19,18 @@ title: Environnements et pipeline CI/CD
 |---|---|---|---|---|
 |  |  |  |  | oui / non |
 
+<!-- Diagramme Mermaid de déploiement, facultatif : GitHub et GitLab l'affichent directement (pas tous les
+     éditeurs). Sors-le de ce commentaire et adapte-le à tes environnements réels, sans adresse ni secret.
+     Ici les liens utilisent « ==> » : la flèche à deux tirets fermerait ce commentaire HTML.
+```mermaid
+flowchart LR
+    C[Fusion / tag] ==> B[Construction unique]
+    B ==> DEV[Dev]
+    B ==> REC[Recette]
+    REC ==>|validation humaine| PROD[Production]
+```
+-->
+
 ## Détail par environnement
 
 <!-- Une section par environnement, dans le même ordre que le tableau ci-dessus.

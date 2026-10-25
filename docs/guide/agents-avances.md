@@ -1,16 +1,37 @@
 # Agents et workflows avancés
 
-Cinq aides s'ajoutent aux agents de base. Elles sont **facultatives** : utilisez-les quand le projet le justifie
+Sept aides s'ajoutent aux agents de base. Elles sont **facultatives** : utilisez-les quand le projet le justifie
 (données sensibles, risque de qualité, besoin qui bouge…). Comme tous les agents d'Orbith, elles **proposent**,
 elles ne décident jamais : une personne relit et tranche.
 
 | Aide | Quand l'utiliser | Gemini CLI | Claude Code |
 |---|---|---|---|
+| Analyste (Alix) | Avant le brief, pour explorer l'idée | `/orbith:analyste` | `/orbith-analyste` |
+| Rédacteur technique (Rémi) | Pour écrire ou vérifier README, guides et schémas | `/orbith:redacteur` | `/orbith-redacteur` |
 | Sécurité (Salomé) | Après la validation de l'architecture, ou pour une US sensible | `/orbith:securite` | `/orbith-securite` |
 | Test Architect (Tania) | Avant les tests, pour décider quoi tester et à quel niveau | `/orbith:test-archi` | `/orbith-test-archi` |
 | Rétrospective | Après une livraison | `/orbith:retro` | `/orbith-retro` |
 | Relecture adverse | Avant `npx orbith valider` d'un PRD, d'une architecture ou d'une US | `/orbith:relecture-adverse` | `/orbith-relecture-adverse` |
 | Changement de cap | Quand le besoin change en cours de route | `/orbith:changement-de-cap` | `/orbith-changement-de-cap` |
+
+## Analyste : explorer l'idée avant le brief
+
+Alix vous aide à réfléchir avant de cadrer : questions « et si… ? », parties prenantes, hypothèses, risques,
+alternatives (dont « ne rien faire »). Elle vous demande les recherches documentaires dont elle a besoin et
+n'invente aucun fait. Elle écrit `docs/produit/analyse.md` (brouillon, à valider ensuite), que la PO reprend pour
+le brief. `npx orbith next` la propose en suggestion secondaire, en piste projet, tant qu'il n'y a pas de brief.
+
+Exemple : `/orbith-analyste explore mon idée d'application de réservation de salles`
+
+## Rédacteur technique : une documentation vraie
+
+Rémi documente le code et le produit (README, guides, description de l'existant) et propose des schémas
+**Mermaid** (flux, séquence, déploiement), que GitHub et GitLab affichent directement. Il vérifie chaque
+commande et chaque chemin en lisant le code, dit ce qu'il n'a pas pu vérifier et ne modifie jamais le code de
+production ni un document validé (il signale l'écart). Les modèles d'architecture, d'UX, d'environnements et
+d'epic contiennent des exemples Mermaid en commentaire, à décommenter.
+
+Exemple : `/orbith-redacteur vérifie que le README correspond au code`
 
 ## Sécurité : repérer les menaces tôt
 
@@ -51,7 +72,7 @@ chargent ensuite, dans de nouvelles sessions, et vous re-validez.
 
 ## À savoir
 
-- Les documents produits (menaces, stratégie de test, rétrospective) sont d'abord des **brouillons** : relisez-les,
+- Les documents produits (analyse, menaces, stratégie de test, rétrospective) sont d'abord des **brouillons** : relisez-les,
   puis validez-les vous-même avec `npx orbith valider <fichier>` (par exemple
   `npx orbith valider docs/architecture/menaces.md`). Les agents n'écrivent jamais « validé ». `npx orbith next`
   vous le rappelle tant qu'un de ces documents n'est pas validé.
@@ -67,7 +88,7 @@ Cette plateforme n'est pas activée par défaut. Pour l'activer :
 
 Orbith génère alors :
 
-- `.github/prompts/orbith.prompt.md`, `orbith-po.prompt.md`, … (les 14 commandes, mêmes noms que pour
+- `.github/prompts/orbith.prompt.md`, `orbith-po.prompt.md`, … (les 16 commandes, mêmes noms que pour
   Claude Code) : dans le chat Copilot, tapez `/orbith-po` suivi de votre demande. Chaque fichier ne contient
   qu'un lien vers l'agent dans `.orbith/` ;
 - un bloc balisé `<!-- orbith:debut -->` … `<!-- orbith:fin -->` dans `.github/copilot-instructions.md`, qui

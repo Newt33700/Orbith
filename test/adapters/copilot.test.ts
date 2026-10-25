@@ -21,9 +21,9 @@ describe('adaptateur copilot', () => {
     expect(await exists(path.join(root, '.github/prompts'))).toBe(false);
   });
 
-  it('génère les 14 prompt files qui référencent le cœur sans le dupliquer', async () => {
+  it('génère les 16 prompt files qui référencent le cœur sans le dupliquer', async () => {
     const files = await adapters.copilot.generate(root, defaultConfig('x'));
-    expect(AGENTS).toHaveLength(14);
+    expect(AGENTS).toHaveLength(16);
     for (const a of AGENTS) {
       const rel = `.github/prompts/${a.claude}.prompt.md`;
       expect(files).toContain(rel);

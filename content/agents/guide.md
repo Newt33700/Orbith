@@ -88,6 +88,8 @@ ou l'agent de la première étape.
 | Tester et relire | `/orbith:qa` | `/orbith-qa` |
 | Environnements et pipeline CI/CD | `/orbith:devops` | `/orbith-devops` |
 | Faire discuter plusieurs agents | `/orbith:atelier` | `/orbith-atelier` |
+| Explorer l'idée avant le brief | `/orbith:analyste` | `/orbith-analyste` |
+| Documenter le code, README, guides, schémas | `/orbith:redacteur` | `/orbith-redacteur` |
 
 Commandes terminal : `npx orbith next` (que faire ensuite), `npx orbith valider <fichier>` (valider un
 document), `npx orbith check` (conformité au CSR, validations, secrets), `npx orbith trace [US-xxx]`

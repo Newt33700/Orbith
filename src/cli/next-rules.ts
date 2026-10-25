@@ -18,7 +18,7 @@ export interface NextResult {
   secondaires: Action[];
 }
 
-export type AgentKey = 'guide' | 'po' | 'sm' | 'ux' | 'architecte' | 'dev' | 'qa' | 'devops';
+export type AgentKey = 'guide' | 'po' | 'sm' | 'ux' | 'architecte' | 'dev' | 'qa' | 'devops' | 'analyste';
 
 export function agent(key: AgentKey, message: string, arg?: string): Action {
   // Source unique des noms de commandes : src/adapters/agents.ts (ce que les adaptateurs génèrent vraiment).
@@ -158,12 +158,13 @@ function devopsHints(arts: Artifact[]): Action[] {
   return pending ? [valider(pending, `Relis les environnements (${pending.chemin}) puis valide-les.`)] : [];
 }
 
-/** Documents des agents avancés (menaces, stratégie de test, rétrospective) : rappelle de les valider une fois relus. */
+/** Documents des agents avancés (menaces, stratégie de test, rétrospective, analyse) : rappelle de les valider une fois relus. */
 function documentsAvancesHints(arts: Artifact[]): Action[] {
   const noms: Partial<Record<ArtifactType, string>> = {
     menaces: 'la modélisation des menaces',
     'strategie-test': 'la stratégie de test',
     retro: 'la rétrospective',
+    analyse: "l'analyse",
   };
   return arts
     .filter((a) => a.type in noms && a.etat !== 'validé')
@@ -243,6 +244,10 @@ export function computeNext(
   }
   if (piste === 'evolution') candidates.push(...archiHints(artifacts));
   candidates.push(...documentsAvancesHints(artifacts));
+  // Piste projet, avant le brief : l'analyse est facultative, donc seulement une suggestion secondaire.
+  if (piste === 'projet' && ofType(artifacts, 'brief').length === 0 && ofType(artifacts, 'analyse').length === 0) {
+    candidates.push(agent('analyste', "Facultatif : explore l'idée avec l'analyste (hypothèses, parties prenantes, risques) avant le brief."));
+  }
 
   if (candidates.length === 0) {
     candidates.push(agent('guide', 'Rien de bloquant : demande conseil au guide.'));

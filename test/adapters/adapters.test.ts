@@ -73,7 +73,7 @@ describe('adaptateur claude', () => {
     expect(await read('CLAUDE.md')).toContain('@.orbith/csr/CSR.md');
     const settings = JSON.parse(await read('.claude/settings.json'));
     expect(settings.permissions.deny).toContain('Read(./.env)');
-    expect(AGENTS).toHaveLength(14);
+    expect(AGENTS).toHaveLength(16);
   });
 
   it('frontmatter des commandes md est du YAML valide', () => {
@@ -137,6 +137,8 @@ describe('agents avancés (sécurité, test architect, workflows)', () => {
     ['retro', 'workflows/retro.md', 'orbith:retro', 'orbith-retro'],
     ['relecture-adverse', 'workflows/relecture-adverse.md', 'orbith:relecture-adverse', 'orbith-relecture-adverse'],
     ['changement-de-cap', 'workflows/changement-de-cap.md', 'orbith:changement-de-cap', 'orbith-changement-de-cap'],
+    ['analyste', 'agents/analyste.md', 'orbith:analyste', 'orbith-analyste'],
+    ['redacteur-technique', 'agents/redacteur-technique.md', 'orbith:redacteur', 'orbith-redacteur'],
   ] as const;
 
   it('sont enregistrés avec des commandes Gemini et Claude', () => {

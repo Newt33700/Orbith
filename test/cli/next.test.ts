@@ -182,7 +182,7 @@ describe('documents des agents avancés (menaces, stratégie de test, rétrospec
     const r = computeNext(a, cfg('projet'));
     return [r.principal, ...r.secondaires];
   };
-  for (const type of ['menaces', 'strategie-test', 'retro'] as const) {
+  for (const type of ['menaces', 'strategie-test', 'retro', 'analyse'] as const) {
     it(`${type} non validé : suggère la validation, puis plus rien une fois validé`, () => {
       const a = [...base(), art(type, { etat: 'non-validé', chemin: `docs/x/${type}.md` })];
       expect(tous(a).some((x) => x.cli === `npx orbith valider docs/x/${type}.md`)).toBe(true);
@@ -190,4 +190,20 @@ describe('documents des agents avancés (menaces, stratégie de test, rétrospec
       expect(tous(a).some((x) => x.cli === `npx orbith valider docs/x/${type}.md`)).toBe(false);
     });
   }
+});
+
+describe('analyse (agent Analyste) en piste projet', () => {
+  const tous = (a: Artifact[]) => {
+    const r = computeNext(a, cfg('projet'));
+    return [r.principal, ...r.secondaires];
+  };
+  it("suggère l'analyste en secondaire tant qu'il n'y a ni brief ni analyse", () => {
+    const r = computeNext([], cfg('projet'));
+    expect(r.principal.claude).toBe('/orbith-po');
+    expect(r.secondaires.some((x) => x.claude === '/orbith-analyste')).toBe(true);
+  });
+  it("ne la suggère plus une fois l'analyse ou le brief présent", () => {
+    expect(tous([art('analyse')]).some((x) => x.claude === '/orbith-analyste')).toBe(false);
+    expect(tous([art('brief')]).some((x) => x.claude === '/orbith-analyste')).toBe(false);
+  });
 });

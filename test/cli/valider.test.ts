@@ -96,6 +96,7 @@ describe('orbith valider : menaces, strategie-test et retro (agents avancés)', 
     ['menaces', 'docs/architecture/menaces.md'],
     ['strategie-test', 'docs/architecture/strategie-test.md'],
     ['retro', 'docs/livraisons/retro-1.0.0.md'],
+    ['analyse', 'docs/produit/analyse.md'],
   ];
   for (const [type, rel] of cas) {
     it(`accepte le type ${type} à partir du modèle, vu ensuite par le scan`, async () => {

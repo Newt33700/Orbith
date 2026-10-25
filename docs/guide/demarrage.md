@@ -54,7 +54,7 @@ Pour éviter les questions :
 npx orbith install --plateformes gemini,claude --piste evolution --nom mon-projet --yes
 ```
 
-L'installation copie les agents dans `.orbith/`, crée les commandes Gemini et Claude (14 de chaque), et ajoute un bloc
+L'installation copie les agents dans `.orbith/`, crée les commandes Gemini et Claude (16 de chaque), et ajoute un bloc
 Orbith à `GEMINI.md` ou `CLAUDE.md`. Votre contenu existant est conservé. Pour un projet existant, Orbith ne remplace
 jamais un fichier : il le laisse en place et vous prévient.
 

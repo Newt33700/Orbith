@@ -83,7 +83,7 @@ Pour un premier pas détaillé, lisez [docs/guide/demarrage.md](docs/guide/demar
 
 ## Les agents
 
-Orbith installe 14 commandes : 10 agents et 4 workflows (atelier, rétrospective, relecture adverse, changement de
+Orbith installe 16 commandes : 12 agents et 4 workflows (atelier, rétrospective, relecture adverse, changement de
 cap). Chaque commande existe en deux syntaxes, selon l'outil utilisé. Si vous avez activé GitHub Copilot
 (facultatif, voir [agents avancés](docs/guide/agents-avances.md)), utilisez dans son chat le nom de la colonne
 Claude Code (`/orbith-po`, etc.).
@@ -98,6 +98,8 @@ Claude Code (`/orbith-po`, etc.).
 | Dani (Développeur) | Implémente une user story validée | `/orbith:dev` | `/orbith-dev` |
 | Quentin (QA) | Tests à partir des critères Gherkin, revue, couverture | `/orbith:qa` | `/orbith-qa` |
 | Dora (DevOps) | Environnements non identiques (dev, recette, prod…) et pipelines CI/CD | `/orbith:devops` | `/orbith-devops` |
+| Alix (Analyste) | Explore l'idée avant le brief : hypothèses, risques, alternatives | `/orbith:analyste` | `/orbith-analyste` |
+| Rémi (Rédacteur technique) | README, guides, schémas Mermaid, exactitude vérifiée dans le code | `/orbith:redacteur` | `/orbith-redacteur` |
 | Atelier | Plusieurs agents discutent ensemble sur un sujet | `/orbith:atelier` | `/orbith-atelier` |
 | Salomé (Sécurité) | Modélisation des menaces, revue des US sensibles | `/orbith:securite` | `/orbith-securite` |
 | Tania (Test Architect) | Stratégie de test par risque | `/orbith:test-archi` | `/orbith-test-archi` |
