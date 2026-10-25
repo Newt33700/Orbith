@@ -36,6 +36,7 @@ On valide avec `npx orbith valider <fichier>`.
 | 10 🔒 | **Revue humaine** ; US → `Terminée` | Toi | colonne du tableau → `Terminée` | | |
 | 11 | Notes de version, traçabilité | SM | `/orbith:sm` · `/orbith-sm` | `docs/livraisons/release-notes-<version>.md` | US `Terminée` |
 | 11 🔒 | Valider les **notes de version** et décider de **livrer** | Toi | `npx orbith valider docs/livraisons/release-notes-<version>.md` | | |
+| 12 🔒 | Après la mise en production réelle : enregistrer la date de mise en production | Toi | `npx orbith deploiement <version>` | | |
 
 Les étapes 9 et 10 se répètent pour chaque US du sprint. Ensuite, on recommence un sprint (étape 8) jusqu'à ce que
 tout soit livré.

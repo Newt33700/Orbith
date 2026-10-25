@@ -25,6 +25,7 @@ Légende : 🔒 = **point de validation humaine** : rien n'avance tant qu'une pe
 | 6 🔒 | **Revue humaine** ; si c'est bon, la US passe en `Terminée` | Toi | colonne du tableau → `Terminée` | US terminée |
 | 7 | Notes de version et traçabilité | SM | `/orbith:sm` · `/orbith-sm` | `docs/livraisons/release-notes-<version>.md` |
 | 7 🔒 | **Relire et valider** les notes de version, puis livrer | Toi | `npx orbith valider docs/livraisons/release-notes-<version>.md` | Livraison décidée par l'humain |
+| 8 🔒 | Après la mise en production réelle : enregistrer la date de mise en production | Toi | `npx orbith deploiement <version>` | Dates de mise en production des US livrées (pour les métriques) |
 
 ## Détail des étapes
 

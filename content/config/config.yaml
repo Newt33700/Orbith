@@ -27,8 +27,26 @@ backlog:
 csr:
   # Fichier du Cadre de Référence (référentiel technique de l'entreprise).
   fichier: .orbith/csr/CSR.md
-  # Source du CSR : V2 uniquement (dépôt Git privé ou paquet npm interne).
+  # Source du CSR (facultative). Trois formats possibles :
+  #   git+https://…#chemin/CSR.md  : dépôt Git privé (fichier CSR.md dans le dépôt)
+  #   https://…                    : adresse qui renvoie le CSR
+  #   /chemin/local/CSR.md         : fichier local
+  # Synchronisée avec `npx orbith csr sync`.
   source: null
+
+# FinOps : suivi du coût de l'IA. Les agents estiment la consommation de chaque tâche
+# (voir la règle couts-ia) ; `npx orbith metriques` calcule les coûts à partir des prix ci-dessous.
+finops:
+  # Devise utilisée dans les estimations de coût.
+  devise: EUR
+  # Prix par million de jetons (entrée / sortie). EXEMPLES INDICATIFS : à faire remplacer par vos tarifs réels (équipe FinOps).
+  # Chaque agent utilise la clé de sa famille de modèle, sinon `defaut`.
+  prix:
+    defaut: { entree: 3, sortie: 15 }
+    claude-sonnet: { entree: 3, sortie: 15 }
+    claude-opus: { entree: 15, sortie: 75 }
+    gemini-pro: { entree: 1.25, sortie: 10 }
+    gemini-flash: { entree: 0.3, sortie: 2.5 }
 
 # Plugins optionnels, ajoutés avec `npx orbith plugin add <nom>`.
 # Exemple : [backlog-md]

@@ -157,6 +157,8 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith valider <fichier>` | Marque un document comme validé, après confirmation humaine |
 | `npx orbith check` | Vérifie le projet : CSR, validations, traçabilité, secrets. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
+| `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
+| `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés (voir [metriques.md](docs/guide/metriques.md)) |
 | `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
@@ -296,7 +298,8 @@ mon-projet/
 │   ├── config/dor.md dod.md      # Definition of Ready et Definition of Done (modifiables par l'équipe)
 │   ├── csr/CSR.md                # Votre référentiel technique
 │   ├── custom/                   # Vos adaptations locales (jamais écrasées par update)
-│   └── validations.json          # Registre des validations humaines
+│   ├── validations.json          # Registre des validations humaines
+│   └── deploiements.json         # Registre des mises en production
 ├── GEMINI.md  CLAUDE.md          # Générés : pointent vers les règles d'Orbith
 ├── .gemini/commands/orbith/      # Commandes Gemini CLI
 ├── .claude/commands/orbith-*.md  # Commandes Claude Code
@@ -441,6 +444,38 @@ Standard qui permet à un agent IA de se connecter à des outils externes (bases
 services) de façon sûre et normalisée.
 *Exemple : un agent qui lit l'état d'un ticket dans un outil de suivi grâce à un serveur MCP.*
 
+**DORA (DevOps Research and Assessment)**
+Programme de recherche qui étudie depuis plusieurs années ce qui rend une équipe performante dans la livraison de logiciels. Il définit quatre indicateurs de performance.
+*Exemple : une équipe qui livre une version par jour, avec peu de retours arrière, est classée « élite » pour la fréquence de déploiement.*
+
+**Accelerate**
+Livre qui présente les résultats de DORA et explique les pratiques qui les accompagnent (petits lots, tests automatisés, livraison continue).
+*Exemple : le livre montre que mesurer la livraison aide une équipe à décider où s'améliorer.*
+
+**Fréquence de déploiement**
+Nombre de mises en production sur une période donnée. Plus il est élevé, plus l'équipe livre souvent de petites améliorations.
+*Exemple : 4 mises en production par semaine, sur les 90 derniers jours.*
+
+**Délai de mise en production (lead time)**
+Temps écoulé entre le premier commit d'une user story et sa mise en production. Il mesure la rapidité à transformer une idée en valeur pour l'utilisateur.
+*Exemple : la US-012 a son premier commit le 4 août et est en production le 2 septembre : délai de 29 jours.*
+
+**Taux d'échec des changements**
+Part des mises en production qui provoquent un bug en production, qui demande un correctif ou un retour arrière.
+*Exemple : sur 25 mises en production, 3 ont provoqué un bug : taux de 12 %.*
+
+**Temps de rétablissement (MTTR)**
+Temps entre la détection d'un bug en production et la mise en production de son correctif.
+*Exemple : un bug détecté le lundi à 9 h, corrigé et remis en production le lundi à 15 h : rétablissement en 6 heures.*
+
+**FinOps**
+Pratique qui consiste à suivre les dépenses liées aux services numériques (ici, l'IA) pour les rendre visibles, comprises et maîtrisées par l'équipe.
+*Exemple : l'équipe sait que la rédaction d'une user story coûte quelques centimes d'IA, et que la phase de développement en coûte davantage.*
+
+**Coût IA estimé**
+Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à partir de la taille des textes lus et écrits et des tarifs de `.orbith/config.yaml`. C'est un ordre de grandeur, pas une facture.
+*Exemple : « 0,58 EUR (estimé) » pour l'implémentation de deux scénarios, notée dans la US.*
+
 ## Documentation détaillée
 
 | Guide | Pour qui | Contenu |
@@ -454,6 +489,7 @@ services) de façon sûre et normalisée.
 | [atelier.md](docs/guide/atelier.md) | Tout le monde | Faire travailler plusieurs agents ensemble |
 | [plugins.md](docs/guide/plugins.md) | Tout le monde | Plugin Backlog.md et tableau Kanban |
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
+| [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
 
 ## Feuille de route (V2)

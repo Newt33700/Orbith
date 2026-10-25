@@ -15,7 +15,9 @@ export interface MetriquesOptions {
   aujourdhui?: string;
 }
 
-const val = (n: number | null, unite: string): string => (n == null ? 'pas encore de données' : `${n} ${unite}`);
+/** Nombre à la française : virgule décimale. */
+const fr = (n: number): string => String(n).replace('.', ',');
+const val = (n: number | null, unite: string): string => (n == null ? 'pas encore de données' : `${fr(n)} ${unite}`);
 const niv = (n: Niveau | null): string => (n ? ` (niveau DORA : ${n})` : '');
 const d = (s?: string): string => s ?? '—';
 
@@ -24,20 +26,20 @@ export function renderMetriques(m: Metriques, projet: string): string {
   L.push(`# Indicateurs DORA : ${projet}`, '');
   L.push(`Période : du ${m.periode.debut} au ${m.periode.fin} (${m.periode.jours} jours).`, '');
   L.push('| Indicateur | Valeur |', '|---|---|');
-  L.push(`| Fréquence de déploiement | ${m.frequence.deploiements} mise(s) en production, ${m.frequence.parSemaine} par semaine${niv(m.frequence.niveau)} |`);
+  L.push(`| Fréquence de déploiement | ${m.frequence.deploiements} mise(s) en production, ${fr(m.frequence.parSemaine)} par semaine${niv(m.frequence.niveau)} |`);
   L.push(`| Délai de mise en production (médiane) | ${val(m.leadTime.medianeJours, 'jour(s)')}${m.leadTime.us ? ` sur ${m.leadTime.us} US` : ''}${niv(m.leadTime.niveau)} |`);
-  L.push(`| Taux d'échec des changements | ${m.tauxEchec.pourcentage == null ? 'pas encore de données' : `${m.tauxEchec.pourcentage} % (${m.tauxEchec.deploiementsEnEchec} déploiement(s) suivi(s) d'un bug de production)`}${niv(m.tauxEchec.niveau)} |`);
+  L.push(`| Taux d'échec des changements | ${m.tauxEchec.pourcentage == null ? 'pas encore de données' : `${fr(m.tauxEchec.pourcentage)} % (${m.tauxEchec.deploiementsEnEchec} déploiement(s) suivi(s) d'un bug de production)`}${niv(m.tauxEchec.niveau)} |`);
   L.push(`| Temps de rétablissement (médiane) | ${val(m.retablissement.medianeHeures, 'heure(s)')}${m.retablissement.incidents ? ` sur ${m.retablissement.incidents} incident(s)` : ''}${niv(m.retablissement.niveau)} |`);
   L.push('');
   L.push(`## Coûts IA (estimations des agents)`, '');
-  L.push(`Total : ${m.couts.total} ${m.devise} sur ${m.couts.estimations} estimation(s). Ce sont des ordres de grandeur, pas une facture.`);
+  L.push(`Total : ${fr(m.couts.total)} ${m.devise} sur ${m.couts.estimations} estimation(s). Ce sont des ordres de grandeur, pas une facture.`);
   const agents = Object.entries(m.couts.parAgent).sort((a, b) => b[1] - a[1]);
-  if (agents.length) L.push('', ...agents.map(([a, c]) => `- ${a} : ${c} ${m.devise}`));
+  if (agents.length) L.push('', ...agents.map(([a, c]) => `- ${a} : ${fr(c)} ${m.devise}`));
   L.push('', '## User stories', '');
   L.push('| US | Type | Colonne | Créée | Modifiée | Début dev | Mise en prod | Délai (j) | Coût IA |', '|---|---|---|---|---|---|---|---|---|');
   for (const u of m.us) {
     L.push(
-      `| ${u.id} | ${u.bug ? 'bug' : 'US'} | ${u.colonne} | ${d(u.creee)} | ${d(u.modifiee)} | ${d(u.debutDev)} | ${d(u.misEnProd)} | ${u.leadTimeJours ?? '—'} | ${u.coutIa ? `${u.coutIa} ${m.devise}` : '—'} |`,
+      `| ${u.id} | ${u.bug ? 'bug' : 'US'} | ${u.colonne} | ${d(u.creee)} | ${d(u.modifiee)} | ${d(u.debutDev)} | ${d(u.misEnProd)} | ${u.leadTimeJours != null ? fr(u.leadTimeJours) : '—'} | ${u.coutIa ? `${fr(u.coutIa)} ${m.devise}` : '—'} |`,
     );
   }
   L.push('');
