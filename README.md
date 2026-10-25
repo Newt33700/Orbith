@@ -158,7 +158,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith check` | Vérifie le projet : CSR, validations, traçabilité, secrets. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
-| `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés (voir [metriques.md](docs/guide/metriques.md)) |
+| `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés, avec cibles, tendances, découpage de l'attente, taille des changements et export `--format csv` (voir [metriques.md](docs/guide/metriques.md)) |
 | `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
