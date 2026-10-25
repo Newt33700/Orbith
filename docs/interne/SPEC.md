@@ -40,7 +40,7 @@ src/audit/               # `orbith audit` (collect + HTML render)
 src/sbom/                # `orbith sbom` (collect, CycloneDX, licence policy) (§12)
 content/                 # THE CORE, copied to <project>/.orbith/ on install
   agents/                # guide po sm ux architecte dev qa devops securite test-architect analyste redacteur-technique (.md)
-  workflows/             # correctif evolution projet atelier retro relecture-adverse changement-de-cap (.md)
+  workflows/             # correctif evolution projet atelier retro relecture-adverse changement-de-cap creer-agent (.md)
   templates/             # brief prd ux architecture adr epic story release-notes environnements bug change incident
                          # menaces strategie-test retro analyse contexte-projet (.md)
   rules/                 # validation-humaine confidentialite tracabilite nouvelle-session couts-ia documentation documents-volumineux (.md)
@@ -335,7 +335,7 @@ and enabled plugins.
 
 ### 4.10 Other commands
 `orbith csr sync` (§10), `orbith audit` (§10), `orbith version` / `orbith release` (§10.1), `orbith init-context` /
-`orbith preparation` (§10.2), `orbith sbom` (§12), `orbith decouper` (§15). Every command also accepts `--cwd <dir>`; `--help` is the
+`orbith preparation` (§10.2), `orbith sbom` (§12), `orbith decouper` (§15), `orbith agent new` / `orbith agent list` (§16). Every command also accepts `--cwd <dir>`; `--help` is the
 reference for options.
 
 ## 5. Core library API (`src/core/`) — shared by all commands
@@ -448,9 +448,13 @@ Agent registry (single source, `src/adapters/agents.ts`):
 | retro | workflows/retro.md | /orbith:retro | /orbith-retro | Rétrospective après livraison, à partir des métriques et des constats QA |
 | relecture-adverse | workflows/relecture-adverse.md | /orbith:relecture-adverse | /orbith-relecture-adverse | Relecture adverse : passe critique avant de valider PRD, architecture ou US |
 | changement-de-cap | workflows/changement-de-cap.md | /orbith:changement-de-cap | /orbith-changement-de-cap | Changement de cap : impact d'un changement de besoin sur les epics et les US |
+| creer-agent | workflows/creer-agent.md | /orbith:creer-agent | /orbith-creer-agent | Créer un agent : concevoir, question par question, un agent personnalisé du projet |
 
-16 entries: 12 agents and 4 workflows (atelier, retro, relecture-adverse, changement-de-cap); `orbith install` and
-`orbith update` generate one Gemini and one Claude command per entry.
+17 entries: 12 agents and 5 workflows (atelier, retro, relecture-adverse, changement-de-cap, creer-agent); `orbith install`
+and `orbith update` generate one Gemini and one Claude command per entry, **plus one per custom agent of the project**
+(`.orbith/custom/agents/<key>.md` with a `description` frontmatter, see §16): adapters iterate over
+`agentsDuProjet(root)` (core `AGENTS` followed by the custom ones, `src/adapters/agents-perso.ts`), which throws an
+`OrbithError` on any collision with a core command, so a core command is never overwritten.
 
 Opt-in third platform `copilot` (GitHub Copilot in VS Code; not in the default `plateformes`): one workspace prompt
 file `.github/prompts/<claude command>.prompt.md` per entry (frontmatter `description`, `argument-hint`; body is a
@@ -542,7 +546,8 @@ run `npx orbith valider <file>`), behavior rules (propose 2-3 options for struct
 decide alone; never write `statut: validé`; ask one question at a time; simple French for beginners; explain
 jargon), and an end-of-task block: summary of what was produced, the next command, and the new-session
 reminder. Agents read `.orbith/config.yaml`, `.orbith/csr/CSR.md`, DoR/DoD files when relevant. Overrides:
-if `.orbith/custom/agents/<name>.md` exists, the agent must read it and apply it on top. Agents that change code or
+if `.orbith/custom/agents/<name>.md` exists, the agent must read it and apply it on top. A file there whose name is
+not a core agent and that has a `description` frontmatter is a custom agent (§16) and follows these same conventions. Agents that change code or
 pipelines (`dev`, `devops`) apply the documentation rule (§14) and report it in their end-of-task block.
 
 ## 9. Backlog.md compatibility (verified with backlog.md v1.55.3)
@@ -738,3 +743,33 @@ Deterministic, no AI. Code: `src/core/extraits.ts` (logic), `src/cli/decouper.ts
   only the useful sections, never the whole document; never edit extracts; cite the source. Pointer added to
   "Ce que tu lis" of `dev`, `qa`, `ux`, `architecte`, `sm`.
 - **Guide** `docs/guide/documents-volumineux.md`. Tests: `test/core/extraits.test.ts`, `test/cli/decouper.test.ts`.
+
+## 16. Custom agents of a project (`orbith agent`, workflow `creer-agent`)
+
+- **Declaration**: `.orbith/custom/agents/<key>.md` (never touched by `update`). Classification
+  (`inventaireAgentsPerso`, `src/adapters/agents-perso.ts`): basename of a core `agents/*.md` file (`guide`, `po`,
+  `sm`, `ux`, `architecte`, `dev`, `qa`, `devops`, `securite`, `test-architect`) → **complement** (read by that core
+  agent, no command); otherwise frontmatter with a non-empty `description` → **custom agent**; otherwise **ignored**.
+  Frontmatter: `description` (required; whitespace collapsed), `commande` (optional, default = key), `nom`,
+  `persona` (optional, display only). Key and `commande` must match `^[a-z0-9][a-z0-9-]*$`.
+- **Commands**: Gemini `.gemini/commands/orbith/<commande>.toml` (`/orbith:<commande>`), Claude
+  `.claude/commands/orbith-<commande>.md`, Copilot `.github/prompts/orbith-<commande>.prompt.md`; same generators as
+  core entries with `file = custom/agents/<key>.md`, so the body only references the file (no duplicated content).
+- **Collisions**: a `commande` equal to the suffix of any core Gemini or Claude command (e.g. `archi`, `retro`,
+  `creer-agent`), or already declared by another custom file (alphabetical order wins), is an error. Any error makes
+  `agentsDuProjet` throw: `install`/`update` stop before writing any command (French message listing each file).
+  Idempotent: writes go through `writeIfChanged`. Known limit: commands of a deleted/renamed custom agent are not
+  removed.
+- **`orbith agent new <cle> [--description t] [--nom n] [--yes] [--cwd d]`** (`src/cli/agent.ts`): refuses an invalid
+  key, a core complement key, a core command, an existing file (never overwrites) or a project with invalid custom
+  agents; writes `squeletteAgent()` (§8 sections, mandatory rules, end-of-task new-session block, marker
+  `<!-- orbith:a-completer -->`, no `statut`), then runs the adapters. Prompts for description/name when interactive.
+- **`orbith agent list [--cwd d]`**: core then custom agents with their commands, complements, ignored files, errors
+  (exit code 1 on error).
+- **Workflow** `content/workflows/creer-agent.md` (core entry `creer-agent`): guides a human one question at a time,
+  invents no rule, writes only `.orbith/custom/agents/<key>.md`, never `statut: validé`.
+- **Check** `src/checks/agents.ts`, category `agents` (« Agents personnalisés »): invalid declaration → erreur;
+  ignored file → avertissement; custom agent body missing a mandatory rule → avertissement (accent/case-insensitive:
+  validation humaine = `rules/validation-humaine.md` or « jamais … statut: validé » on one line; confidentialité;
+  « nouvelle session »; `rules/documentation.md` or « documentation à jour »); marker still present → info. Keyword
+  detection only. Guide: `docs/guide/creer-un-agent.md`.

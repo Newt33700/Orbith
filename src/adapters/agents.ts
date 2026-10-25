@@ -27,6 +27,7 @@ export const AGENTS: AgentDef[] = [
   { key: 'changement-de-cap', file: 'workflows/changement-de-cap.md', gemini: 'orbith:changement-de-cap', claude: 'orbith-changement-de-cap', description: 'Changement de cap : impact d\'un changement de besoin sur les epics et les US' },
   { key: 'analyste', file: 'agents/analyste.md', gemini: 'orbith:analyste', claude: 'orbith-analyste', description: "Analyste : brainstorming, hypothèses, risques et alternatives avant le brief" },
   { key: 'redacteur-technique', file: 'agents/redacteur-technique.md', gemini: 'orbith:redacteur', claude: 'orbith-redacteur', description: 'Rédacteur technique : README, guides, schémas Mermaid, exactitude vérifiée dans le code' },
+  { key: 'creer-agent', file: 'workflows/creer-agent.md', gemini: 'orbith:creer-agent', claude: 'orbith-creer-agent', description: 'Créer un agent : concevoir, question par question, un agent personnalisé du projet' },
 ];
 
 export const RULES = [

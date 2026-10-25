@@ -91,6 +91,10 @@ ou l'agent de la première étape.
 | Faire discuter plusieurs agents | `/orbith:atelier` | `/orbith-atelier` |
 | Explorer l'idée avant le brief | `/orbith:analyste` | `/orbith-analyste` |
 | Documenter le code, README, guides, schémas | `/orbith:redacteur` | `/orbith-redacteur` |
+| Créer un agent propre au projet | `/orbith:creer-agent` | `/orbith-creer-agent` |
+
+Les agents personnalisés du projet (dans `.orbith/custom/agents/`) ont aussi leur commande : lance
+`npx orbith agent list` pour les voir.
 
 Commandes terminal : `npx orbith next` (que faire ensuite), `npx orbith valider <fichier>` (valider un
 document), `npx orbith check` (conformité au CSR, validations, secrets), `npx orbith trace [US-xxx]`

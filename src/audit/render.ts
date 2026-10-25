@@ -47,6 +47,7 @@ const CATEGORIES: [string, string][] = [
   ['documentation', 'Documentation'],
   ['secrets', 'Secrets'],
   ['sbom', 'Licences (SBOM)'],
+  ['agents', 'Agents personnalisés'],
 ];
 
 function badge(kind: 'ok' | 'warn' | 'err' | 'info', text: string): string {

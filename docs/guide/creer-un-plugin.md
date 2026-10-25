@@ -81,6 +81,7 @@ ni fonction de copie. Les agents, workflows, templates et règles viennent de `c
 `workflows`, `templates`, `rules`), copiés par `npx orbith install`.
 
 Pour proposer un agent ou un template, ouvre une MR qui ajoute le fichier dans `content/` et décris le besoin.
+Pour un agent propre à un seul projet, pas besoin de plugin : voir [Créer un agent](creer-un-agent.md).
 
 ## 6. Tester son plugin
 
