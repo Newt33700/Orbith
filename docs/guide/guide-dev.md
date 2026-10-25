@@ -23,7 +23,13 @@ qu'elle est **validée** (`statut: validé`). Vérifiez-le :
 npx orbith next
 ```
 
-Orbith indique la story à prendre et la commande à lancer.
+Orbith indique la story à prendre et la commande à lancer. Avant le premier développement, vérifiez aussi la
+cohérence de la chaîne brief → PRD → architecture → epics → stories (voir
+[contexte-preparation.md](contexte-preparation.md)) :
+
+```bash
+npx orbith preparation
+```
 
 ## Étape 2 : passer la story en « En cours »
 
@@ -99,6 +105,15 @@ git commit -m "test(US-012): ajoute les scénarios de connexion"
 
 Pourquoi ? Orbith relie chaque commit à sa story. `npx orbith trace US-012` affichera la liste.
 
+**Mettez à jour la documentation dans la même story** : README, guides, documentation technique, commentaires du
+code, et ce qui doit figurer dans les notes de version (section `## Notes techniques` de la story). L'agent Dev le
+fait systématiquement (règle `.orbith/rules/documentation.md`) et vous indique les fichiers modifiés, ou pourquoi
+aucune documentation n'est concernée :
+
+```bash
+git commit -m "docs(US-012): documente la connexion par email dans le README"
+```
+
 ## Étape 6 : contrôler le projet
 
 Avant de demander une revue, lancez les contrôles :
@@ -110,9 +125,15 @@ npx orbith check
 La commande vérifie :
 
 - le **CSR** : les outils, bibliothèques et versions sont conformes au référentiel de l'entreprise ;
-- les **validations** : aucun document validé n'a été modifié depuis ;
+- les **validations** : aucun document validé n'a été modifié depuis, les registres n'ont pas été retouchés à la
+  main (voir [integrite-sbom.md](integrite-sbom.md)) et, si elles sont activées, les règles de rôles sont
+  respectées (voir [changements-roles.md](changements-roles.md)) ;
 - la **traçabilité** : les commits récents mentionnent une story ;
-- les **secrets** : aucun mot de passe ou clé d'API n'est versionné.
+- la **documentation** : une story dont les commits modifient du code (`src/`) sans aucun fichier de documentation
+  est signalée (avertissement ; `documentation: non-concernée` dans l'en-tête de la story si rien n'est à
+  documenter) ;
+- les **secrets** : aucun mot de passe ou clé d'API n'est versionné ;
+- les **licences** des dépendances, si une politique est déclarée (voir [integrite-sbom.md](integrite-sbom.md)).
 
 Une **erreur** fait échouer la commande (code de sortie 1). Un **avertissement** est signalé, sans bloquer.
 Corrigez les erreurs avant de continuer. Pour les règles de référentiel, lisez [csr.md](csr.md).
@@ -139,7 +160,11 @@ Si la revue demande des changements, corrigez, committez, et relancez `npx orbit
 Une fois la merge request fusionnée :
 
 - la story passe en **Terminée** ;
-- le Scrum Master (`/orbith-sm`) peut préparer les **notes de version**, qui listent les stories livrées.
+- le Scrum Master (`/orbith-sm`) peut préparer les **notes de version**, qui listent les stories livrées ;
+- `npx orbith version` propose le numéro de version et `npx orbith release <version>` prépare le `CHANGELOG.md` et
+  le tag Git (voir [versions.md](versions.md)) ;
+- après la mise en production réelle, un humain lance `npx orbith deploiement <version>` (voir
+  [metriques.md](metriques.md)).
 
 Lancez `npx orbith trace US-012` pour vérifier que la chaîne est complète : story, validation, commits, tests,
 notes de version.
@@ -150,9 +175,12 @@ notes de version.
 - **Un commit sans identifiant** de story sur le travail en cours : il sera signalé par `npx orbith check`.
 - **Un secret dans le code** (mot de passe, clé), même « temporairement ».
 - **Enchaîner plusieurs stories dans la même session.** Ouvrez une nouvelle session (`/clear`) pour chaque story.
+- **Livrer du code sans sa documentation** : un README ou un guide qui décrit l'ancien comportement induit l'équipe en
+  erreur.
 
 ## Pour aller plus loin
 
 - [validation-humaine.md](validation-humaine.md) : statuts et validations.
 - [csr.md](csr.md) : le référentiel technique et son contrôle en CI.
 - [plugins.md](plugins.md) : le tableau Kanban Backlog.md.
+- [agents-avances.md](agents-avances.md) : Sécurité, Test Architect, relecture adverse, rétrospective.

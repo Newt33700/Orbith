@@ -20,7 +20,7 @@ Légende : 🔒 = **point de validation humaine** : rien n'avance tant qu'une pe
 | 3 | *Si la US touche les environnements ou le pipeline* : décrire les environnements, puis le pipeline | DevOps | `/orbith:devops` · `/orbith-devops` | `docs/architecture/environnements.md`, `.gitlab-ci.yml` |
 | 3 🔒 | **Relire et valider** les environnements (si modifiés), puis **relire la merge request** du pipeline | Toi | `npx orbith valider docs/architecture/environnements.md` | `statut: validé` ; merge request acceptée |
 | 4 | Contrôler la DoR et passer la US en `Prête` | Toi (PO humain) | colonne du tableau → `Prête` | US prête |
-| 5 | Tests puis développement (une US par session) | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | Tests `@US-NNN`, code, commits `feat(US-NNN): …` |
+| 5 | Tests puis développement (une US par session) | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | Tests `@US-NNN`, code, documentation à jour, commits `feat(US-NNN): …` |
 | 6 | Tests exécutables, couverture des critères, revue de code | QA | `/orbith:qa US-NNN` · `/orbith-qa US-NNN` | Rapport de QA |
 | 6 🔒 | **Revue humaine** ; si c'est bon, la US passe en `Terminée` | Toi | colonne du tableau → `Terminée` | US terminée |
 | 7 | **Créer la version** : les US fusionnées depuis la version précédente y sont ajoutées automatiquement | Toi (PO humain) | `npx orbith version <numéro>` (exemple : `1.1.0.0`) | `.orbith/versions.json`, brouillon `docs/livraisons/release-notes-<numéro>.md` |
@@ -48,7 +48,8 @@ request que tu relis. Sinon, cette étape ne s'applique pas. Tu crées toi-même
 carte en `Prête`.
 
 **5. Développement.** Le développeur n'accepte qu'une US validée en `Prête` ou `En cours`. Il écrit d'abord les
-squelettes de tests à partir du Gherkin, puis le code, puis lance les tests et `npx orbith check`. Il te propose de
+squelettes de tests à partir du Gherkin, puis le code, met à jour la documentation concernée (README, guides,
+commentaires : règle `documentation`), puis lance les tests et `npx orbith check`. Il te propose de
 passer la US en `En revue`, **tu déplaces la carte**.
 
 **6. QA et revue.** La QA vérifie que chaque critère est couvert par un test qui s'exécute, relit le code selon la DoD

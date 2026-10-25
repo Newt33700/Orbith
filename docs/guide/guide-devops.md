@@ -115,6 +115,23 @@ Dora ne peut pas le faire à votre place. À la fin de sa réponse, elle liste :
 
 Sans ces étapes, les déploiements échoueront, ou pire, ne seront pas contrôlés.
 
+## Étape 6 : tenir la documentation à jour
+
+Quand le pipeline change la façon de construire, tester ou déployer, Dora met à jour dans le même commit ce qui le
+décrit (README du projet, `docs/architecture/environnements.md`, à revalider s'il change). Elle vous indique les
+fichiers modifiés, ou pourquoi aucun ne l'est (règle `.orbith/rules/documentation.md`).
+
+## Après le déploiement
+
+- **Demande de changement** : si votre organisation l'exige (`changements.exiger_pour_deploiement`), Dora rédige la
+  demande `docs/livraisons/changes/CHG-NNN-*.md` à faire valider avant la mise en production (voir
+  [changements-roles.md](changements-roles.md)).
+- **Enregistrer la mise en production** : une fois le déploiement **réellement** fait, lancez vous-même
+  `npx orbith deploiement <version>` (voir [metriques.md](metriques.md)).
+- **Incident** : Dora peut rédiger un post-mortem sans blâme dans `docs/livraisons/incidents/INC-NNN-*.md`.
+- **Liste des composants** : `npx orbith sbom --sortie sbom.json` produit le SBOM du projet (voir
+  [integrite-sbom.md](integrite-sbom.md)).
+
 ## Exemple de dialogue
 
 Voici à quoi ressemble un début d'échange :

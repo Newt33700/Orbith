@@ -31,7 +31,7 @@ On valide avec `npx orbith valider <fichier>`.
 | 7 🔒 | Valider les **Epics** et les **US** | Toi | `npx orbith valider <fichier>` | | |
 | 8 | Proposition de sprint | SM | `/orbith:sm` · `/orbith-sm` | (dans la conversation) | US validées et `Prête` |
 | 8 🔒 | **Décider** le contenu du sprint | Toi / l'équipe | cartes → `Prête` / `En cours` | | |
-| 9 | Tests puis développement (une US par session) | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | code, tests `@US-NNN`, commits | US validée |
+| 9 | Tests puis développement (une US par session) | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | code, tests `@US-NNN`, documentation à jour, commits | US validée |
 | 10 | Tests exécutables, couverture, revue de code | QA | `/orbith:qa US-NNN` · `/orbith-qa US-NNN` | rapport de QA | |
 | 10 🔒 | **Revue humaine** ; US → `Terminée` | Toi | colonne du tableau → `Terminée` | | |
 | 11 | **Créer la version** (US fusionnées depuis la précédente ajoutées automatiquement) | Toi (PO humain) | `npx orbith version <numéro>` | `docs/livraisons/release-notes-<numéro>.md` (brouillon) | US fusionnées |

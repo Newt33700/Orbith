@@ -14,6 +14,8 @@ quel éditeur.
 
 ## Installer le plugin
 
+Pour voir les plugins disponibles et ceux déjà activés : `npx orbith plugin list`.
+
 Dans le dossier du projet, lancez :
 
 ```bash
@@ -72,7 +74,7 @@ Ne renommez pas l'identifiant (`US-012`) : Orbith et les commits s'en servent po
 | Action | Où la faire |
 |---|---|
 | Rédiger une story | Avec l'agent PO (`/orbith-po`) |
-| Valider une story | `npx orbith valider backlog/tasks/us-012 - Connexion par email.md` |
+| Valider une story | `npx orbith valider "backlog/tasks/us-012 - Connexion par email.md"` (guillemets : le nom contient des espaces) |
 | Passer une story en Prête | Dans le tableau, ou dans le fichier |
 | Voir la prochaine action | `npx orbith next` |
 | Vérifier la cohérence | `npx orbith check` |

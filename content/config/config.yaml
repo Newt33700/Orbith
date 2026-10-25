@@ -60,3 +60,23 @@ plugins: []
 #   valideurs:                        # qui peut valider quel type de document (email ou nom git)
 #     prd: [alice@societe.fr]
 #     change: ["Bob Martin"]
+
+# Cibles DORA (facultatif) comparées aux valeurs mesurées par `npx orbith metriques` :
+# voir docs/guide/metriques.md. Une clé inconnue ou une valeur non numérique est refusée.
+# dora:
+#   cibles:
+#     frequence_par_semaine: 1        # au moins
+#     delai_jours: 7                  # au plus
+#     taux_echec_pct: 10              # au plus
+#     retablissement_heures: 24       # au plus
+
+# Politique de licences (facultatif), contrôlée par `npx orbith check` à partir du SBOM :
+# voir docs/guide/integrite-sbom.md. S'ajoute à la catégorie « Licences » du CSR.
+# sbom:
+#   licences_interdites: [AGPL-3.0, GPL-3.0]
+
+# Contrôle de documentation de `npx orbith check` (actif par défaut, avertissement seulement) :
+# signale une US dont les commits modifient du code sans aucun fichier de documentation.
+# documentation:
+#   controle: false                   # désactive le contrôle
+#   code: [src/, lib/]                # dossiers considérés comme du code (défaut : src/)

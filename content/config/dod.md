@@ -7,7 +7,7 @@
   - un point doit être vérifiable : oui ou non, sans discussion.
 
   La DoD est vérifiée avant de passer une story en `Terminée`, et `npx orbith check` la
-  complète en contrôlant la traçabilité, les validations et le CSR.
+  complète en contrôlant la traçabilité, la documentation, les validations et le CSR.
 -->
 
 # Definition of Done
@@ -18,5 +18,8 @@ Une story passe en `Terminée` seulement si tous les points ci-dessous sont coch
 - [ ] **Tests automatiques** : les tests unitaires et les scénarios Gherkin sont écrits et exécutés dans la CI.
 - [ ] **Revue de code humaine** : au moins une personne de l'équipe a relu et approuvé le code (une IA ne suffit pas).
 - [ ] **`npx orbith check` OK** : aucune erreur de conformité CSR, de validation ou de confidentialité.
-- [ ] **Documentation à jour** : la documentation utilisateur et les notes techniques reflètent le comportement livré.
+- [ ] **Documentation à jour** : les fichiers de documentation concernés (README, guides, documentation technique, ADR,
+      commentaires du code) sont modifiés dans les commits de la story, ou la story porte `documentation: non-concernée`
+      avec la raison dans ses notes techniques ; `npx orbith check` n'affiche aucun avertissement « Documentation » pour
+      elle (voir `.orbith/rules/documentation.md`).
 - [ ] **Traçabilité US dans les commits** : chaque commit de la story porte l'identifiant `US-XXX` dans son scope.

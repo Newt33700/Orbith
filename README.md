@@ -3,8 +3,8 @@
 [![CI](https://github.com/Newt33700/Orbith/actions/workflows/ci.yml/badge.svg)](https://github.com/Newt33700/Orbith/actions/workflows/ci.yml)
 
 **Orbith** est une équipe d'agents IA experts qui vous accompagne dans une méthode agile, du besoin
-jusqu'à la livraison du code. Chaque agent joue un rôle précis : Product Owner, Architecte, Développeur,
-UX Designer, QA, Scrum Master. Orbith fonctionne avec **Gemini CLI** et **Claude Code**.
+jusqu'à la livraison du code. Chaque agent joue un rôle précis : Product Owner, Scrum Master, UX Designer,
+Architecte, Développeur, QA, DevOps, Sécurité, Test Architect. Orbith fonctionne avec **Gemini CLI** et **Claude Code**.
 
 Le principe clé : **l'IA propose, l'humain décide.** Aucun document ne passe à l'état « validé » sans
 qu'une personne l'ait relu et confirmé explicitement.
@@ -30,12 +30,13 @@ adapte à un contexte d'entreprise : validation humaine, référentiel technique
 - [Validation humaine](#validation-humaine)
 - [Le référentiel CSR](#le-référentiel-csr)
 - [Traçabilité](#traçabilité)
+- [Documentation à jour](#documentation-à-jour)
 - [Confidentialité](#confidentialité)
 - [Plugin Backlog.md](#plugin-backlogmd)
 - [Structure d'un projet généré](#structure-dun-projet-généré)
 - [Glossaire](#glossaire)
 - [Documentation détaillée](#documentation-détaillée)
-- [Feuille de route (V2)](#feuille-de-route-v2)
+- [Feuille de route](#feuille-de-route)
 - [Contribuer](#contribuer)
 
 ---
@@ -81,7 +82,8 @@ Pour un premier pas détaillé, lisez [docs/guide/demarrage.md](docs/guide/demar
 
 ## Les agents
 
-Chaque agent existe en deux syntaxes, selon l'outil utilisé.
+Orbith installe 14 commandes : 10 agents et 4 workflows (atelier, rétrospective, relecture adverse, changement de
+cap). Chaque commande existe en deux syntaxes, selon l'outil utilisé.
 
 | Agent | Rôle | Gemini CLI | Claude Code |
 |---|---|---|---|
@@ -160,7 +162,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith install` | Installe Orbith dans le projet (agents, commandes Gemini et Claude, configuration) |
 | `npx orbith next` | Indique la prochaine action recommandée (sans IA) |
 | `npx orbith valider <fichier>` | Marque un document comme validé, après confirmation humaine |
-| `npx orbith check` | Vérifie le projet : CSR, validations, traçabilité, secrets. Échoue en cas d'erreur |
+| `npx orbith check` | Vérifie le projet : CSR, validations (et chaîne d'audit des registres, rôles), traçabilité, documentation, secrets, licences. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
 | `npx orbith version <numéro>` | Crée une version (exemple : `1.1.0.0`) : y ajoute les user stories fusionnées depuis la version précédente et prépare le brouillon des notes de version |
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
@@ -174,11 +176,14 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith sbom` | Produit la liste des composants (SBOM CycloneDX JSON) ; `check` contrôle les licences interdites et la chaîne d'audit des registres (voir [integrite-sbom.md](docs/guide/integrite-sbom.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
 | `npx orbith csr sync` | Récupère le CSR depuis la source interne déclarée dans `.orbith/config.yaml` |
-| `npx orbith update` | Met à jour les agents et les règles, sans toucher à votre configuration |
+| `npx orbith update` | Met à jour les agents, workflows, modèles et règles (et les commandes Gemini et Claude), sans toucher à votre configuration, à votre CSR, à `custom/`, au contexte projet ni aux registres |
 | `npx orbith plugin add <nom>` | Installe un plugin, par exemple `backlog-md` |
+| `npx orbith plugin list` | Liste les plugins disponibles et ceux déjà activés |
 
-Options utiles : `--yes` (sans question, pour les scripts ; réservé à un usage humain pour `valider`),
-`--cwd <dossier>` (travailler sur un autre dossier), `--format json` pour `check`.
+Options utiles : `--yes` (sans question, pour les scripts ; réservé à un usage humain pour `valider`, `deploiement` et
+`release`), `--cwd <dossier>` (travailler sur un autre dossier, accepté par toutes les commandes), `--format json`
+pour `next`, `check`, `version`, `preparation`, `metriques` (aussi `csv`) et `audit`, `--sortie <fichier>` pour
+`trace`, `metriques`, `audit`, `sbom` et `csr import`. `npx orbith <commande> --help` liste toutes les options.
 
 ## Une tâche = une session
 
@@ -261,6 +266,24 @@ Elle repose sur trois conventions simples :
 `npx orbith trace` assemble tout cela dans un tableau par user story : statut, validation, commits, tests et
 notes de version. `npx orbith check` signale les stories « Terminée » sans commit associé.
 
+## Documentation à jour
+
+Une règle permanente (`.orbith/rules/documentation.md`, chargée dans `GEMINI.md` et `CLAUDE.md`) impose aux agents
+de mettre à jour, dans le même commit ou la même user story, la documentation que leur code rend fausse : README,
+guides, documentation technique et ADR, commentaires, notes de version. Le Dev l'applique, la QA signale les écarts,
+le Scrum Master le vérifie dans la Definition of Done.
+
+`npx orbith check` ajoute un filet de sécurité (avertissement, rubrique « Documentation ») : une US dont les commits
+modifient du code (`src/` par défaut) sans aucun fichier de documentation (README, `docs/`, CHANGELOG, `*.md`) est
+signalée. Si rien n'est à documenter, indiquez `documentation: non-concernée` dans l'en-tête de la US. Le contrôle se
+règle dans `.orbith/config.yaml` :
+
+```yaml
+documentation:
+  controle: false        # désactive le contrôle
+  code: [src/, lib/]     # dossiers considérés comme du code (défaut : src/)
+```
+
 ## Confidentialité
 
 - **Ne mettez jamais de secrets dans les prompts** : mots de passe, clés d'API, jetons, identifiants.
@@ -308,25 +331,31 @@ mon-projet/
 │   ├── config.yaml               # Configuration du projet
 │   ├── config/dor.md dod.md      # Definition of Ready et Definition of Done (modifiables par l'équipe)
 │   ├── csr/CSR.md                # Votre référentiel technique
+│   ├── contexte-projet.md        # Mémoire durable : conventions, patterns, pièges (jamais écrasé par update)
 │   ├── custom/                   # Vos adaptations locales (jamais écrasées par update)
-│   ├── validations.json          # Registre des validations humaines
+│   ├── validations.json          # Registre chaîné des validations humaines
 │   ├── versions.json             # Registre des versions (US incluses)
-│   └── deploiements.json         # Registre des mises en production
-├── GEMINI.md  CLAUDE.md          # Générés : pointent vers les règles d'Orbith
-├── .gemini/commands/orbith/      # Commandes Gemini CLI
-├── .claude/commands/orbith-*.md  # Commandes Claude Code
+│   └── deploiements.json         # Registre chaîné des mises en production (créé par `orbith deploiement`)
+├── GEMINI.md  CLAUDE.md          # Générés : pointent vers les règles d'Orbith, le CSR et le contexte projet
+├── .gemini/commands/orbith/      # Commandes Gemini CLI (14)
+├── .claude/commands/orbith*.md   # Commandes Claude Code (14)
+├── .claude/settings.json  .geminiignore   # Interdisent la lecture des fichiers sensibles
 ├── docs/
 │   ├── produit/                  # brief.md, prd.md, ux.md, epics/EPIC-001-*.md
-│   ├── architecture/             # architecture.md, environnements.md, adr/ADR-001-*.md
-│   └── livraisons/               # release-notes-<version>.md
+│   ├── architecture/             # architecture.md, environnements.md, menaces.md, strategie-test.md, adr/ADR-001-*.md
+│   └── livraisons/               # release-notes-<version>.md, retro-<version>.md, changes/CHG-001-*.md,
+│                                 # incidents/INC-001-*.md, audit-AAAA-MM-JJ.html
 ├── backlog/tasks/                # Les user stories (us-001 - Titre.md, une par fichier)
 ├── src/  tests/                  # Votre code et vos tests (tests/features/ : squelettes de `orbith tests`)
 ├── .gitlab-ci.yml                # Lance `npx orbith check` ; complété par l'agent DevOps (environnements)
+├── CHANGELOG.md                  # Créé par `orbith release`
 └── README.md  .gitignore  .editorconfig
 ```
 
-Vous pouvez modifier `.orbith/config/`, `.orbith/csr/` et `.orbith/custom/` : `npx orbith update` ne touche
-jamais à ces dossiers.
+Les dossiers `docs/` et `backlog/` sont remplis au fil du travail ; seul leur squelette est créé à l'installation
+d'un nouveau projet. Vous pouvez modifier `.orbith/config/`, `.orbith/csr/`, `.orbith/custom/` et
+`.orbith/contexte-projet.md` : `npx orbith update` ne les écrase jamais (le CSR est seulement resynchronisé depuis
+`csr.source` si elle est déclarée).
 
 ## Glossaire
 
@@ -488,11 +517,36 @@ Pratique qui consiste à suivre les dépenses liées aux services numériques (i
 Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à partir de la taille des textes lus et écrits et des tarifs de `.orbith/config.yaml`. C'est un ordre de grandeur, pas une facture.
 *Exemple : « 0,58 EUR (estimé) » pour l'implémentation de deux scénarios, notée dans la US.*
 
+**SemVer (versionnage sémantique)**
+Numérotation des versions en trois nombres, majeur.mineur.correctif : on augmente le premier pour un changement incompatible, le deuxième pour une nouveauté, le troisième pour une correction.
+*Exemple : après la 1.4.0, une simple correction donne la 1.4.1 ; une nouvelle fonctionnalité, la 1.5.0.*
+
+**Demande de changement (ITIL)**
+Fiche qui décrit une mise en production avant qu'elle ait lieu : ce qui change, le risque, la fenêtre, qui approuve et comment revenir en arrière.
+*Exemple : CHG-001, risque moyen, déploiement de la 1.4.0 mardi entre 20 h et 22 h, plan de retour arrière vers la 1.3.2.*
+
+**Principe des quatre yeux**
+Règle selon laquelle la personne qui écrit un document ne le valide pas elle-même : une deuxième personne relit.
+*Exemple : Bob a écrit la demande de changement, c'est Alice qui la valide.*
+
+**Post-mortem sans blâme**
+Analyse d'un incident qui cherche ce que le système a rendu possible, et non qui s'est trompé.
+*Exemple : « le déploiement a pu partir sans test de fumée » plutôt que « Paul a oublié le test ».*
+
+**SBOM (Software Bill of Materials)**
+Liste de tous les composants logiciels d'un projet, avec leur version et leur licence, dans un format standard (ici CycloneDX).
+*Exemple : le SBOM montre que le projet utilise `express` 4.19.2 sous licence MIT.*
+
+**Contexte projet**
+Fichier `.orbith/contexte-projet.md` qui garde les conventions, les patterns et les pièges du projet, lu par les agents avant d'écrire.
+*Exemple : « les dates sont toujours stockées en UTC » ; « ne pas appeler l'API de facturation dans les tests ».*
+
 ## Documentation détaillée
 
 | Guide | Pour qui | Contenu |
 |---|---|---|
 | [demarrage.md](docs/guide/demarrage.md) | Tout le monde | Installation pas à pas, premier lancement |
+| [versions.md](docs/guide/versions.md) | Leads tech, chefs de projet | Numéro de version (SemVer), CHANGELOG, tag Git |
 | [guide-po.md](docs/guide/guide-po.md) | PO, chefs de projet | Du brief à une user story prête |
 | [guide-dev.md](docs/guide/guide-dev.md) | Leads tech, développeurs | Prendre une story, la développer, la livrer |
 | [guide-devops.md](docs/guide/guide-devops.md) | Leads tech, DevOps | Décrire les environnements et créer les pipelines |
@@ -508,9 +562,10 @@ Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à 
 | [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
 
-## Feuille de route (V2)
+## Feuille de route
 
-La version 0.1 se concentre sur le parcours de base. Prochaines étapes prévues :
+La version 0.1 couvre le parcours complet (du brief à la mise en production), avec la gouvernance (changements,
+rôles), les métriques DORA, la gestion des versions, le journal d'audit chaîné et le SBOM. Prochaines étapes prévues :
 
 - **Connecteurs Jira et Confluence** via le serveur MCP « IT for IT », pour lire et publier sans copier-coller.
 - **D'autres écosystèmes CSR**, au-delà de Node.js, Java et Python.
@@ -524,7 +579,8 @@ Les contributions sont les bienvenues.
    **en français**. La documentation interne est en anglais.
 3. Ouvrez une branche, faites vos modifications et proposez une merge request.
 
-Avant de proposer une modification, exécutez les tests : `npm test`.
+Avant de proposer une modification, exécutez les tests (`npm test`) et mettez à jour la documentation concernée
+(README, `docs/guide/`, `docs/interne/SPEC.md`) dans la même merge request : voir [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 

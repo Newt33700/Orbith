@@ -44,7 +44,9 @@ const CATEGORIES: [string, string][] = [
   ['csr', 'Cadre de référence (CSR)'],
   ['validations', 'Validations'],
   ['tracabilite', 'Traçabilité'],
+  ['documentation', 'Documentation'],
   ['secrets', 'Secrets'],
+  ['sbom', 'Licences (SBOM)'],
 ];
 
 function badge(kind: 'ok' | 'warn' | 'err' | 'info', text: string): string {
