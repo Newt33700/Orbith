@@ -532,7 +532,7 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   arrière, Surveillance), `Stories livrées`. `orbith deploiement` still reads story ids from the whole body.
 - **Recognized story labels**: `bug`, `impact-archi`, `breaking`.
 
-### 10.x Project context and readiness check (`docs/guide/contexte-preparation.md`)
+### 10.2 Project context and readiness check (`docs/guide/contexte-preparation.md`)
 - **Project context**: template `content/templates/contexte-projet.md`; adapters (`src/adapters/contexte.ts`,
   `ensureContexteProjet`) create `.orbith/contexte-projet.md` from it when missing (never overwritten, not in
   `CORE_DIRS`, so untouched by `update`). The generated GEMINI.md/CLAUDE.md block references it. The marker
@@ -572,3 +572,18 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   someone outside the role matrix / approvers, or breaking the four-eyes principle.
 - **`orbith trace`** appends a « Demandes de changement » table; `orbith audit` lists changes with other artifacts.
 - Logic: `src/core/roles.ts` (`valideursDuType`, `refusRole`, `refusQuatreYeux`).
+
+- **Chained audit journal** (`src/core/chaine.ts`): every entry of `.orbith/validations.json` and
+  `.orbith/deploiements.json` carries `precedent` = SHA-256 of the previous entry's canonical JSON (sorted keys,
+  `precedent` included); the first one uses `GENESE` (64 zeros). `recordValidation` replaces the file's entry, then
+  rechains the whole registry; it throws on a broken chain (never launders a manual edit) and chains legacy
+  registries (no `precedent` anywhere) on the fly. `runDeploiement` behaves the same. `check` (category
+  `validations`, `src/checks/chaine.ts`): broken chain → erreur, legacy registry → avertissement.
+  Known limit: dropping only the last entry is undetectable without git history.
+- **`orbith sbom [--sortie f] [--cwd d]`** (`src/sbom/`): deterministic component inventory (package-lock v1–v3 else
+  package.json; pom.xml; requirements*.txt, pyproject.toml), sorted by purl, rendered as minimal CycloneDX 1.5 JSON
+  (no timestamp, content-derived `serialNumber`). stdout by default; summary on stderr in that case. Exit 0.
+- **License policy**: forbidden/deprecated licenses from the CSR category "Licences" (statut interdit / déprécié) and
+  `sbom.licences_interdites` in config.yaml. `check` category `sbom` (`src/checks/sbom.ts`): forbidden → erreur,
+  deprecated → avertissement, unknown license → info. SPDX `OR` is lenient, `AND`/`WITH` strict. No policy → no results.
+  Guide: `docs/guide/integrite-sbom.md`.

@@ -170,6 +170,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith init-context` | Crée le contexte projet d'un projet existant (stack, arborescence, scripts, tests), à compléter par un agent (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
 | `npx orbith preparation` | Vérifie la préparation à l'implémentation (brief, PRD, architecture, epics, US) : PASS, CONCERNS ou FAIL (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
+| `npx orbith sbom` | Produit la liste des composants (SBOM CycloneDX JSON) ; `check` contrôle les licences interdites et la chaîne d'audit des registres (voir [integrite-sbom.md](docs/guide/integrite-sbom.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
 | `npx orbith csr sync` | Récupère le CSR depuis la source interne déclarée dans `.orbith/config.yaml` |
 | `npx orbith update` | Met à jour les agents et les règles, sans toucher à votre configuration |
@@ -499,6 +500,7 @@ Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à 
 | [agents-avances.md](docs/guide/agents-avances.md) | Tout le monde | Sécurité, Test Architect, rétrospective, relecture adverse, changement de cap |
 | [plugins.md](docs/guide/plugins.md) | Tout le monde | Plugin Backlog.md et tableau Kanban |
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
+| [integrite-sbom.md](docs/guide/integrite-sbom.md) | Sécurité, conformité | Journal d'audit chaîné, SBOM, licences |
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
 | [contexte-preparation.md](docs/guide/contexte-preparation.md) | Leads tech, POs | Contexte projet, projet existant, check de préparation |
 | [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |

@@ -18,6 +18,7 @@ import { register as registerVersion } from './version.js';
 import { register as registerRelease } from './release.js';
 import { register as registerInitContext } from './init-context.js';
 import { register as registerPreparation } from './preparation.js';
+import { register as registerSbom } from './sbom.js';
 
 function version(): string {
   try {
@@ -72,6 +73,7 @@ for (const register of [
   registerRelease,
   registerInitContext,
   registerPreparation,
+  registerSbom,
 ]) {
   register(program);
 }

@@ -2,6 +2,7 @@ export * from './errors.js';
 export * from './paths.js';
 export * from './config.js';
 export * from './frontmatter.js';
+export * from './chaine.js';
 export * from './validations.js';
 export * from './artifacts.js';
 export * from './git.js';

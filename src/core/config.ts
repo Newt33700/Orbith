@@ -36,6 +36,8 @@ export interface OrbithConfig {
   changements?: { exiger_pour_deploiement: boolean };
   /** Facultatif : matrice des rôles et principe des quatre yeux (désactivés par défaut). */
   roles?: { quatre_yeux: boolean; valideurs: Record<string, string[]> };
+  /** Politique de licences (optionnelle) : s'ajoute à la catégorie « Licences » du CSR. */
+  sbom?: { licences_interdites: string[] };
 }
 
 function lireCiblesDora(raw: unknown): DoraCibles | undefined {
@@ -101,6 +103,9 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
   }
   const r = raw as Partial<OrbithConfig>;
   const def = defaultConfig(r.projet?.nom ?? path.basename(root));
+  const interdites = Array.isArray(r.sbom?.licences_interdites)
+    ? r.sbom.licences_interdites.filter((x): x is string => typeof x === 'string' && x.trim() !== '')
+    : [];
   const cfg: OrbithConfig = {
     version: 1,
     orbith_version: r.orbith_version ?? def.orbith_version,
@@ -134,6 +139,7 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
     }
     cfg.roles = { quatre_yeux: (r.roles as { quatre_yeux?: unknown }).quatre_yeux === true, valideurs };
   }
+  if (interdites.length) cfg.sbom = { licences_interdites: interdites };
   return cfg;
 }
 
