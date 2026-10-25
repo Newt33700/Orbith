@@ -25,6 +25,7 @@ export const AGENTS: AgentDef[] = [
   { key: 'retro', file: 'workflows/retro.md', gemini: 'orbith:retro', claude: 'orbith-retro', description: 'Rétrospective après livraison, à partir des métriques et des constats QA' },
   { key: 'relecture-adverse', file: 'workflows/relecture-adverse.md', gemini: 'orbith:relecture-adverse', claude: 'orbith-relecture-adverse', description: 'Relecture adverse : passe critique avant de valider PRD, architecture ou US' },
   { key: 'changement-de-cap', file: 'workflows/changement-de-cap.md', gemini: 'orbith:changement-de-cap', claude: 'orbith-changement-de-cap', description: 'Changement de cap : impact d\'un changement de besoin sur les epics et les US' },
+  { key: 'autopilote', file: 'workflows/autopilote.md', gemini: 'orbith:autopilote', claude: 'orbith-autopilote', description: 'Autopilote borné : enchaîne Dev puis QA sur les US éligibles, s\'arrête à chaque porte humaine' },
 ];
 
 export const RULES = [

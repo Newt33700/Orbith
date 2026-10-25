@@ -81,3 +81,10 @@ plugins: []
 # documentation:
 #   controle: false                   # désactive le contrôle
 #   code: [src/, lib/]                # dossiers considérés comme du code (défaut : src/)
+
+# Autopilote borné (facultatif) : `npx orbith autopilote` calcule, sans IA, les US que l'agent peut enchaîner
+# (Dev puis QA) avant ta revue : voir le guide Orbith en ligne : https://github.com/Newt33700/Orbith/blob/main/docs/guide/autopilote.md.
+# Les options --max-us et --budget de la commande remplacent ces valeurs.
+# autopilote:
+#   max_us: 3                         # US en attente de ta revue, au plus (défaut : 3)
+#   budget: 20                        # plafond de coût IA estimé du périmètre, en finops.devise (défaut : aucun)

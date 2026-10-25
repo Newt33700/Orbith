@@ -104,6 +104,7 @@ Claude Code (`/orbith-po`, etc.).
 | Rétrospective | Bilan après une livraison, à partir des métriques et des constats QA | `/orbith:retro` | `/orbith-retro` |
 | Relecture adverse | Passe critique avant de valider un PRD, une architecture ou une US | `/orbith:relecture-adverse` | `/orbith-relecture-adverse` |
 | Changement de cap | Impact d'un changement de besoin sur les epics et les US | `/orbith:changement-de-cap` | `/orbith-changement-de-cap` |
+| Autopilote borné | Enchaîne Dev puis QA sur les US éligibles et s'arrête à chaque porte humaine (voir [autopilote.md](docs/guide/autopilote.md)) | `/orbith:autopilote` | `/orbith-autopilote` |
 
 Exemple : pour demander au PO de rédiger le brief, tapez `/orbith:po rédige le brief de mon appli de
 réservation de salles` dans Gemini CLI, ou `/orbith-po rédige le brief de mon appli de réservation de
@@ -177,6 +178,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith preparation` | Vérifie la préparation à l'implémentation (brief, PRD, architecture, epics, US) : PASS, CONCERNS ou FAIL (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
 | `npx orbith sbom` | Produit la liste des composants (SBOM CycloneDX JSON) ; `check` contrôle les licences interdites et la chaîne d'audit des registres (voir [integrite-sbom.md](docs/guide/integrite-sbom.md)) |
+| `npx orbith autopilote [EPIC-NNN\|US-NNN…]` | Calcule le plan borné de l'autopilote, sans IA : US éligibles et ordre, plafond de US (`--max-us`, 3 par défaut), budget IA (`--budget`), portes humaines ; refuse si `check` est en erreur, si un document est modifié après validation ou si le budget est épuisé (voir [autopilote.md](docs/guide/autopilote.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
 | `npx orbith csr sync` | Récupère le CSR depuis la source interne déclarée dans `.orbith/config.yaml` |
 | `npx orbith update` | Met à jour les agents, workflows, modèles et règles (et les commandes Gemini et Claude), sans toucher à votre configuration, à votre CSR, à `custom/`, au contexte projet ni aux registres |
@@ -185,7 +187,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 
 Options utiles : `--yes` (sans question, pour les scripts ; réservé à un usage humain pour `valider`, `deploiement` et
 `release`), `--cwd <dossier>` (travailler sur un autre dossier, accepté par toutes les commandes), `--format json`
-pour `next`, `check`, `version`, `preparation`, `metriques` (aussi `csv`) et `audit`, `--sortie <fichier>` pour
+pour `next`, `check`, `version`, `preparation`, `autopilote`, `metriques` (aussi `csv`) et `audit`, `--sortie <fichier>` pour
 `trace`, `metriques`, `audit`, `sbom` et `csr import`. `npx orbith <commande> --help` liste toutes les options.
 
 ## Une tâche = une session
@@ -563,6 +565,7 @@ Fichier `.orbith/contexte-projet.md` qui garde les conventions, les patterns et 
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
 | [contexte-preparation.md](docs/guide/contexte-preparation.md) | Leads tech, POs | Contexte projet, projet existant, check de préparation |
 | [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
+| [autopilote.md](docs/guide/autopilote.md) | Leads tech, PO | Mode autopilote borné : plan sans IA, plafond de US, budget, portes humaines |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
 
 ## Feuille de route

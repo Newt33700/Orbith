@@ -62,6 +62,8 @@ export interface OrbithConfig {
    * `controle: false` le désactive ; `code` liste les préfixes de chemins considérés comme du code (défaut `src/`).
    */
   documentation?: { controle: boolean; code: string[] };
+  /** Facultatif : bornes du mode autopilote (`orbith autopilote`). Valeurs vérifiées par la commande. */
+  autopilote?: { max_us?: unknown; budget?: unknown };
 }
 
 /** Préfixes de chemins considérés comme du code par défaut (contrôle de documentation). */
@@ -175,6 +177,13 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
     cfg.documentation = {
       controle: d.controle !== false,
       code: code.length ? code : [...DOCUMENTATION_CODE_DEFAUT],
+    };
+  }
+  if (r.autopilote && typeof r.autopilote === 'object') {
+    const a = r.autopilote as { max_us?: unknown; budget?: unknown };
+    cfg.autopilote = {
+      ...(a.max_us != null ? { max_us: a.max_us } : {}),
+      ...(a.budget != null ? { budget: a.budget } : {}),
     };
   }
   return cfg;
