@@ -25,7 +25,7 @@ La proposition vient de deux sources :
 | Commit avec `!` (`feat(US-012)!: …`), pied de commit `BREAKING CHANGE:` ou US étiquetée `breaking` | version **majeure** (1.2.0 → 2.0.0) |
 
 Le plus fort l'emporte. Les autres types (`docs`, `chore`, `refactor`…) ne changent pas le numéro à eux seuls.
-Sans tag existant, le calcul part de 0.0.0.
+Sans tag existant, le calcul part de 0.0.0. Seuls les tags atteignables depuis la branche courante comptent : sur une branche de maintenance, un tag plus récent d'une autre branche est ignoré pour le calcul, mais il empêche toujours de recréer le même tag.
 
 Pour marquer une rupture sur une US, ajoute l'étiquette `breaking` dans ses `labels` :
 
