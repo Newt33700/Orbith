@@ -518,21 +518,28 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
 `src/core/git-release.ts` (tags, commits since a tag, annotated tag, path-limited commit). Guide: `docs/guide/versions.md`.
 
 - **`orbith version [--format texte|json]`**: base = latest `vX.Y.Z` tag (else 0.0.0); inputs = commits since that tag
-  + pending stories (`Terminée`, no `mis_en_prod_le`, or cited by a commit since the tag). Bump = max of:
+  + pending stories (`Terminée`, no `mis_en_prod_le`, or cited by a commit since the tag), excluding stories cited by
+  the release notes of a version that already has a tag (`storiesDejaLivrees`). Bump = max of:
   major = `type!:` / `BREAKING CHANGE:` footer / story label `breaking` (case-insensitive, constant `BREAKING_LABEL`);
   minor = `feat` / done non-bug story; patch = `fix` / done story labelled `bug`. Other types do not bump.
   Read-only; prints the reasons; nothing proposed when no signal.
 - **`orbith release <version> [--yes] [--sans-tag] [--dry-run] [--date]`** (`vX.Y.Z` accepted):
   1. refuses a non-SemVer version, an existing tag, or a version ≤ the latest tag;
   2. no notes (`docs/livraisons/release-notes-<version>.md` or frontmatter `version`) → writes a draft (2 audiences)
-     from the done pending stories, then fails;
+     from the done pending stories, then fails (`--dry-run`: writes nothing; an existing unrecognized file at that
+     path is never overwritten);
   3. guardrails, all reported together (exit 1): notes not `validé`; a story cited in the notes is not `Terminée`;
      any `orbith check` error;
-  4. warnings only: notes cite no story, no « exploitation » part, major expected (breaking) but not chosen;
+  4. warnings only: notes cite no story, no « exploitation » part, major expected (breaking) but not chosen,
+     changelog includes commits of stories not `Terminée`, a story cited in the notes has uncommitted changes;
   5. prints the CHANGELOG section; after confirmation (`--yes` or TTY prompt; non-TTY without `--yes` fails):
-     prepends `## [X.Y.Z] - date` to `CHANGELOG.md` (Changements majeurs / Nouveautés / Corrections, from commits;
-     breaking stories listed too), commits only that file (`chore(release): vX.Y.Z`) and creates the annotated local
-     tag `vX.Y.Z`. `--sans-tag` stops after the changelog; `--dry-run` writes nothing. **Never pushes**.
+     prepends `## [X.Y.Z] - date` (local date) to `CHANGELOG.md`, keeping its line endings (Changements majeurs /
+     Nouveautés / Corrections, from commits; breaking stories listed too), commits only that file plus the notes file
+     and `.orbith/validations.json` when they have uncommitted changes (`chore(release): vX.Y.Z`, path-limited: other
+     staged files stay staged) and creates the annotated local tag `vX.Y.Z`. A failed commit restores `CHANGELOG.md`
+     and the index and reports git's message; a failed tag reports the manual `git tag` command.
+     `--sans-tag` stops after the changelog and prints the `git add` / `git commit` / `git tag` commands;
+     `--dry-run` writes nothing. **Never pushes**.
 - **Release-notes template** (`content/templates/release-notes.md`): parts `Résumé`, `Pour les utilisateurs`
   (Nouveautés, Corrections, Limites connues), `Pour l'exploitation` (Changements à connaître, Déploiement et retour
   arrière, Surveillance), `Stories livrées`. `orbith deploiement` still reads story ids from the whole body.

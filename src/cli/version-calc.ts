@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { gitCommitsSince, gitTags, storyStatus, type Artifact, type RawCommit } from '../core/index.js';
 import { mentions } from './trace-report.js';
 
@@ -103,10 +104,35 @@ export interface VersionProposal {
   nonTerminees: Artifact[];
 }
 
-/** Stories concerned by the next version: done and never put in production, or touched by a recent commit. */
-export function storiesEnAttente(arts: Artifact[], commits: ParsedCommit[]): Artifact[] {
+/** Version a release-notes document is about (frontmatter `version`, else its file name), or null. */
+export function versionDesNotes(n: Artifact): string | null {
+  if (n.data['version'] != null) return String(n.data['version']).trim().replace(/^v/, '');
+  const m = /^release-notes-(\d+\.\d+\.\d+)\.md$/.exec(path.posix.basename(n.chemin));
+  return m ? m[1]! : null;
+}
+
+/**
+ * Ids of the stories already shipped in a published version: cited by the release notes of a version
+ * that has a `vX.Y.Z` (or `X.Y.Z`) tag. They must not be counted again for the next version, even
+ * before `orbith deploiement` writes their `mis_en_prod_le`.
+ */
+export function storiesDejaLivrees(arts: Artifact[], tags: string[]): Set<string> {
+  const publiees = new Set(tags.map((t) => t.replace(/^v/, '')));
+  const notes = arts.filter((a) => a.type === 'release-notes' && publiees.has(versionDesNotes(a) ?? ''));
+  const ids = new Set<string>();
+  for (const s of arts) {
+    if (s.type === 'story' && s.id && notes.some((n) => mentions(n.body, s.id!))) ids.add(s.id);
+  }
+  return ids;
+}
+
+/**
+ * Stories concerned by the next version: done and never put in production, or touched by a recent commit.
+ * Stories listed in `livrees` (already in a published version) are left out.
+ */
+export function storiesEnAttente(arts: Artifact[], commits: ParsedCommit[], livrees: Set<string> = new Set()): Artifact[] {
   return arts.filter((a) => {
-    if (a.type !== 'story' || !a.id || a.data['mis_en_prod_le'] != null) return false;
+    if (a.type !== 'story' || !a.id || a.data['mis_en_prod_le'] != null || livrees.has(a.id)) return false;
     return storyStatus(a) === 'Terminée' || commits.some((c) => c.us.includes(a.id!));
   });
 }
@@ -116,7 +142,7 @@ export async function proposerVersion(root: string, arts: Artifact[]): Promise<V
   const last = await lastReleaseTag(root);
   const ids = arts.filter((a) => a.type === 'story' && a.id).map((a) => a.id!);
   const commits = (await gitCommitsSince(root, last?.tag)).map((c) => parseCommit(c, ids));
-  const stories = storiesEnAttente(arts, commits);
+  const stories = storiesEnAttente(arts, commits, storiesDejaLivrees(arts, await gitTags(root)));
   const raisons: Reason[] = [];
   let bump: Bump | null = null;
   const add = (b: Bump, text: string) => {

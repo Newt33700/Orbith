@@ -58,3 +58,39 @@ export async function gitCommitPaths(root: string, paths: string[], message: str
   await run(root, ['add', '--', ...paths]);
   await run(root, ['commit', '-q', '-m', message, '--', ...paths]);
 }
+
+/**
+ * Among `paths` (posix, relative to root), those with uncommitted changes: modified, staged or untracked.
+ * Ignored files are not reported. Empty when git fails.
+ */
+export async function gitDirtyPaths(root: string, paths: string[]): Promise<string[]> {
+  if (paths.length === 0) return [];
+  let out: string;
+  let prefix: string;
+  try {
+    // Porcelain paths are relative to the repository top level, not to `root` (project in a sub-folder).
+    prefix = (await run(root, ['rev-parse', '--show-prefix'])).trim();
+    out = await run(root, ['status', '--porcelain', '-z', '--untracked-files=all', '--', ...paths]);
+  } catch {
+    return [];
+  }
+  const dirty = new Set<string>();
+  const entries = out.split('\0');
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i]!;
+    if (e.length < 4) continue;
+    dirty.add(e.slice(3));
+    // Renames and copies carry the original path in the next NUL-separated field.
+    if (e[0] === 'R' || e[0] === 'C') i++;
+  }
+  return paths.filter((p) => dirty.has(prefix + p));
+}
+
+/** Removes the given paths from the index (back to HEAD, or untracked when HEAD does not exist yet). */
+export async function gitUnstage(root: string, paths: string[]): Promise<void> {
+  try {
+    await run(root, ['reset', '-q', '--', ...paths]);
+  } catch {
+    await run(root, ['rm', '--cached', '-q', '--ignore-unmatch', '--', ...paths]);
+  }
+}

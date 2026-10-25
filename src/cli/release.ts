@@ -3,12 +3,15 @@ import path from 'node:path';
 import type { Command } from 'commander';
 import { confirm, isCancel } from '@clack/prompts';
 import {
+  ORBITH_DIR,
   OrbithError,
   exists,
   gitCommitPaths,
   gitCommitsSince,
   gitCreateTag,
+  gitDirtyPaths,
   gitTags,
+  gitUnstage,
   gitUser,
   isGitRepo,
   requireProjectRoot,
@@ -80,12 +83,38 @@ export function renderChangelogSection(version: string, date: string, commits: P
   return out.join('\n') + '\n';
 }
 
-/** Inserts a section on top of the existing entries; creates the file when missing. */
+/**
+ * Inserts a section on top of the existing entries; creates the file when missing.
+ * Keeps the file's line endings: a CRLF file (Windows checkout) stays CRLF instead of mixing both.
+ */
 export function insererSection(existing: string | null, section: string): string {
   if (existing == null || !existing.trim()) return `${HEADER}\n${section}`;
+  const crlf = /\r\n/.test(existing);
+  const sec = crlf ? section.replace(/\r?\n/g, '\r\n') : section;
+  const nl = crlf ? '\r\n' : '\n';
   const i = existing.search(/^## \[/m);
-  if (i === -1) return `${existing.replace(/\s+$/, '')}\n\n${section}`;
-  return `${existing.slice(0, i)}${section}\n${existing.slice(i)}`;
+  if (i === -1) return `${existing.replace(/\s+$/, '')}${nl}${nl}${sec}`;
+  return `${existing.slice(0, i)}${sec}${nl}${existing.slice(i)}`;
+}
+
+/** Local calendar date (AAAA-MM-JJ): `toISOString()` is UTC and gives the wrong day around midnight. */
+export function dateLocale(d: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function messageGit(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
+/** Commands a human runs to finish a release prepared with --sans-tag (one per line: also valid in PowerShell). */
+function commandesManuelles(version: string, tag: string, notes: string): string {
+  const fichiers = `CHANGELOG.md "${notes}" ${ORBITH_DIR}/validations.json`;
+  return [
+    `  git add ${fichiers}`,
+    `  git commit -m "chore(release): ${tag}" -- ${fichiers}`,
+    `  git tag -a ${tag} -m "Version ${version}"`,
+  ].join('\n');
 }
 
 /** Draft release notes with the two audiences (users / operations), to be reviewed then validated. */
@@ -159,7 +188,7 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
   if (!sv || !/^\d+\.\d+\.\d+$/.test(version)) {
     throw new OrbithError(`Version invalide : « ${versionArg} » (format attendu : X.Y.Z, par exemple 1.2.0).`);
   }
-  const date = opts.date ?? new Date().toISOString().slice(0, 10);
+  const date = opts.date ?? dateLocale();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) {
     throw new OrbithError(`Date invalide : ${date} (format attendu : AAAA-MM-JJ).`);
   }
@@ -178,13 +207,24 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
   if (!notes) {
     const livrees = proposal.stories.filter((s) => storyStatus(s) === 'Terminée');
     const rel = `docs/livraisons/release-notes-${version}.md`;
-    if (!opts.dryRun) {
-      const file = path.join(root, rel);
-      await fs.mkdir(path.dirname(file), { recursive: true });
-      await fs.writeFile(file, renderNotesBrouillon(version, date, livrees), 'utf8');
+    const file = path.join(root, rel);
+    if (await exists(file)) {
+      // Never overwrite a human's file: it exists but was not recognized as the notes of this version.
+      throw new OrbithError(
+        `${rel} existe mais n'est pas reconnu comme notes de la version ${version}. ` +
+          `Vérifie son en-tête (type: release-notes, version: ${version}) puis relance : npx orbith release ${version}`,
+      );
     }
+    if (opts.dryRun) {
+      throw new OrbithError(
+        `Notes de version introuvables pour ${version}. Simulation (--dry-run) : aucun brouillon n'a été écrit.\n` +
+          `Relance sans --dry-run pour créer le brouillon ${rel}, puis relis-le et valide-le.`,
+      );
+    }
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, renderNotesBrouillon(version, date, livrees), 'utf8');
     throw new OrbithError(
-      `Notes de version introuvables pour ${version}. ${opts.dryRun ? 'Elles seraient créées' : 'Un brouillon a été créé'} : ${rel}\n` +
+      `Notes de version introuvables pour ${version}. Un brouillon a été créé : ${rel}\n` +
         `Relis-le (public utilisateur et public exploitation), puis : npx orbith valider ${rel}\nEnsuite relance : npx orbith release ${version}`,
     );
   }
@@ -195,6 +235,7 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
     refus.push(`les notes de version ${notes.chemin} ne sont pas validées (état : ${notes.etat}) → npx orbith valider ${notes.chemin}`);
   }
   const stories = arts.filter((a): a is Artifact & { id: string } => a.type === 'story' && !!a.id && mentions(notes.body, a.id));
+  const veutTag = git && !opts.sansTag;
   for (const s of stories.filter((x) => storyStatus(x) !== 'Terminée')) {
     refus.push(`${s.id} figure dans les notes mais n'est pas « Terminée » (colonne : ${storyStatus(s)})`);
   }
@@ -216,11 +257,32 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
 
   const ids = arts.filter((a) => a.type === 'story' && a.id).map((a) => a.id!);
   const commits = (await gitCommitsSince(root, last?.tag)).map((c) => parseCommit(c, ids));
+  const enCours = arts.filter(
+    (a) => a.type === 'story' && !!a.id && storyStatus(a) !== 'Terminée' && commits.some((c) => c.us.includes(a.id!)),
+  );
+  if (enCours.length > 0) {
+    ui.avert(
+      `Le changelog reprend des commits d'US pas « Terminée » : ${enCours.map((s) => `${s.id} (${storyStatus(s)})`).join(', ')}. ` +
+        'Ce code part quand même dans la version : vérifie que c’est voulu.',
+    );
+  }
+  // The release commit carries the validated notes and their validation, so that the tag contains the proof.
+  const aCommiter = veutTag ? await gitDirtyPaths(root, [notes.chemin, `${ORBITH_DIR}/validations.json`]) : [];
+  const storiesModifiees = veutTag ? await gitDirtyPaths(root, stories.map((s) => s.chemin)) : [];
+  if (storiesModifiees.length > 0) {
+    ui.avert(
+      `US modifiées mais pas commitées (le tag contiendra leur dernière version commitée) : ${storiesModifiees.join(', ')}. ` +
+        'Commite-les avant si leur état doit faire partie de la version.',
+    );
+  }
   const section = renderChangelogSection(version, date, commits, stories);
   const changelogPath = path.join(root, 'CHANGELOG.md');
   const existing = (await exists(changelogPath)) ? await fs.readFile(changelogPath, 'utf8') : null;
   if (existing && existing.includes(`## [${version}]`)) {
-    throw new OrbithError(`CHANGELOG.md contient déjà une section pour ${version} : supprime-la d'abord si tu veux la régénérer.`);
+    throw new OrbithError(
+      `CHANGELOG.md contient déjà une section pour ${version} : supprime-la d'abord si tu veux la régénérer.\n` +
+        `Si elle vient d'un passage avec --sans-tag, termine à la main :\n${commandesManuelles(version, tag, notes.chemin)}`,
+    );
   }
 
   ui.titre(`Version ${version}`);
@@ -231,7 +293,6 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
     return null;
   }
 
-  const veutTag = git && !opts.sansTag;
   if (veutTag && !(await gitUser(root))) {
     throw new OrbithError('Identité git introuvable. Configure-la avec :\n  git config user.name "Ton Nom"\n  git config user.email "ton@email.fr"');
   }
@@ -242,7 +303,7 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
       );
     }
     const ok = await confirm({
-      message: `Je confirme : écrire CHANGELOG.md, le valider dans Git et créer le tag ${tag} (sans rien pousser)`,
+      message: `Je confirme : écrire CHANGELOG.md, commiter ${['CHANGELOG.md', ...aCommiter].join(', ')} et créer le tag ${tag} (sans rien pousser)`,
       initialValue: false,
     });
     if (isCancel(ok) || !ok) {
@@ -255,11 +316,32 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
   await fs.writeFile(changelogPath, insererSection(existing, section), 'utf8');
   ui.ok('CHANGELOG.md mis à jour.');
   if (!veutTag) {
-    ui.info(git ? `Tag non créé (--sans-tag). Quand tu es prêt : git tag -a ${tag} -m "Version ${version}"` : 'Dossier non versionné avec Git : pas de tag.');
+    if (git) ui.info(`Ni commit ni tag (--sans-tag). Quand tu es prêt, lance toi-même :\n${commandesManuelles(version, tag, notes.chemin)}`);
+    else ui.info('Dossier non versionné avec Git : pas de tag.');
     return { version, changelog: 'CHANGELOG.md', tag: null };
   }
-  await gitCommitPaths(root, ['CHANGELOG.md'], `chore(release): ${tag}`);
-  await gitCreateTag(root, tag, `Version ${version}`);
+  const chemins = ['CHANGELOG.md', ...aCommiter];
+  try {
+    await gitCommitPaths(root, chemins, `chore(release): ${tag}`);
+  } catch (e) {
+    // Roll back so that a new run starts clean (otherwise « section déjà présente » would block it).
+    if (existing == null) await fs.rm(changelogPath, { force: true });
+    else await fs.writeFile(changelogPath, existing, 'utf8');
+    await gitUnstage(root, chemins).catch(() => undefined);
+    throw new OrbithError(
+      `Le commit de la version a échoué : CHANGELOG.md a été remis dans son état d'avant et aucun tag n'a été créé.\n` +
+        `Message de Git : ${messageGit(e)}\nCorrige le problème (hook pre-commit, identité…) puis relance : npx orbith release ${version}`,
+    );
+  }
+  ui.ok(`Commit chore(release): ${tag} (${chemins.join(', ')}).`);
+  try {
+    await gitCreateTag(root, tag, `Version ${version}`);
+  } catch (e) {
+    throw new OrbithError(
+      `Le commit chore(release): ${tag} a été créé, mais pas le tag ${tag}.\nMessage de Git : ${messageGit(e)}\n` +
+        `Corrige le problème puis crée le tag toi-même : git tag -a ${tag} -m "Version ${version}"`,
+    );
+  }
   ui.ok(`Tag ${tag} créé en local.`);
   ui.info(`Rien n'a été poussé. Quand tu es prêt : git push && git push origin ${tag}`);
   return { version, changelog: 'CHANGELOG.md', tag };
