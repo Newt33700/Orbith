@@ -12,7 +12,8 @@ export type ArtifactType =
   | 'adr'
   | 'epic'
   | 'story'
-  | 'release-notes';
+  | 'release-notes'
+  | 'environnements';
 
 export interface Artifact {
   type: ArtifactType;
@@ -56,7 +57,7 @@ export function storyStatus(a: { data: Record<string, unknown> }): string {
   return STATUS_ALIASES[k] ?? s.trim();
 }
 
-const TYPES: readonly string[] = [
+export const ARTIFACT_TYPES: readonly ArtifactType[] = [
   'brief',
   'prd',
   'ux',
@@ -65,7 +66,9 @@ const TYPES: readonly string[] = [
   'epic',
   'story',
   'release-notes',
+  'environnements',
 ];
+const TYPES: readonly string[] = ARTIFACT_TYPES;
 
 const SCAN_DIRS = ['docs/produit', 'docs/architecture', 'docs/livraisons', 'backlog/tasks'];
 

@@ -52,10 +52,20 @@ alternatives : l'agent présente souvent deux options pour les choix structurant
 
 ## Étape 4 : écrire les tests à partir du Gherkin
 
-Les critères d'acceptation de la story sont la base des tests. Demandez à l'agent QA de les transformer en tests :
+Les critères d'acceptation de la story sont la base des tests. Commencez par générer les squelettes, sans IA :
+
+```bash
+npx orbith tests US-012
+```
+
+La commande crée `tests/features/us-012.feature`, copie fidèle des critères Gherkin. Elle ne traite que les
+stories **validées** et ne réécrit jamais un fichier existant (sauf avec `--force`). Sans identifiant, elle
+traite toutes les stories validées.
+
+Demandez ensuite à l'agent QA (ou dev) d'écrire les définitions d'étapes qui rendent ces scénarios exécutables :
 
 ```
-/orbith-qa écris les tests de US-012 à partir des critères Gherkin
+/orbith-qa écris les définitions d'étapes de US-012
 ```
 
 Chaque scénario devient un test. Les fichiers portent le marqueur de la story (`@US-012`), ce qui permet la

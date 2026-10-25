@@ -7,6 +7,7 @@ import { register as registerNext } from './next.js';
 import { register as registerValider } from './valider.js';
 import { register as registerCheck } from './check.js';
 import { register as registerTrace } from './trace.js';
+import { register as registerTests } from './tests.js';
 import { register as registerCsr } from './csr.js';
 import { register as registerUpdate } from './update.js';
 import { register as registerPlugin } from './plugin.js';
@@ -54,6 +55,7 @@ for (const register of [
   registerValider,
   registerCheck,
   registerTrace,
+  registerTests,
   registerCsr,
   registerUpdate,
   registerPlugin,

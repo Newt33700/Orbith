@@ -153,3 +153,19 @@ describe('orbith next (intégration)', () => {
     expect(json.piste).toBe('correctif');
   });
 });
+
+describe('agent DevOps (piste projet)', () => {
+  const base = (): Artifact[] => [art('brief'), art('prd'), art('ux'), art('architecture'), art('epic'), story('US-001', 'Prête')];
+  it('sans environnements : suggère l’agent DevOps', () => {
+    const r = computeNext(base(), cfg('projet'));
+    expect([r.principal, ...r.secondaires].some((a) => a.claude === '/orbith-devops')).toBe(true);
+  });
+  it('environnements non validés : demande la validation, puis plus rien une fois validés', () => {
+    const a = [...base(), art('environnements', { etat: 'non-validé' })];
+    const r = computeNext(a, cfg('projet'));
+    expect([r.principal, ...r.secondaires].some((x) => x.cli?.includes('valider'))).toBe(true);
+    a[a.length - 1] = art('environnements');
+    const all = [computeNext(a, cfg('projet')).principal, ...computeNext(a, cfg('projet')).secondaires];
+    expect(all.some((x) => x.claude === '/orbith-devops' || x.message.includes('environnements'))).toBe(false);
+  });
+});
