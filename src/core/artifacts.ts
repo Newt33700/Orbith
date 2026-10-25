@@ -19,7 +19,8 @@ export type ArtifactType =
   | 'menaces'
   | 'strategie-test'
   | 'retro'
-  | 'analyse';
+  | 'analyse'
+  | 'amelioration';
 
 export interface Artifact {
   type: ArtifactType;
@@ -79,10 +80,11 @@ export const ARTIFACT_TYPES: readonly ArtifactType[] = [
   'strategie-test',
   'retro',
   'analyse',
+  'amelioration',
 ];
 const TYPES: readonly string[] = ARTIFACT_TYPES;
 
-const SCAN_DIRS = ['docs/produit', 'docs/architecture', 'docs/livraisons', 'backlog/tasks'];
+const SCAN_DIRS = ['docs/produit', 'docs/architecture', 'docs/livraisons', 'backlog/tasks', 'docs/amelioration'];
 
 async function walkMd(dir: string): Promise<string[]> {
   let entries;

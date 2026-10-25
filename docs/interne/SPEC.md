@@ -79,6 +79,7 @@ mon-projet/
 ├── docs/produit/        brief.md prd.md ux.md epics/EPIC-001-*.md
 ├── docs/architecture/   architecture.md environnements.md menaces.md strategie-test.md adr/ADR-001-*.md
 ├── docs/livraisons/     release-notes-<version>.md retro-<version>.md changes/ incidents/ audit-*.html
+├── docs/amelioration/   AMEL-NNN-*.md (optional, §15)
 ├── backlog/tasks/       user stories (one file per US, Backlog.md compatible — §3.4)
 ├── src/ tests/
 ├── .gitlab-ci.yml                                # runs `npx orbith check`
@@ -114,6 +115,7 @@ sbom: { licences_interdites: [AGPL-3.0] }         # §12
 documentation: { controle: true, code: [src/] }   # §14 (check on by default; `controle: false` disables it)
 extraits: { seuil_jetons: 4000 }                  # §15 (large-document threshold, estimated tokens)
 autopilote: { max_us: 3, budget: 20 }             # §17 (bounded autopilot; no budget ceiling when absent)
+sla: { disponibilite_pct: 99.5, retablissement_heures: { 1: 4, 2: 24 }, correction_bug_prod_jours: 5 }  # §19
 ```
 
 ### 3.2 Artifacts and the `statut` field
@@ -121,7 +123,7 @@ autopilote: { max_us: 3, budget: 20 }             # §17 (bounded autopilot; no 
 Every Orbith document has YAML frontmatter with at least:
 
 ```yaml
-type: brief | prd | ux | architecture | adr | epic | story | release-notes | environnements | change | incident | menaces | strategie-test | retro | analyse
+type: brief | prd | ux | architecture | adr | epic | story | release-notes | environnements | change | incident | menaces | strategie-test | retro | analyse | amelioration
 statut: brouillon | en-revue | validé
 ```
 
@@ -147,6 +149,7 @@ Canonical locations (used by `next`, `check`, `trace`):
 | strategie-test | docs/architecture/strategie-test.md |
 | retro | docs/livraisons/retro-<version>.md |
 | analyse | docs/produit/analyse.md |
+| amelioration | docs/amelioration/AMEL-NNN-*.md (§19) |
 
 Scanning uses the frontmatter `type` (files without it are ignored), the table above is where agents write.
 
@@ -871,3 +874,57 @@ review.
   erreur when `.orbith/provenance.json` chain is broken.
 - **`orbith audit`**: optional `AuditData.provenance`; HTML section `#provenance` « Provenance IA » after the
   traceability matrix; flagged rows use class `pb`. Guide: `docs/guide/provenance-couts.md`.
+
+## 19. Service levels, continual improvement, knowledge links and DORA reliability (all optional)
+
+Guides: `docs/guide/metriques.md` (SLA, rework rate, reliability), `docs/guide/amelioration-continue.md`.
+
+- **Config `sla`** (`src/core/sla-config.ts`, `lireSla`, called by `loadConfig`): `disponibilite_pct` (min, 0–100),
+  `retablissement_heures` (map severity → max hours; keys `1|2|3` or `critique|majeure|mineure`, read by `lireGravite`,
+  which also parses incident `gravite` such as `1 critique`), `correction_bug_prod_jours` (max days). Unknown key,
+  unknown severity or non-numeric value → `OrbithError`. Absent → no `sla` in the output.
+- **`orbith metriques`** (`src/cli/fiabilite-calc.ts` pure, `src/cli/fiabilite-render.ts`), current period only:
+  - `sla.objectifs[]` `{cle, gravite?, sens, cible, unite, valeur, mesures, respectes, incomplets[], atteint, remarque}`,
+    `sla.bilan`, `sla.avertissements[]` (incidents without usable severity/detection date, prod bugs without `detecte_le`).
+    Dates: `AAAA-MM-JJ[ HH:MM[:SS]]` or ISO, read as UTC when no zone (`instant`).
+  - availability = 100 × (1 − union of incident intervals `[detecte_le, retabli_le]` clipped to the period / period),
+    all severities; an overlapping incident without `retabli_le` → `valeur: null`; no incident → 100 with remarque
+    « aucun incident déclaré : à vérifier ».
+  - per-item objectives (restore per severity: incidents with `retabli_le` in the period; prod-bug fix: `labels: [bug]`,
+    `origine: production`, `mis_en_prod_le` in the period): `valeur` = worst duration; `atteint` = false if one exceeds
+    the target or an item still open at period end is already older than the target, else null if an item of the period
+    is still open (no end date) or none exists, else true.
+  - `reprise` `{deploiements, deploiementsDeReprise, pourcentage, avertissement}` (always present): DORA *deployment
+    rework rate*, production deployments of the period shipping a production bug story / production deployments; null
+    without deployment; no performance level (DORA publishes none).
+  - `fiabilite[]` (present only if some `retro` has `fiabilite_auto_evaluation`): the team's reliability self-assessment,
+    shown verbatim, no level.
+  - Text: sections « Taux de reprise des déploiements » and « Fiabilité et objectifs de service » (before the trends);
+    CSV: one `dora` row for the rework rate, one `sla` row per objective.
+- **DORA sources checked** (dora.dev source repository `dora-team/dora.dev`, 2024 and 2021 report PDFs): five delivery
+  metrics since 2024 (change lead time, deployment frequency, failed deployment recovery time, change fail rate,
+  deployment rework rate = "percentage of deployments that are unplanned work to fix bugs"; survey question: deployments
+  in the last six months "not planned but performed to address a user-facing bug"). Reliability was called "the fifth
+  metric" in the 2021 report (self-rated ability to meet or exceed reliability targets); dora.dev's metrics history
+  (2026-01-02) states this was inaccurate: reliability measures operational, not delivery, performance. Hence: rework
+  rate is computed, reliability is only the optional SLA comparison plus the verbatim self-assessment.
+- **Artifact `amelioration`** (`content/templates/amelioration.md`, `docs/amelioration/AMEL-NNN-*.md`, scanned dir
+  added to `SCAN_DIRS`): frontmatter `source` (`retro|incident|metrique`), `source_ref` (e.g. `INC-002`, `retro-1.2.0`),
+  `responsable`, `echeance` (AAAA-MM-JJ), `avancement` (`ouvert|en cours|fait|abandonné`, default `ouvert`;
+  `statut` stays the validation field), `liens`. Body: Constat, Action, Indicateur de succès, Suivi. Validated like any
+  artifact. Helpers in `src/core/connaissance.ts` (`avancement`, `sourceAmelioration`, `enRetard`, `ameliorationsLiees`).
+- **Knowledge links** (`src/core/connaissance.ts`): optional `liens` (list or comma string) on any artifact. Graph
+  (`grapheConnaissance`) edges = `liens` + bug `cause` + incident `change` + improvement `source_ref`; node key = `id`,
+  else file name without `.md`; matching is case-insensitive; template placeholders (`US-XXX`, `<…>`) are ignored.
+- **`orbith check`** (`src/checks/amelioration.ts`, warnings only): category `amelioration` (new, shown only when it has
+  results, in `check` and `audit`): missing/invalid `AMEL-NNN` id, unknown `avancement`/`source`, open action without
+  `responsable`/`echeance`, overdue open action. Category `tracabilite`: malformed `liens`, `liens`/`source_ref` target
+  not found (`cause`/`change` are not checked, for backward compatibility).
+- **`orbith trace`** (`src/cli/trace-connaissance.ts`): appends « Actions d'amélioration » and « Liens de connaissance »
+  sections when non-empty; `orbith trace <ID>` for a non-story id prints that artifact's links.
+- **`orbith audit`**: `AuditData.connaissance` `{ameliorations[], liens[]}` (present only when non-empty) and an HTML section.
+- **`orbith next`** (`src/cli/next-amelioration.ts`, appended last): overdue action (humain), unvalidated action
+  (valider), restored (`retabli_le`) or validated incident with no linked action (devops), retro with no linked action
+  (`/orbith-retro`). Linked = the action cites it (`source_ref`/`liens`) or it cites the action in `liens`.
+- **Prompts**: `workflows/retro.md` and `agents/devops.md` propose one AMEL file per action retained by the human;
+  `incident.md` and `retro.md` templates reference AMEL; `retro.md` has optional `fiabilite_auto_evaluation`.

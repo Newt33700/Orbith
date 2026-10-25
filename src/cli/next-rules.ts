@@ -1,6 +1,7 @@
 import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
 import { mentions } from './trace-report.js';
 import { usEligibles } from './autopilote-plan.js';
+import { ameliorationHints } from './next-amelioration.js';
 import { changesPourVersion, hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
 
 export interface Action {
@@ -270,6 +271,7 @@ export function computeNext(
   if (piste === 'projet' && ofType(artifacts, 'brief').length === 0 && ofType(artifacts, 'analyse').length === 0) {
     candidates.push(agent('analyste', "Facultatif : explore l'idée avec l'analyste (hypothèses, parties prenantes, risques) avant le brief."));
   }
+  candidates.push(...ameliorationHints(artifacts));
 
   if (candidates.length === 0) {
     candidates.push(agent('guide', 'Rien de bloquant : demande conseil au guide.'));

@@ -6,6 +6,7 @@ import { ORBITH_DIR } from './paths.js';
 import { exists } from './fsutil.js';
 import { readFileSync } from 'node:fs';
 import { packageRoot } from './paths.js';
+import { lireSla, type SlaConfig } from './sla-config.js';
 
 export type Plateforme = 'gemini' | 'claude' | 'copilot';
 /** Plateformes reconnues. `copilot` est facultative : absente des valeurs par défaut. */
@@ -66,6 +67,8 @@ export interface OrbithConfig {
   extraits?: { seuil_jetons: number };
   /** Facultatif : bornes du mode autopilote (`orbith autopilote`). Valeurs vérifiées par la commande. */
   autopilote?: { max_us?: unknown; budget?: unknown };
+  /** Facultatif : objectifs de service (SLA/SLO) comparés aux incidents et bugs de production par `orbith metriques`. */
+  sla?: SlaConfig;
 }
 
 /** Préfixes de chemins considérés comme du code par défaut (contrôle de documentation). */
@@ -170,6 +173,8 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
     }
     cfg.roles = { quatre_yeux: (r.roles as { quatre_yeux?: unknown }).quatre_yeux === true, valideurs };
   }
+  const sla = lireSla((r as { sla?: unknown }).sla);
+  if (sla) cfg.sla = sla;
   if (interdites.length) cfg.sbom = { licences_interdites: interdites };
   if (r.documentation && typeof r.documentation === 'object') {
     const d = r.documentation as { controle?: unknown; code?: unknown };

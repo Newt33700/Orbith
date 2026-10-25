@@ -1,6 +1,6 @@
 import type { OrbithConfig } from '../core/index.js';
 
-export type CheckCategorie = 'csr' | 'validations' | 'tracabilite' | 'secrets' | 'sbom' | 'documentation' | 'agents' | 'provenance';
+export type CheckCategorie = 'csr' | 'validations' | 'tracabilite' | 'secrets' | 'sbom' | 'documentation' | 'agents' | 'provenance' | 'amelioration';
 export type CheckNiveau = 'erreur' | 'avertissement' | 'info';
 
 export interface CheckResult {

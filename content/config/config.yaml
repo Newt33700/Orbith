@@ -73,6 +73,17 @@ plugins: []
 #     taux_echec_pct: 10              # au plus
 #     retablissement_heures: 24       # au plus
 
+# Objectifs de service (SLA/SLO, facultatif) comparés par `npx orbith metriques` aux incidents (INC-NNN)
+# et aux bugs de production : voir le guide Orbith en ligne : https://github.com/Newt33700/Orbith/blob/main/docs/guide/metriques.md.
+# Sans donnée, le résultat est « non mesurable ». Une clé inconnue ou une valeur non numérique est refusée.
+# sla:
+#   disponibilite_pct: 99.5           # au moins (estimée à partir des incidents déclarés)
+#   retablissement_heures:            # au plus, par gravité d'incident (1 critique, 2 majeure, 3 mineure)
+#     1: 4
+#     2: 24
+#     3: 72
+#   correction_bug_prod_jours: 5      # au plus, de la détection à la mise en production du correctif
+
 # Politique de licences (facultatif), contrôlée par `npx orbith check` à partir du SBOM :
 # voir le guide Orbith en ligne : https://github.com/Newt33700/Orbith/blob/main/docs/guide/integrite-sbom.md. S'ajoute à la catégorie « Licences » du CSR.
 # sbom:

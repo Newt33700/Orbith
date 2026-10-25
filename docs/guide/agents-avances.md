@@ -55,6 +55,8 @@ Exemple : `/orbith-test-archi propose une stratégie de test pour le projet`
 questions (ce qui a bien marché, ce qui a coincé), cherche les causes et propose des actions. Le résultat est
 `docs/livraisons/retro-<version>.md` (brouillon). Les métriques servent à améliorer le processus, jamais à
 juger des personnes.
+Chaque action que vous retenez devient une action suivie `docs/amelioration/AMEL-NNN-*.md` (responsable, échéance,
+indicateur de succès) : voir [Amélioration continue et liens de connaissance](amelioration-continue.md).
 
 ## Relecture adverse : une passe critique obligatoire
 

@@ -1,4 +1,5 @@
-import { storyStatus, type Artifact, type DoraCibles } from '../core/index.js';
+import { storyStatus, type Artifact, type DoraCibles, type SlaConfig } from '../core/index.js';
+import { autoEvaluationsFiabilite, calculerReprise, calculerSla, type AutoEvaluationFiabilite, type Reprise, type ResultatSla } from './fiabilite-calc.js';
 import type { Deploiement } from './deploiement.js';
 import { mentions } from './trace-report.js';
 
@@ -110,6 +111,12 @@ export interface Metriques {
     parSource: { estime: { total: number; entrees: number }; mesure: { total: number; entrees: number } };
   };
   us: LigneUS[];
+  /** DORA deployment rework rate (fifth delivery metric, 2024 report); no level. */
+  reprise: Reprise;
+  /** Present only when `sla` is configured. */
+  sla?: ResultatSla;
+  /** Present only when a retrospective carries `fiabilite_auto_evaluation`. */
+  fiabilite?: AutoEvaluationFiabilite[];
 }
 
 const JOUR = 86_400_000;
@@ -208,9 +215,10 @@ export interface OptionsMetriques {
   /** Commits (sujet) de l'historique Git, pour la taille des changements. Absent : non mesurable. */
   commits?: { subject: string }[];
   cibles?: DoraCibles;
+  sla?: SlaConfig;
 }
 
-type Periode = Omit<Metriques, 'precedent' | 'tendances' | 'cibles'>;
+type Periode = Omit<Metriques, 'precedent' | 'tendances' | 'cibles' | 'reprise' | 'sla' | 'fiabilite'>;
 
 function mediane1(xs: number[]): number | null {
   const m = mediane(xs);
@@ -415,5 +423,8 @@ export function calculerMetriques(
     precedent: { debut: prec.periode.debut, fin: prec.periode.fin },
     tendances,
     ...(cibles.length ? { cibles } : {}),
+    reprise: calculerReprise(arts, deploiements, courante.periode.debut, courante.periode.fin),
+    ...(opts.sla ? { sla: calculerSla(arts, opts.sla, courante.periode.debut, courante.periode.fin) } : {}),
+    ...(autoEvaluationsFiabilite(arts).length ? { fiabilite: autoEvaluationsFiabilite(arts) } : {}),
   };
 }
