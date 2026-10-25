@@ -66,7 +66,7 @@ export function parseSource(source: string): ParsedSource {
   return { kind: 'local', path: s };
 }
 
-function git(args: string[], cwd: string): Promise<void> {
+function git(args: string[], cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       'git',
@@ -77,8 +77,8 @@ function git(args: string[], cwd: string): Promise<void> {
         maxBuffer: 16 * 1024 * 1024,
         env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
       },
-      (err, _out, stderr) => {
-        if (!err) return resolve();
+      (err, out, stderr) => {
+        if (!err) return resolve(out);
         if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
           return reject(new OrbithError("git est introuvable : installe Git pour utiliser une source CSR de type git+…"));
         }
@@ -93,14 +93,13 @@ async function fromGit(src: Extract<ParsedSource, { kind: 'git' }>): Promise<str
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'orbith-csr-'));
   try {
     const dest = path.join(tmp, 'repo');
-    // Copie octet pour octet : pas de conversion LF → CRLF par Git sous Windows.
-    const args = ['-c', 'core.autocrlf=false', 'clone', '--depth', '1', '--quiet', '--config', 'core.autocrlf=false'];
+    const args = ['clone', '--depth', '1', '--quiet', '--no-checkout'];
     if (src.ref) args.push('--branch', src.ref);
     args.push('--', src.repo, dest);
     await git(args, tmp);
-    const file = path.join(dest, ...src.file.split('/'));
+    // Lecture du blob tel que versionné : aucune conversion de fins de ligne (autocrlf, .gitattributes).
     try {
-      return await fs.readFile(file, 'utf8');
+      return await git(['show', `HEAD:${src.file}`], dest);
     } catch {
       throw new OrbithError(`Fichier « ${src.file} » introuvable dans le dépôt ${masquer(src.repo)}.`);
     }

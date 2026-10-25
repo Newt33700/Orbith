@@ -77,7 +77,7 @@ export function parseCsr(md: string): CsrEntry[] {
       continue;
     }
     if (!line.trim().startsWith('|')) {
-      if (line.trim() === '') continue;
+      // Toute ligne hors tableau (y compris vide) termine le tableau courant.
       cols = null;
       continue;
     }

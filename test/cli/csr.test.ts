@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { Command } from 'commander';
@@ -51,6 +51,23 @@ describe('orbith csr import', () => {
     expect(e[1]!.commentaire).toBe('LTS | seulement');
     expect(e[2]).toMatchObject({ categorie: 'Frameworks', outil: 'AngularJS', statut: 'interdit' });
     expect(e[3]!.statut).toBe('déprécié');
+  });
+
+  it('sans --sortie : écrit dans csr.fichier de la config', async () => {
+    await mkdir(path.join(dir, '.orbith'));
+    await writeFile(path.join(dir, '.orbith', 'config.yaml'), 'version: 1\norbith_version: 0.1.0\nprojet:\n  nom: demo\ncsr:\n  fichier: docs/CSR.md\n');
+    const wb = new ExcelJS.Workbook();
+    wb.addWorksheet('Langages').addRow(['Outil', 'Statut']);
+    wb.getWorksheet('Langages')!.addRow(['Java', 'Autorisé']);
+    const xlsx = path.join(dir, 'csr.xlsx');
+    await wb.xlsx.writeFile(xlsx);
+
+    const p = new Command();
+    register(p);
+    await p.parseAsync(['node', 'orbith', 'csr', 'import', xlsx, '--cwd', dir]);
+
+    const md = await readFile(path.join(dir, 'docs', 'CSR.md'), 'utf8');
+    expect(parseCsr(md)).toHaveLength(1);
   });
 
   it('fichier introuvable : erreur claire', async () => {

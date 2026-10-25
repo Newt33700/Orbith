@@ -1,4 +1,5 @@
 import type { Adapter } from '../index.js';
+import type { OrbithConfig } from '../../core/index.js';
 import { AGENTS, GEMINI_IGNORE, RULES } from '../agents.js';
 import { upsertBlockFile, writeIfChanged } from '../blocks.js';
 
@@ -13,25 +14,25 @@ export function commandToml(agent: (typeof AGENTS)[number]): string {
   return lines.join('\n');
 }
 
-export function geminiMdBlock(): string {
+export function geminiMdBlock(cfg: OrbithConfig): string {
   return [
     '# Orbith',
     'Ce projet utilise Orbith. Règles permanentes :',
     ...RULES.map((r) => `@.orbith/rules/${r}.md`),
-    'Référentiel technique (CSR) : @.orbith/csr/CSR.md',
+    `Référentiel technique (CSR) : @${cfg.csr.fichier}`,
   ].join('\n');
 }
 
 export const gemini: Adapter = {
   id: 'gemini',
   nom: 'Gemini CLI',
-  async generate(root) {
+  async generate(root, cfg) {
     const written: string[] = [];
     for (const agent of AGENTS) {
       const name = agent.gemini.split(':')[1] as string;
       written.push(await writeIfChanged(root, `.gemini/commands/orbith/${name}.toml`, commandToml(agent)));
     }
-    written.push(await upsertBlockFile(root, 'GEMINI.md', '<!-- orbith:debut -->', '<!-- orbith:fin -->', geminiMdBlock()));
+    written.push(await upsertBlockFile(root, 'GEMINI.md', '<!-- orbith:debut -->', '<!-- orbith:fin -->', geminiMdBlock(cfg)));
     written.push(
       await upsertBlockFile(
         root,

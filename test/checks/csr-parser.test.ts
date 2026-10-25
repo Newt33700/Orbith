@@ -20,6 +20,14 @@ describe('parseCsr', () => {
     expect(e[2]!.statut).toBe('interdit');
   });
 
+  it('une ligne vide sépare deux tableaux sous le même titre', () => {
+    const md = '## Outils\n| Outil | Statut |\n|---|---|\n| Node | Obligatoire |\n\n| Statut | Outil |\n|---|---|\n| Interdit | Python |';
+    const e = parseCsr(md);
+    expect(e).toContainEqual(expect.objectContaining({ outil: 'Python', statut: 'interdit' }));
+    expect(e.map((x) => x.outil)).not.toContain('Statut');
+    expect(e.map((x) => x.outil)).not.toContain('Interdit');
+  });
+
   it('gère les pipes échappés et un document sans tableau', () => {
     expect(parseCsr('# Rien')).toEqual([]);
     const e = parseCsr('## A\n| Outil | Commentaire |\n|---|---|\n| x | a \\| b |');

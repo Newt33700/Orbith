@@ -38,7 +38,8 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function mentions(text: string, id: string): boolean {
+/** Mention exacte d'un identifiant : US-1 ne correspond pas à US-12. */
+export function mentions(text: string, id: string): boolean {
   return new RegExp(`(?<![A-Za-z0-9-])${escapeRe(id)}(?![A-Za-z0-9-])`).test(text);
 }
 
@@ -67,7 +68,7 @@ export async function findTests(root: string, ids: string[]): Promise<Map<string
     const rel = path.relative(root, f).split(path.sep).join('/');
     const test = looksLikeTest(rel);
     for (const id of ids) {
-      if (content.includes('@' + id) || (test && mentions(content, id))) result.get(id)!.push(rel);
+      if (mentions(content, '@' + id) || (test && mentions(content, id))) result.get(id)!.push(rel);
     }
   }
   return result;
@@ -77,7 +78,7 @@ export async function buildTraces(root: string, arts: Artifact[]): Promise<Story
   const stories = arts.filter((a) => a.type === 'story');
   const ids = stories.map((s) => s.id).filter((i): i is string => !!i);
   const tests = await findTests(root, ids);
-  const commits = (await isGitRepo(root)) ? await gitLog(root, 500) : [];
+  const commits = (await isGitRepo(root)) ? await gitLog(root, 100_000) : [];
   const notes = arts.filter((a) => a.type === 'release-notes');
   return stories.map((s) => {
     const id = s.id ?? s.chemin;

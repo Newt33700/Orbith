@@ -89,6 +89,16 @@ describe('syncCsr', () => {
     expect((await readdir(os.tmpdir())).filter((n) => n.startsWith('orbith-csr-'))).toHaveLength(0);
   });
 
+  it('dépôt git avec .gitattributes eol=crlf : fichier local identique au blob (LF)', async () => {
+    const url = await initRepo();
+    await writeFile(path.join(repo, '.gitattributes'), '* text eol=crlf\n');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'attributs');
+    const r = await syncCsr(root, cfg(`git+${url}#csr/CSR.md`));
+    expect(r.change).toBe(true);
+    expect(await local()).toBe(CSR);
+  });
+
   it('dépôt git avec @ref', async () => {
     const url = await initRepo();
     git('tag', 'v1');

@@ -1,4 +1,4 @@
-import { promises as fs } from 'node:fs';
+import { promises as fs, constants as fsConstants } from 'node:fs';
 import path from 'node:path';
 import { readDoc } from './frontmatter.js';
 import { toPosixRelative } from './paths.js';
@@ -112,7 +112,7 @@ export async function scanAll(root: string): Promise<ScanResult> {
       } catch (e) {
         const msg = e instanceof Error ? e.message.split(/\r?\n/)[0] ?? '' : String(e);
         // Fichier illisible (droits…) : ignoré ; YAML invalide : signalé.
-        const lisible = await fs.access(file).then(() => true, () => false);
+        const lisible = await fs.access(file, fsConstants.R_OK).then(() => true, () => false);
         if (lisible) problems.push({ chemin: toPosixRelative(root, file), message: msg });
         continue;
       }

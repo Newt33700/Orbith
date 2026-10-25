@@ -76,9 +76,9 @@ export function register(program: Command): void {
   csr
     .command('import <fichier>')
     .description('Importe un classeur Excel en CSR.md')
-    .option('--sortie <fichier>', 'fichier de sortie', '.orbith/csr/CSR.md')
+    .option('--sortie <fichier>', 'fichier de sortie (défaut : csr.fichier de la config, sinon .orbith/csr/CSR.md)')
     .option('--cwd <dir>', 'dossier de travail')
-    .action(async (fichier: string, opts: { sortie: string; cwd?: string }) => {
+    .action(async (fichier: string, opts: { sortie?: string; cwd?: string }) => {
       const cwd = path.resolve(opts.cwd ?? process.cwd());
       const root = (await findProjectRoot(cwd)) ?? cwd;
       const src = path.resolve(cwd, fichier);
@@ -89,7 +89,8 @@ export function register(program: Command): void {
       }
       const { markdown, outils, feuilles } = await convertWorkbook(src, path.basename(src));
       if (feuilles === 0) throw new OrbithError('Aucune feuille exploitable : une colonne « Outil » est requise.');
-      const out = path.resolve(root, opts.sortie);
+      const sortie = opts.sortie ?? (await loadConfig(root).then((c) => c.csr.fichier, () => '.orbith/csr/CSR.md'));
+      const out = path.resolve(root, sortie);
       await fs.mkdir(path.dirname(out), { recursive: true });
       await fs.writeFile(out, markdown, 'utf8');
       ui.ok(`${outils} outil(s) importé(s) depuis ${feuilles} feuille(s) vers ${path.relative(root, out) || out}`);

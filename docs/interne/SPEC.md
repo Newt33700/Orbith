@@ -176,7 +176,7 @@ Exit code 0 = OK, 1 = problem found / error. Colored output with `picocolors`, i
 `@clack/prompts`. Every command supports `--cwd <dir>`. Non-interactive mode for CI/tests: `--yes`.
 
 ### 4.1 `orbith install [--plateformes gemini,claude] [--piste evolution] [--nom <nom>] [--yes]`
-1. Detect if target dir is empty / has no git → "nouveau projet" (also copy `content/projet/*` skeleton,
+1. Detect if target dir is empty (ignoring `.git`) → "nouveau projet" (also copy `content/projet/*` skeleton,
    run `git init` if no `.git`) else "projet existant" (never overwrite existing user files; skip with a warning).
 2. Copy `content/{agents,workflows,templates,rules}` → `.orbith/`, `content/config/{dor,dod}.md` → `.orbith/config/`,
    `content/csr/CSR.exemple.md` → `.orbith/csr/CSR.md`, write `.orbith/config.yaml`, create `.orbith/custom/`,
@@ -236,7 +236,7 @@ Builds a markdown traceability matrix: per story → title, statut, board status
 (hash + subject), tests referencing it (files containing `@ID` or `ID`), release notes mentioning it.
 With ID: detail for one story. Prints to stdout or writes file.
 
-### 4.7 `orbith csr import <fichier.xlsx> [--sortie .orbith/csr/CSR.md]`
+### 4.7 `orbith csr import <fichier.xlsx> [--sortie <fichier>]` (default: `csr.fichier` from config)
 Reads an Excel workbook with exceljs. Each sheet → a `## <sheet name>` section and a markdown table.
 Expected columns (case/accents-insensitive matching): Outil, Version min, Statut, Commentaire (extra columns kept).
 Writes CSR.md with a header (source file, date). Prints how many tools imported.

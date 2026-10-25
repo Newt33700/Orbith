@@ -184,7 +184,8 @@ export async function runInstall(opts: InstallOptions): Promise<void> {
 
   const hasGit = await exists(path.join(root, '.git'));
   const entries = (await fs.readdir(root)).filter((e) => e !== '.git');
-  const nouveau = !installed && (!hasGit || entries.length === 0);
+  // Nouveau projet : dossier vide uniquement (un projet existant hors Git n'est pas réinitialisé).
+  const nouveau = !installed && entries.length === 0;
 
   ui.titre(nouveau ? `Installation d'Orbith : nouveau projet « ${nom} »` : `Installation d'Orbith : projet « ${nom} »`);
   if (installed) ui.info('Orbith est déjà installé ici : tes fichiers sont conservés (utilise `npx orbith update` pour mettre à jour les agents).');

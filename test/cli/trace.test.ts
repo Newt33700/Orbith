@@ -3,6 +3,8 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runValider } from '../../src/cli/valider.js';
 import { runTrace } from '../../src/cli/trace.js';
+import { buildTraces } from '../../src/cli/trace-report.js';
+import { scanArtifacts } from '../../src/core/index.js';
 import { GHERKIN, commit, makeProject, put } from './helpers.js';
 
 const roots: string[] = [];
@@ -41,6 +43,16 @@ describe('orbith trace', () => {
     expect(out).toContain('release-notes-1.0.md');
     expect(out).toMatch(/\| US-002 \| Profil \| brouillon \| À faire \| — \| — \| — \| — \|/);
     expect(await readFile(path.join(root, 'out/trace.md'), 'utf8')).toBe(out);
+  });
+  it('US-1 ne matche pas un test tagué @US-12', async () => {
+    const root = await makeProject('evolution', true);
+    roots.push(root);
+    await put(root, 'backlog/tasks/us-1 - Court.md', '---\ntype: story\nid: US-1\ntitle: Court\nstatut: brouillon\nstatus: À faire\n---\n# Court\n');
+    await put(root, 'backlog/tasks/us-12 - Long.md', '---\ntype: story\nid: US-12\ntitle: Long\nstatut: brouillon\nstatus: À faire\n---\n# Long\n');
+    await put(root, 'tests/x.feature', '@US-12\nFonctionnalité: x\n');
+    const traces = await buildTraces(root, await scanArtifacts(root));
+    expect(traces.find((t) => t.id === 'US-1')!.tests).toEqual([]);
+    expect(traces.find((t) => t.id === 'US-12')!.tests).toEqual(['tests/x.feature']);
   });
   it('détail pour un ID et erreur si inconnu', async () => {
     const root = await fixture();

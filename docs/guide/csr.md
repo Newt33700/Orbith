@@ -65,10 +65,10 @@ Les équipes architecture tiennent souvent leur référentiel dans un classeur E
 npx orbith csr import fichier.xlsx
 ```
 
-Par défaut, le résultat est écrit dans `.orbith/csr/CSR.md`. Pour un autre emplacement :
+Par défaut, le résultat est écrit dans le fichier CSR du projet (réglage `csr.fichier` de `.orbith/config.yaml`, par défaut `.orbith/csr/CSR.md`). Pour un autre emplacement :
 
 ```bash
-npx orbith csr import fichier.xlsx --sortie .orbith/csr/CSR.md
+npx orbith csr import fichier.xlsx --sortie docs/autre-CSR.md
 ```
 
 ### Préparer le fichier Excel

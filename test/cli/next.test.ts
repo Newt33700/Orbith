@@ -96,6 +96,12 @@ describe('computeNext', () => {
     const notes = art('release-notes', { body: 'Livré : US-001' });
     expect(computeNext([s, notes], cfg('evolution')).principal.kind).toBe('fini');
   });
+  it('tout Terminée, notes qui ne couvrent que US-12 -> pas fini, sm', () => {
+    const a = [story('US-1', 'Terminée'), story('US-12', 'Terminée'), art('release-notes', { body: 'Livré : US-12' })];
+    const r = computeNext(a, cfg('evolution')).principal;
+    expect(r.kind).not.toBe('fini');
+    expect(r.claude).toBe('/orbith-sm');
+  });
   it('problèmes en premier', () => {
     const r = computeNext([story('US-001', 'Prête', { etat: 'modifié' })], cfg('evolution'));
     expect(r.principal.kind).toBe('probleme');

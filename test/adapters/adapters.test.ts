@@ -2,7 +2,9 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
 import { adapters, AGENTS, runAdapters } from '../../src/adapters/index.js';
+import { commandMd } from '../../src/adapters/claude/index.js';
 import { upsertBlock } from '../../src/adapters/blocks.js';
 import { defaultConfig, exists } from '../../src/core/index.js';
 
@@ -47,6 +49,22 @@ describe('adaptateur claude', () => {
     const settings = JSON.parse(await read('.claude/settings.json'));
     expect(settings.permissions.deny).toContain('Read(./.env)');
     expect(AGENTS).toHaveLength(8);
+  });
+
+  it('frontmatter des commandes md est du YAML valide', () => {
+    for (const agent of AGENTS) {
+      const lines = commandMd(agent).split('\n');
+      const fm = parse(lines.slice(1, lines.indexOf('---', 1)).join('\n'));
+      expect(fm.description, agent.key).toBe(agent.description);
+      expect(fm['argument-hint'], agent.key).toBe('[ta demande]');
+    }
+  });
+
+  it('CLAUDE.md référence le CSR configuré', async () => {
+    const cfg = defaultConfig('x');
+    cfg.csr.fichier = 'docs/CSR.md';
+    await runAdapters(root, cfg);
+    expect(await read('CLAUDE.md')).toContain('@docs/CSR.md');
   });
 
   it('préserve le contenu utilisateur et est idempotent', async () => {

@@ -7,7 +7,8 @@ import { exists, OrbithError } from '../../core/index.js';
 import { geminiMdBlock } from '../gemini/index.js';
 
 export function commandMd(agent: (typeof AGENTS)[number]): string {
-  const lines = ['---', `description: ${agent.description}`, 'argument-hint: [ta demande]', '---'];
+  // Valeurs entre guillemets : les descriptions contiennent « : » (typographie française).
+  const lines = ['---', `description: ${JSON.stringify(agent.description)}`, 'argument-hint: "[ta demande]"', '---'];
   if (agent.key === 'guide') {
     lines.push('Commence par exécuter `npx orbith next` pour connaître l\'état du projet et la prochaine action.', '');
   }
@@ -30,12 +31,12 @@ export function mergeSettings(settings: Record<string, unknown>): Record<string,
 export const claude: Adapter = {
   id: 'claude',
   nom: 'Claude Code',
-  async generate(root) {
+  async generate(root, cfg) {
     const written: string[] = [];
     for (const agent of AGENTS) {
       written.push(await writeIfChanged(root, `.claude/commands/${agent.claude}.md`, commandMd(agent)));
     }
-    written.push(await upsertBlockFile(root, 'CLAUDE.md', '<!-- orbith:debut -->', '<!-- orbith:fin -->', geminiMdBlock()));
+    written.push(await upsertBlockFile(root, 'CLAUDE.md', '<!-- orbith:debut -->', '<!-- orbith:fin -->', geminiMdBlock(cfg)));
 
     const rel = '.claude/settings.json';
     const file = path.join(root, rel);

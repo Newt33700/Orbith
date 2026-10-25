@@ -66,6 +66,14 @@ describe('orbith install', () => {
     expect(await Promise.all(files.map(read))).toEqual(before);
   });
 
+  it('projet existant hors Git : pas de git init ni de squelette', async () => {
+    await writeFile(path.join(root, 'package.json'), '{"name":"x"}\n');
+    await runInstall({ cwd: root, yes: true });
+    expect(await has('.git')).toBe(false);
+    expect(await has('src')).toBe(false);
+    expect(await has('tests')).toBe(false);
+  });
+
   it('préserve les fichiers d\'un projet existant', async () => {
     await mkdir(path.join(root, '.git'));
     await mkdir(path.join(root, '.claude'));

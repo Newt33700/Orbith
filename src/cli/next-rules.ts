@@ -1,4 +1,5 @@
 import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
+import { mentions } from './trace-report.js';
 import { hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
 
 export interface Action {
@@ -117,7 +118,7 @@ function storyActions(arts: Artifact[]): Action[] {
   if (stories.length > 0 && open.length === 0) {
     const notes = ofType(arts, 'release-notes');
     const ids = stories.map((s) => s.id).filter((i): i is string => !!i);
-    const covered = notes.some((n) => ids.every((id) => n.body.includes(id)));
+    const covered = notes.some((n) => ids.every((id) => mentions(n.body, id)));
     if (covered) {
       actions.push({ kind: 'fini', message: 'Tout est livré 🎉 Bravo !' });
     } else {
@@ -134,7 +135,7 @@ function archiHints(arts: Artifact[]): Action[] {
     const labels = s.data['labels'];
     if (!Array.isArray(labels) || !labels.includes('impact-archi')) continue;
     const id = s.id;
-    if (id && adrs.some((a) => a.body.includes(id) || JSON.stringify(a.data).includes(id))) continue;
+    if (id && adrs.some((a) => mentions(a.body, id) || mentions(JSON.stringify(a.data), id))) continue;
     out.push(agent('architecte', `${label(s)} a un impact d'architecture : pense à un ADR.`));
   }
   return out;
