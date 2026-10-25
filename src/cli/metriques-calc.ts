@@ -102,7 +102,13 @@ export interface Metriques {
     avertissement: string | null;
   };
   retablissement: { medianeHeures: number | null; incidents: number; niveau: Niveau | null };
-  couts: { total: number; parAgent: Record<string, number>; estimations: number };
+  couts: {
+    total: number;
+    parAgent: Record<string, number>;
+    estimations: number;
+    /** Répartition selon `source` : `mesuré` (compteurs réels importés) ou `estimé` (défaut, auto-estimation). */
+    parSource: { estime: { total: number; entrees: number }; mesure: { total: number; entrees: number } };
+  };
   us: LigneUS[];
 }
 
@@ -136,13 +142,22 @@ export function estBug(a: Artifact): boolean {
   return Array.isArray(labels) && labels.some((l) => String(l).toLowerCase() === 'bug');
 }
 
-/** Somme des coûts IA estimés d'une US (`couts_ia`), et répartition par agent. */
-export function coutsIa(a: Artifact): { total: number; parAgent: Record<string, number>; n: number } {
+/** `source: mesuré` (compteurs réels importés) ; toute autre valeur, ou son absence, vaut estimation. */
+export function estMesure(e: unknown): boolean {
+  if (!e || typeof e !== 'object') return false;
+  const s = (e as Record<string, unknown>)['source'];
+  return typeof s === 'string' && s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() === 'mesure';
+}
+
+/** Somme des coûts IA d'une US (`couts_ia`), répartition par agent et part mesurée. */
+export function coutsIa(a: Artifact): { total: number; parAgent: Record<string, number>; n: number; mesure: number; nMesure: number } {
   const list = a.data['couts_ia'];
   const parAgent: Record<string, number> = {};
   let total = 0;
   let n = 0;
-  if (!Array.isArray(list)) return { total, parAgent, n };
+  let mesure = 0;
+  let nMesure = 0;
+  if (!Array.isArray(list)) return { total, parAgent, n, mesure, nMesure };
   for (const e of list) {
     if (!e || typeof e !== 'object') continue;
     const cout = Number((e as Record<string, unknown>)['cout']);
@@ -151,8 +166,12 @@ export function coutsIa(a: Artifact): { total: number; parAgent: Record<string, 
     parAgent[agent] = (parAgent[agent] ?? 0) + cout;
     total += cout;
     n++;
+    if (estMesure(e)) {
+      mesure += cout;
+      nMesure++;
+    }
   }
-  return { total, parAgent, n };
+  return { total, parAgent, n, mesure, nMesure };
 }
 
 // Seuils inspirés des rapports DORA (State of DevOps).
@@ -291,10 +310,14 @@ function calculerPeriode(
   const parAgent: Record<string, number> = {};
   let total = 0;
   let estimations = 0;
+  let mesure = 0;
+  let nMesure = 0;
   for (const s of stories) {
     const c = coutsIa(s);
     total += c.total;
     estimations += c.n;
+    mesure += c.mesure;
+    nMesure += c.nMesure;
     for (const [k, v] of Object.entries(c.parAgent)) parAgent[k] = arrondi((parAgent[k] ?? 0) + v, 2);
   }
 
@@ -318,7 +341,15 @@ function calculerPeriode(
       incidents: retab.length,
       niveau: retabMed != null ? niveauRetablissement(retabMed) : null,
     },
-    couts: { total: arrondi(total, 2), parAgent, estimations },
+    couts: {
+      total: arrondi(total, 2),
+      parAgent,
+      estimations,
+      parSource: {
+        estime: { total: arrondi(total - mesure, 2), entrees: estimations - nMesure },
+        mesure: { total: arrondi(mesure, 2), entrees: nMesure },
+      },
+    },
     us: lignes,
   };
 }

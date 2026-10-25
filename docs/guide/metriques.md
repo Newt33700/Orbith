@@ -144,6 +144,28 @@ couts_ia:
 - ce ne sont **pas une facture**. La facture de votre fournisseur d'IA fait foi ;
 - `source: estimé` indique qu'il s'agit d'une estimation.
 
+### Coûts mesurés (Claude Code)
+
+Avec Claude Code, vous pouvez aussi importer les **compteurs de jetons réels** enregistrés sur votre poste :
+`npx orbith couts importer --us US-012`. Les entrées importées s'ajoutent à la fin de `couts_ia` avec
+`source: mesuré`, sans toucher aux estimations existantes. Le détail (options, calcul du cache, confidentialité,
+limites, Gemini CLI non pris en charge) est dans [provenance-couts.md](provenance-couts.md).
+
+Dès qu'une entrée mesurée existe, `npx orbith metriques` sépare les deux sources :
+
+```markdown
+## Coûts IA (estimations des agents et compteurs mesurés)
+
+Total : 4,12 EUR sur 9 entrée(s). Ce sont des ordres de grandeur, pas une facture.
+
+- estimé (auto-estimation des agents) : 3,31 EUR sur 7 entrée(s)
+- mesuré (compteurs réels importés, `orbith couts importer`) : 0,81 EUR sur 2 entrée(s)
+```
+
+En JSON, la répartition est dans `couts.parSource.estime` et `couts.parSource.mesure` (`total`, `entrees`) ; en CSV,
+dans les lignes de famille `couts`. Une entrée sans `source`, ou avec une autre valeur que `mesuré`, compte comme
+une estimation.
+
 ### Régler les prix
 
 Les coûts se calculent avec les prix de `.orbith/config.yaml`, par million de jetons (entrée et sortie) :

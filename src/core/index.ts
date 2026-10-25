@@ -12,3 +12,4 @@ export * from './changes.js';
 export * from './csr-source.js';
 export * from './fsutil.js';
 export * from './ui.js';
+export * from './provenance.js';

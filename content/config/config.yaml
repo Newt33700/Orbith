@@ -42,6 +42,8 @@ finops:
   devise: EUR
   # Prix par million de jetons (entrée / sortie). EXEMPLES INDICATIFS : à faire remplacer par vos tarifs réels (équipe FinOps).
   # Chaque agent utilise la clé de sa famille de modèle, sinon `defaut`.
+  # Facultatif : `cache_lecture` et `cache_ecriture` (prix des jetons du cache) pour `npx orbith couts importer` ;
+  # par défaut 0,1 × entree en lecture, 1,25 × entree (5 min) ou 2 × entree (1 h) en écriture.
   prix:
     defaut: { entree: 3, sortie: 15 }
     claude-sonnet: { entree: 3, sortie: 15 }

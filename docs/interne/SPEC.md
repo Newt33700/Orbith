@@ -686,3 +686,54 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   (`docs/**`, `README*`, `CHANGELOG*`, any `*.md|*.mdx|*.adoc|*.rst`, excluding `backlog/**` and `.orbith/**` except
   `.orbith/contexte-projet.md`) is reported. Skipped when the story frontmatter has `documentation: non-concernée`
   (accent/case-insensitive; also `aucune`), when `documentation.controle: false`, or outside a git repository.
+
+## 15. AI provenance and measured AI costs (optional, backward compatible)
+
+- **`orbith couts importer [--source claude|gemini] [--chemin <file|dir>] [--us US-NNN] [--agent <nom>] [--session <id>] [--depuis AAAA-MM-JJ]`**
+  (`src/cli/couts.ts`, parser `src/cli/couts-import.ts`). Reads real token counters left locally by Claude Code.
+  - **Format (verified on real local files, envelope undocumented by Anthropic)**: JSONL transcripts under
+    `~/.claude/projects/<abs project path with every non-alphanumeric char replaced by "-">/<sessionId>.jsonl`, plus
+    `<sessionId>/subagents/agent-*.jsonl`. `CLAUDE_CONFIG_DIR` replaces `~/.claude`. Only lines with
+    `type: "assistant"` and `message.usage` are used; fields read: `sessionId`, `timestamp`, `requestId`, `uuid`,
+    `message.id`, `message.model`, `message.usage.{input_tokens, output_tokens, cache_creation_input_tokens,
+    cache_read_input_tokens, cache_creation.ephemeral_5m_input_tokens, cache_creation.ephemeral_1h_input_tokens}`
+    (the `usage` object is the documented Messages API object). One response is written once per content block with
+    the same `message.id` and identical `usage`: deduplicated by `message.id` (fallback `requestId`, `uuid`), also
+    across files. Model `<synthetic>` and unparsable lines are skipped. Message content is never read.
+  - Aggregated per (session, model) into one `couts_ia` entry appended at the end of the story frontmatter
+    (`writeDoc`; body untouched, so the validation hash is unchanged; existing entries never modified):
+    `date, agent, outil: claude-code, modele, tache, tokens_entree (non-cached input), tokens_cache_ecriture,
+    tokens_cache_lecture, tokens_sortie, cout, devise, source: mesuré, session, du, au` (`du`/`au` = ISO timestamps of
+    first/last counted call). Re-import only counts calls with `timestamp > max(au)` of the same session across all
+    stories (`bornesImportees`).
+  - Price (`prixPour`): exact `finops.prix` key, else the longest key the model name starts with, else `defaut`, else
+    error. Cost = (input×entree + output×sortie + cacheRead×(cache_lecture ?? 0.1×entree) + write5m×(cache_ecriture ??
+    1.25×entree) + write1h×(cache_ecriture ?? 2×entree)) / 1e6, rounded to 2 decimals. `cache_lecture` /
+    `cache_ecriture` are optional extra keys of a price entry (read from the raw config object; `OrbithConfig` type
+    unchanged).
+  - Without `--us`: preview only, nothing written. Measured totals are a lower bound (Claude Code does not log every
+    request in the transcript).
+  - `--source gemini` → `OrbithError` (not implemented: Gemini CLI documents telemetry attribute names but not the
+    exact local outfile structure; session-file format not confirmed). Unknown source → error.
+- **`orbith metriques`**: `couts.parSource = { estime: {total, entrees}, mesure: {total, entrees} }` (`estMesure`:
+  `source` equal to `mesuré`, accent/case-insensitive; anything else = estimate). Text output adds the split when a
+  measured entry exists; CSV adds two `couts` rows.
+- **Provenance** (`src/core/provenance.ts`): a commit is AI co-authored when a `Co-Authored-By:` trailer names an AI
+  (`coAuteurIa`: names Claude alone or followed by Code/Opus/Sonnet/Haiku/digit, Anthropic, Gemini, Copilot, Codex,
+  ChatGPT, OpenAI, GPT-n, CodeWhisperer, Codestral, Windsurf, Tabnine; e-mails `@anthropic.com`, `@openai.com`; GitHub
+  bot noreply addresses of those tools). Model = trailer name when it contains a digit. Linked stories = ids in the
+  message without trailers; documents = changed `.md` under `docs/produit|architecture|livraisons/`, `backlog/tasks/`;
+  `relu_par` = names (no e-mail) from non-AI `Reviewed-by:` trailers. Git read: `log --reverse --name-only` with full body.
+- **Registry `.orbith/provenance.json`**: `{ version: 1, commits: [{ commit, date, ia[], modele?, us[], documents[],
+  relu_par[], precedent }] }`, append-only, chained with `src/core/chaine.ts` (same rules as validations.json; broken
+  chain → refuse to write). Written only by `orbith provenance --enregistrer`. Reports use registry ∪ live git log
+  (by hash), so squashed/rebased history keeps its trace. No e-mails, diffs or conversation content are stored.
+- **`orbith provenance [--format texte|json] [--enregistrer]`** (`src/cli/provenance.ts`): one row per story/document
+  linked to AI commits: commits, models, human validation (validations registry entry when state is `validé`),
+  human code review (`revue_par` / `revue_le` frontmatter or `Reviewed-by:` on a linked commit), `revueQa` (a
+  « Revue QA » heading: reported, not counted as human review). JSON shape `RapportProvenance`.
+- **`orbith check`** category `provenance` (`src/checks/provenance.ts`): avertissement for a story in column
+  `Terminée` with AI co-authored commits, no traced human validation (state ≠ `validé`) and no human review mention;
+  erreur when `.orbith/provenance.json` chain is broken.
+- **`orbith audit`**: optional `AuditData.provenance`; HTML section `#provenance` « Provenance IA » after the
+  traceability matrix; flagged rows use class `pb`. Guide: `docs/guide/provenance-couts.md`.
