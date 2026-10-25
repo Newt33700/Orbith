@@ -266,7 +266,10 @@ DORA metrics over the period, production deployments only:
 - deployment frequency (per week); lead time = median(`mis_en_prod_le` − `debut_dev_le` or first commit) of
   non-bug stories deployed in the period;
 - change failure rate = production deployments containing a story named in the `cause` of a bug
-  (`labels: [bug]`, `origine: production`) / production deployments;
+  (`labels: [bug]`, `origine: production`) / production deployments.
+  With ≥1 production deployment and no declared production bug, the value stays 0 % (level and target still computed)
+  but is flagged: text report appends « : aucun bug déclaré : à vérifier », and JSON
+  `tauxEchec.avertissement` carries that string (`null` otherwise);
 - time to restore = median(bug `mis_en_prod_le` − `detecte_le`), in hours.
 Also « attente » = median(`mis_en_prod_le` − `termine_le`). Levels (élite/élevé/moyen/faible) use DORA-report thresholds. Also a per-story table (created_date,
 updated_date, début dev, mise en prod, lead time, AI cost) and AI costs: sum of `couts_ia[].cout`, per agent.

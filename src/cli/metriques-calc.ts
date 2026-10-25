@@ -94,13 +94,22 @@ export interface Metriques {
   tendances: Tendance[];
   /** Présent seulement si `dora.cibles` est renseigné dans la configuration. */
   cibles?: CibleMesuree[];
-  tauxEchec: { pourcentage: number | null; deploiementsEnEchec: number; niveau: Niveau | null };
+  tauxEchec: {
+    pourcentage: number | null;
+    deploiementsEnEchec: number;
+    niveau: Niveau | null;
+    /** Renseigné quand le 0 % n'est pas une mesure : des déploiements existent mais aucun bug n'est déclaré. */
+    avertissement: string | null;
+  };
   retablissement: { medianeHeures: number | null; incidents: number; niveau: Niveau | null };
   couts: { total: number; parAgent: Record<string, number>; estimations: number };
   us: LigneUS[];
 }
 
 const JOUR = 86_400_000;
+
+/** Mention affichée (texte et JSON) quand le taux d'échec vaut 0 % faute de bug déclaré. */
+export const AVERTISSEMENT_AUCUN_BUG = 'aucun bug déclaré : à vérifier';
 
 function dateStr(v: unknown): string | undefined {
   if (v == null || v === '') return undefined;
@@ -298,7 +307,12 @@ function calculerPeriode(
     attente: { medianeJours: attenteMed != null ? arrondi(attenteMed) : null, us: attentes.length },
     decoupageAttente,
     taille,
-    tauxEchec: { pourcentage: pct, deploiementsEnEchec: enEchec, niveau: pct != null ? niveauEchec(pct) : null },
+    tauxEchec: {
+      pourcentage: pct,
+      deploiementsEnEchec: enEchec,
+      niveau: pct != null ? niveauEchec(pct) : null,
+      avertissement: prod.length > 0 && bugsProd.length === 0 ? AVERTISSEMENT_AUCUN_BUG : null,
+    },
     retablissement: {
       medianeHeures: retabMed != null ? arrondi(retabMed) : null,
       incidents: retab.length,

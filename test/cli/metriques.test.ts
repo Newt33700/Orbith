@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runValider } from '../../src/cli/valider.js';
 import { dateTerminee, loadDeploiements, runDeploiement } from '../../src/cli/deploiement.js';
-import { runMetriques } from '../../src/cli/metriques.js';
+import { renderMetriques, runMetriques } from '../../src/cli/metriques.js';
 import { calculerMetriques } from '../../src/cli/metriques-calc.js';
 import { readDoc, scanArtifacts, type Artifact } from '../../src/core/index.js';
 import { GHERKIN, commit, makeProject, put } from './helpers.js';
@@ -268,5 +268,24 @@ describe('orbith metriques : csv, cibles, rappel', () => {
     await expect(runMetriques({ cwd: root })).rejects.toThrow(/delai_jours/);
     await writeFile(cfg, orig + 'dora:\n  cibles:\n    vitesse: 3\n');
     await expect(runMetriques({ cwd: root })).rejects.toThrow(/inconnue/);
+  });
+});
+
+describe('taux d\'échec sans bug déclaré', () => {
+  const dep = { version: '1', env: 'production', date: '2026-10-10', par: 'x', email: 'x', us: ['US-1'] };
+  const opts = { jours: 30, aujourdhui: '2026-10-25', devise: 'EUR' };
+
+  it('garde 0 % mais le signale', () => {
+    const m = calculerMetriques([story('US-1', {})], [dep], new Map(), opts);
+    expect(m.tauxEchec).toMatchObject({ pourcentage: 0, deploiementsEnEchec: 0, niveau: 'élite', avertissement: 'aucun bug déclaré : à vérifier' });
+    expect(renderMetriques(m, 'p')).toContain('0 % (0 déploiement(s) suivi(s) d\'un bug de production) (niveau DORA : élite) : aucun bug déclaré : à vérifier');
+  });
+
+  it('pas d\'avertissement avec un bug déclaré, ni sans déploiement', () => {
+    const bug = story('BUG-1', { labels: ['bug'], origine: 'production', cause: 'US-9' });
+    expect(calculerMetriques([story('US-1', {}), bug], [dep], new Map(), opts).tauxEchec.avertissement).toBeNull();
+    const vide = calculerMetriques([story('US-1', {})], [], new Map(), opts);
+    expect(vide.tauxEchec).toMatchObject({ pourcentage: null, avertissement: null });
+    expect(renderMetriques(vide, 'p')).not.toContain('à vérifier');
   });
 });

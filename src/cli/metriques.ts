@@ -95,7 +95,7 @@ export function renderMetriques(m: Metriques, projet: string): string {
   L.push(`| Fréquence de déploiement | ${m.frequence.deploiements} mise(s) en production, ${fr(m.frequence.parSemaine)} par semaine${niv(m.frequence.niveau)} |`);
   L.push(`| Délai de mise en production (médiane) | ${val(m.leadTime.medianeJours, 'jour(s)')}${m.leadTime.us ? ` sur ${m.leadTime.us} US` : ''}${niv(m.leadTime.niveau)} |`);
   L.push(`| Attente avant mise en production (médiane) | ${val(m.attente.medianeJours, 'jour(s)')}${m.attente.us ? ` sur ${m.attente.us} US` : ''} |`);
-  L.push(`| Taux d'échec des changements | ${m.tauxEchec.pourcentage == null ? 'pas encore de données' : `${fr(m.tauxEchec.pourcentage)} % (${m.tauxEchec.deploiementsEnEchec} déploiement(s) suivi(s) d'un bug de production)`}${niv(m.tauxEchec.niveau)} |`);
+  L.push(`| Taux d'échec des changements | ${m.tauxEchec.pourcentage == null ? 'pas encore de données' : `${fr(m.tauxEchec.pourcentage)} % (${m.tauxEchec.deploiementsEnEchec} déploiement(s) suivi(s) d'un bug de production)`}${niv(m.tauxEchec.niveau)}${m.tauxEchec.avertissement ? ` : ${m.tauxEchec.avertissement}` : ''} |`);
   L.push(`| Temps de rétablissement (médiane) | ${val(m.retablissement.medianeHeures, 'heure(s)')}${m.retablissement.incidents ? ` sur ${m.retablissement.incidents} incident(s)` : ''}${niv(m.retablissement.niveau)} |`);
   L.push('');
   if (m.cibles?.length) {

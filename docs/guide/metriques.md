@@ -280,8 +280,10 @@ point-virgule et virgule décimale, pour s'ouvrir directement dans un tableur fr
 
 ## Ce qu'il faut savoir
 
-- **Un chiffre manquant n'est pas un zéro.** Si aucun déploiement n'est enregistré, la fréquence est vide. Si aucun bug
-  n'est déclaré, le taux d'échec n'est pas « 0 % » : il faut déclarer les bugs pour que la mesure soit fiable.
+- **Un chiffre manquant n'est pas un zéro.** Si aucun déploiement n'est enregistré, la fréquence est vide. Si des
+  déploiements existent mais qu'aucun bug n'est déclaré (`labels: [bug]`, `origine: production`), le rapport affiche
+  « 0 % » suivi de la mention « aucun bug déclaré : à vérifier » (champ `tauxEchec.avertissement` du JSON). Ce 0 % n'est
+  pas une mesure : déclarez les bugs de production pour que le taux soit fiable.
 - **Les métriques mesurent l'équipe, pas les personnes.** Le rapport le rappelle à chaque fois. Les utiliser pour juger un individu va à l'encontre de leur
   objet. Une métrique sert à voir où le processus coince, puis à décider d'une amélioration en équipe.
 - **La qualité des données compte.** Les dates sont fiables si les commits portent l'identifiant de la US
