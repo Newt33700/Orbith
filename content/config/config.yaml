@@ -51,3 +51,12 @@ finops:
 # Plugins optionnels, ajoutés avec `npx orbith plugin add <nom>`.
 # Exemple : [backlog-md]
 plugins: []
+
+# Gouvernance (facultatif, désactivée par défaut) : voir docs/guide/changements-roles.md
+# changements:
+#   exiger_pour_deploiement: true     # `orbith deploiement` exige une demande de changement validée
+# roles:
+#   quatre_yeux: true                 # on ne valide pas un fichier dont on a fait le dernier commit
+#   valideurs:                        # qui peut valider quel type de document (email ou nom git)
+#     prd: [alice@societe.fr]
+#     change: ["Bob Martin"]

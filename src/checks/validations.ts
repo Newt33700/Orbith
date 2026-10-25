@@ -1,4 +1,5 @@
 import { scanAll } from '../core/index.js';
+import { run as runGouvernance } from './gouvernance.js';
 import type { CheckContext, CheckResult } from './types.js';
 
 export async function run(ctx: CheckContext): Promise<CheckResult[]> {
@@ -29,5 +30,6 @@ export async function run(ctx: CheckContext): Promise<CheckResult[]> {
       });
     }
   }
+  res.push(...(await runGouvernance(ctx)));
   return res;
 }

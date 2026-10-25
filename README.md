@@ -158,6 +158,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith check` | Vérifie le projet : CSR, validations, traçabilité, secrets. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
+| `npx orbith valider <fichier>` (rôles) | Avec `roles` et `changements` dans `.orbith/config.yaml` (facultatifs) : matrice des rôles, quatre yeux et demande de changement exigée avant `deploiement` (voir [changements-roles.md](docs/guide/changements-roles.md)) |
 | `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés (voir [metriques.md](docs/guide/metriques.md)) |
 | `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
@@ -490,6 +491,7 @@ Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à 
 | [plugins.md](docs/guide/plugins.md) | Tout le monde | Plugin Backlog.md et tableau Kanban |
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
+| [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
 
 ## Feuille de route (V2)
