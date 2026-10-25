@@ -9,6 +9,8 @@ export interface Action {
   /** Slash commands (agents). */
   gemini?: string;
   claude?: string;
+  /** Copilot prompt files are named after the Claude command (`.github/prompts/orbith-po.prompt.md` -> `/orbith-po`). */
+  copilot?: string;
   /** Commande CLI à lancer. */
   cli?: string;
 }
@@ -25,7 +27,7 @@ export function agent(key: AgentKey, message: string, arg?: string): Action {
   const def = AGENT_DEFS.find((a) => a.key === key);
   if (!def) throw new Error(`Agent inconnu : ${key}`);
   const suffix = arg ? ` ${arg}` : '';
-  return { kind: 'agent', message, gemini: `/${def.gemini}${suffix}`, claude: `/${def.claude}${suffix}` };
+  return { kind: 'agent', message, gemini: `/${def.gemini}${suffix}`, claude: `/${def.claude}${suffix}`, copilot: `/${def.claude}${suffix}` };
 }
 
 function valider(a: Artifact, message: string): Action {

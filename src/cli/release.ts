@@ -10,6 +10,8 @@ import {
   gitCommitsSince,
   gitCreateTag,
   gitDirtyPaths,
+  gitLsFiles,
+  gitReachableTags,
   gitTags,
   gitUnstage,
   gitUser,
@@ -48,6 +50,9 @@ export interface ReleaseResult {
   changelog: string;
   tag: string | null;
 }
+
+/** Below this number of tracked files besides the release files, the tag is considered almost empty. */
+const FICHIERS_MIN_TAG = 3;
 
 const HEADER =
   '# Journal des modifications\n\nToutes les évolutions notables de ce projet sont consignées ici.\n' +
@@ -194,7 +199,15 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
   }
   const tag = `v${version}`;
   const git = await isGitRepo(root);
-  if (git && (await gitTags(root)).includes(tag)) throw new OrbithError(`Le tag ${tag} existe déjà : choisis un autre numéro de version.`);
+  if (git && (await gitTags(root)).includes(tag)) {
+    // The tag list covers every branch: a tag created elsewhere is also refused, with its own explanation.
+    const ailleurs = !(await gitReachableTags(root)).includes(tag);
+    throw new OrbithError(
+      `Le tag ${tag} existe déjà` +
+        (ailleurs ? " mais n'est pas atteignable depuis le commit actuel (il a été créé sur une autre branche)" : '') +
+        ` : choisis un autre numéro de version${ailleurs ? ', ou supprime ce tag si c’est une erreur (commande : tag -d ' + tag + ')' : ''}.`,
+    );
+  }
   const last = git ? await lastReleaseTag(root) : null;
   if (last && compareSemVer(sv, last.version) <= 0) {
     throw new OrbithError(`La version ${version} doit être supérieure à la dernière version publiée (${last.tag}).`);
@@ -274,6 +287,17 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
       `US modifiées mais pas commitées (le tag contiendra leur dernière version commitée) : ${storiesModifiees.join(', ')}. ` +
         'Commite-les avant si leur état doit faire partie de la version.',
     );
+  }
+  if (veutTag) {
+    const versionnes = (await gitLsFiles(root)) ?? [];
+    const releaseFiles = new Set(['CHANGELOG.md', notes.chemin, `${ORBITH_DIR}/validations.json`]);
+    const autres = versionnes.filter((f) => !releaseFiles.has(f) && !f.startsWith(`${ORBITH_DIR}/`));
+    if (autres.length < FICHIERS_MIN_TAG) {
+      ui.avert(
+        `Presque rien n'est commité en dehors des fichiers de version (${autres.length} fichier(s) suivi(s) hors ${ORBITH_DIR}/, CHANGELOG et notes) : ` +
+          `le tag ${tag} serait quasi vide. Commite d'abord ton travail puis relance : npx orbith release ${version}.`,
+      );
+    }
   }
   const section = renderChangelogSection(version, date, commits, stories);
   const changelogPath = path.join(root, 'CHANGELOG.md');

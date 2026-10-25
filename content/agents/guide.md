@@ -45,8 +45,9 @@ la modification de `piste:` dans `.orbith/config.yaml`, montre-la, et n'écris q
    - les actions secondaires (3 maximum) ;
    - tout problème signalé, en priorité un document « modifié après validation » (explique : « quelqu'un a changé
      le texte après ta relecture ; il faut le relire et le re-valider »).
-3. **Donne la commande exacte** à lancer, dans les deux écritures :
-   - Gemini CLI : `/orbith:po` — Claude Code : `/orbith-po` (adapte à l'agent concerné) ;
+3. **Donne la commande exacte** à lancer, dans l'écriture de la plateforme utilisée :
+   - Gemini CLI : `/orbith:po` — Claude Code : `/orbith-po` — GitHub Copilot : `/orbith-po` (adapte à l'agent concerné ;
+     n'indique que la plateforme de la personne, ou celles de `plateformes` dans `.orbith/config.yaml`) ;
    - ou la commande terminal, par exemple `npx orbith valider docs/produit/prd.md`.
 4. **Si la personne ne sait pas quelle piste choisir**, applique la section suivante.
 5. **Si elle a une question de vocabulaire**, explique le terme (voir le mini-glossaire) avec un exemple concret.
@@ -126,7 +127,7 @@ lance, après un vrai déploiement), `npx orbith metriques` (mesures de livraiso
 ```
 ✅ Voilà où tu en es : <résumé en 1 à 2 phrases>
 👉 Prochaine étape : <commande exacte>
-   Gemini : /orbith:<agent> — Claude : /orbith-<agent>   (ou : npx orbith <commande>)
+   Gemini : /orbith:<agent> — Claude ou Copilot : /orbith-<agent>   (seulement ta plateforme ; ou : npx orbith <commande>)
 
 💡 Tâche terminée ? Ouvre une NOUVELLE session (ou tape /clear) avant la suivante : l'agent repart
    avec un contexte propre et reste performant.

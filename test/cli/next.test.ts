@@ -1,7 +1,7 @@
 import { rm } from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultConfig, hashBody, recordValidation, scanArtifacts, type Artifact, type Piste } from '../../src/core/index.js';
-import { computeNext, runNext } from '../../src/cli/next.js';
+import { computeNext, renderNext, runNext } from '../../src/cli/next.js';
 import { GHERKIN, makeProject, put } from './helpers.js';
 
 const roots: string[] = [];
@@ -190,4 +190,33 @@ describe('documents des agents avancés (menaces, stratégie de test, rétrospec
       expect(tous(a).some((x) => x.cli === `npx orbith valider docs/x/${type}.md`)).toBe(false);
     });
   }
+});
+
+describe('renderNext selon les plateformes', () => {
+  const res = computeNext([], cfg('projet'));
+  const sansCouleur = (t: string) => t.replace(/\u001b\[[0-9;]*m/g, '');
+  it('par défaut : Gemini et Claude, sans Copilot', () => {
+    const t = sansCouleur(renderNext(res, 'x', 'projet'));
+    expect(t).toContain('Gemini : /orbith:po   Claude : /orbith-po');
+    expect(t).not.toContain('Copilot');
+  });
+  it('claude seul', () => {
+    const t = sansCouleur(renderNext(res, 'x', 'projet', ['claude']));
+    expect(t).toContain('Claude : /orbith-po');
+    expect(t).not.toMatch(/Gemini|Copilot/);
+  });
+  it('gemini seul', () => {
+    const t = sansCouleur(renderNext(res, 'x', 'projet', ['gemini']));
+    expect(t).toContain('Gemini : /orbith:po');
+    expect(t).not.toMatch(/Claude|Copilot/);
+  });
+  it('copilot seul : même forme que les prompts .github/prompts', () => {
+    const t = sansCouleur(renderNext(res, 'x', 'projet', ['copilot']));
+    expect(t).toContain('Copilot : /orbith-po');
+    expect(t).not.toMatch(/Gemini|Claude/);
+  });
+  it('les trois', () => {
+    const t = sansCouleur(renderNext(res, 'x', 'projet', ['gemini', 'claude', 'copilot']));
+    expect(t).toMatch(/Gemini : \/orbith:po\s+Claude : \/orbith-po\s+Copilot : \/orbith-po/);
+  });
 });

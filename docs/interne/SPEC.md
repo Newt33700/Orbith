@@ -216,8 +216,8 @@ some dotfiles from published packages.
 
 ### 4.3 `orbith next`
 Deterministic (no AI). Reads config + artifacts + validations and prints ONE main recommended action
-(plus up to 3 secondary items), each naming the exact slash command to run in Gemini (`/orbith:po`) and
-Claude (`/orbith-po`) or the CLI command (`npx orbith valider …`). Always ends with the new-session reminder.
+(plus up to 3 secondary items), each naming the exact slash command to run, only for the platforms of `config.plateformes` (Gemini `/orbith:po`,
+Claude `/orbith-po`, Copilot `/orbith-po` = name of its `.github/prompts/*.prompt.md`; default config: Gemini + Claude) or the CLI command (`npx orbith valider …`). Always ends with the new-session reminder.
 Rules by track (first matching wins):
 - **projet**: brief missing → po | brief not validated → review+valider | prd missing → po | prd not validated |
   ux missing → ux | ux not validated | architecture missing → architecte | not validated | no epic → po |
@@ -583,7 +583,7 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   minor = `feat` / done non-bug story; patch = `fix` / done story labelled `bug`. Other types do not bump.
   Read-only; prints the reasons; nothing proposed when no signal.
 - **`orbith release <version> [--yes] [--sans-tag] [--dry-run] [--date]`** (`vX.Y.Z` accepted):
-  1. refuses a non-SemVer version, an existing tag (checked against all tags, reachable or not), or a version ≤ the highest tag reachable from HEAD;
+  1. refuses a non-SemVer version, an existing tag (checked against all tags, reachable or not; a tag only on another branch gets a dedicated message), or a version ≤ the highest tag reachable from HEAD;
   2. no notes (`docs/livraisons/release-notes-<version>.md` or frontmatter `version`) → writes a draft (2 audiences)
      from the done pending stories, then fails (`--dry-run`: writes nothing; an existing unrecognized file at that
      path is never overwritten);
@@ -653,7 +653,12 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   rechains the whole registry; it throws on a broken chain (never launders a manual edit) and chains legacy
   registries (no `precedent` anywhere) on the fly. `runDeploiement` behaves the same. `check` (category
   `validations`, `src/checks/chaine.ts`): broken chain → erreur, legacy registry → avertissement.
-  Known limit: dropping only the last entry is undetectable without git history.
+  Removal check (`entreesPerdues`, `gitShowHead`): when the project is a git repository, `check` compares each registry
+  with `git show HEAD:<path>`. An entry committed but missing/altered in the working copy = erreur "Entrée supprimée ou
+  modifiée" (this catches dropping only the last entry). `deploiements.json` is append-only (committed entries must be an
+  unchanged prefix); `validations.json` ignores `precedent` and tolerates the legitimate replacement of a file's entry by
+  `recordValidation` (an entry whose `fichier` is still present). No git, no commit or untracked registry: skipped.
+  Residual limit: a rewrite that keeps every `fichier` (altered hash, rechained by hand) looks like a revalidation.
 - **`orbith sbom [--sortie f] [--cwd d]`** (`src/sbom/`): deterministic component inventory (package-lock v1–v3 else
   package.json; pom.xml; requirements*.txt, pyproject.toml), sorted by purl, rendered as minimal CycloneDX 1.5 JSON
   (no timestamp, content-derived `serialNumber`). stdout by default; summary on stderr in that case. Exit 0.
