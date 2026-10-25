@@ -194,10 +194,12 @@ function niveauLeadTime(jours: number): Niveau {
   if (jours <= 30) return 'moyen';
   return 'faible';
 }
+// Rapport DORA 2024 : élite 5 %, élevé 20 %, moyen 10 %, faible 40 % (valeurs des groupes, non monotones : le groupe
+// « moyen » a moins d'échecs que le groupe « élevé »). On garde l'ordre élite < élevé < moyen < faible avec 5, 20 et 40 %.
 function niveauEchec(pct: number): Niveau {
   if (pct <= 5) return 'élite';
-  if (pct <= 10) return 'élevé';
-  if (pct <= 15) return 'moyen';
+  if (pct <= 20) return 'élevé';
+  if (pct <= 40) return 'moyen';
   return 'faible';
 }
 function niveauRetablissement(heures: number): Niveau {

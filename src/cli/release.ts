@@ -56,7 +56,7 @@ const FICHIERS_MIN_TAG = 3;
 
 const HEADER =
   '# Journal des modifications\n\nToutes les évolutions notables de ce projet sont consignées ici.\n' +
-  'Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).\n' +
+  'Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions au format W.X.Y.Z (majeur, mineur, correctif, révision ; inspiré de [SemVer](https://semver.org/lang/fr/)).\n' +
   'Fichier généré par `npx orbith release` : relis-le avant de le conserver.\n';
 
 function notesFor(arts: Artifact[], version: string): Artifact | undefined {
@@ -190,8 +190,8 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
   const root = await requireProjectRoot(cwd);
   const version = versionArg.trim().replace(/^v/, '');
   const sv = parseSemVer(version);
-  if (!sv || !/^\d+\.\d+\.\d+$/.test(version)) {
-    throw new OrbithError(`Version invalide : « ${versionArg} » (format attendu : X.Y.Z, par exemple 1.2.0).`);
+  if (!sv || !/^\d+\.\d+\.\d+\.\d+$/.test(version)) {
+    throw new OrbithError(`Version invalide : « ${versionArg} » (format attendu : W.X.Y.Z, quatre chiffres, par exemple 1.2.0.0).`);
   }
   const date = opts.date ?? dateLocale();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) {

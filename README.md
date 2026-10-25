@@ -176,7 +176,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
 | `npx orbith version <numéro>` | Crée une version (exemple : `1.1.0.0`) : y ajoute les user stories fusionnées depuis la version précédente et prépare le brouillon des notes de version |
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
-| `npx orbith version` (sans numéro) / `npx orbith release <version>` | Propose le prochain numéro SemVer (commits, US, étiquette `breaking`), puis prépare la version : `CHANGELOG.md`, notes validées, tag Git local après confirmation, sans jamais pousser (voir [versions.md](docs/guide/versions.md)) |
+| `npx orbith version` (sans numéro) / `npx orbith release <version>` | Propose le prochain numéro W.X.Y.Z (commits, US, étiquette `breaking`), puis prépare la version : `CHANGELOG.md`, notes validées, tag Git local après confirmation, sans jamais pousser (voir [versions.md](docs/guide/versions.md)) |
 | `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés, avec cibles, tendances, découpage de l'attente, taille des changements et export `--format csv` (voir [metriques.md](docs/guide/metriques.md)) |
 | `npx orbith metriques` (fiabilité) | Taux de reprise des déploiements (5e indicateur DORA) et, avec `sla` dans `.orbith/config.yaml` (facultatif), objectifs de service comparés aux incidents et bugs de production : atteint, non atteint ou non mesurable (voir [metriques.md](docs/guide/metriques.md)) |
 | `npx orbith trace` (connaissance) | Actions d'amélioration `AMEL-NNN` et liens (`liens`, `cause`) entre incidents, bugs, ADR, actions et US ; `check` signale les actions en retard et les liens introuvables (voir [amelioration-continue.md](docs/guide/amelioration-continue.md)) |
@@ -536,9 +536,9 @@ Pratique qui consiste à suivre les dépenses liées aux services numériques (i
 Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à partir de la taille des textes lus et écrits et des tarifs de `.orbith/config.yaml`. C'est un ordre de grandeur, pas une facture.
 *Exemple : « 0,58 EUR (estimé) » pour l'implémentation de deux scénarios, notée dans la US.*
 
-**SemVer (versionnage sémantique)**
-Numérotation des versions en trois nombres, majeur.mineur.correctif : on augmente le premier pour un changement incompatible, le deuxième pour une nouveauté, le troisième pour une correction.
-*Exemple : après la 1.4.0, une simple correction donne la 1.4.1 ; une nouvelle fonctionnalité, la 1.5.0.*
+**Numéro de version (W.X.Y.Z)**
+Numérotation des versions en quatre nombres, majeur.mineur.correctif.révision, inspirée du versionnage sémantique (SemVer) : on augmente le premier pour un changement incompatible, le deuxième pour une nouveauté, le troisième pour une correction. Le quatrième sert à republier une même version.
+*Exemple : après la 1.4.0.0, une simple correction donne la 1.4.1.0 ; une nouvelle fonctionnalité, la 1.5.0.0.*
 
 **Demande de changement (ITIL)**
 Fiche qui décrit une mise en production avant qu'elle ait lieu : ce qui change, le risque, la fenêtre, qui approuve et comment revenir en arrière.
@@ -565,7 +565,7 @@ Fichier `.orbith/contexte-projet.md` qui garde les conventions, les patterns et 
 | Guide | Pour qui | Contenu |
 |---|---|---|
 | [demarrage.md](docs/guide/demarrage.md) | Tout le monde | Installation pas à pas, premier lancement |
-| [versions.md](docs/guide/versions.md) | Leads tech, chefs de projet | Numéro de version (SemVer), CHANGELOG, tag Git |
+| [versions.md](docs/guide/versions.md) | Leads tech, chefs de projet | Numéro de version (W.X.Y.Z), CHANGELOG, tag Git |
 | [guide-po.md](docs/guide/guide-po.md) | PO, chefs de projet | Du brief à une user story prête |
 | [guide-dev.md](docs/guide/guide-dev.md) | Leads tech, développeurs | Prendre une story, la développer, la livrer |
 | [guide-devops.md](docs/guide/guide-devops.md) | Leads tech, DevOps | Décrire les environnements et créer les pipelines |

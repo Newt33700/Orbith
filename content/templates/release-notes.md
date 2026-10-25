@@ -1,11 +1,11 @@
 ---
 type: release-notes
 statut: brouillon
-version: <X.Y.Z>
+version: <W.X.Y.Z>
 date: <AAAA-MM-JJ>
 ---
 
-# Notes de livraison : version <X.Y.Z>
+# Notes de livraison : version <W.X.Y.Z>
 
 <!-- Ce document liste ce qui a été livré dans une version. Il s'adresse à deux publics, dans deux parties
      séparées : les utilisateurs (ce qui change pour eux) et l'exploitation (ce qu'il faut savoir pour déployer,

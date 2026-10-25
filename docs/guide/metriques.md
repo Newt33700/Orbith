@@ -26,8 +26,12 @@ les compare enfin aux incidents et aux bugs de production (voir [Objectifs de se
 |---|---|---|---|---|---|---|
 | **Fréquence de déploiement** | À quel rythme met-on une version en production ? | Mises en production par semaine, sur la période | Au moins 7 par semaine | Au moins 1 par semaine | Au moins 12 par an | Moins de 12 par an |
 | **Délai de mise en production** (*lead time*) | Combien de temps entre le premier commit d'une US et sa mise en production ? | Médiane des délais, en jours | Moins d'1 jour | Jusqu'à 7 jours | Jusqu'à 30 jours | Plus de 30 jours |
-| **Taux d'échec des changements** | Quelle part des mises en production a provoqué un bug en production ? | Déploiements ayant une US-cause de bug, en % | 5 % ou moins | Jusqu'à 10 % | Jusqu'à 15 % | Plus de 15 % |
+| **Taux d'échec des changements** | Quelle part des mises en production a provoqué un bug en production ? | Déploiements ayant une US-cause de bug, en % | 5 % ou moins | Jusqu'à 20 % | Jusqu'à 40 % | Plus de 40 % |
 | **Temps de rétablissement** (MTTR) | Combien de temps pour corriger un bug en production ? | Médiane des délais entre la détection du bug et la mise en production de son correctif, en heures | Moins d'1 heure | Moins de 24 heures | Moins de 7 jours | 7 jours ou plus |
+
+Les seuils du taux d'échec viennent du rapport DORA 2024 : élite 5 %, élevé 20 %, moyen 10 %, faible 40 %. DORA
+observe que le groupe « moyen » a moins d'échecs que le groupe « élevé » : ces chiffres sont des valeurs de groupes, pas
+des bornes. Orbith garde l'ordre élite, élevé, moyen, faible et retient 5 %, 20 % et 40 % comme limites.
 
 Ces seuils sont des repères inspirés des rapports DORA. Ils aident à situer l'équipe, sans la juger. Une équipe
 « moyenne » qui progresse est en bonne voie.
