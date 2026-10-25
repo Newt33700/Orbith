@@ -103,7 +103,12 @@ describe('lecture des transcriptions Claude Code', () => {
     const avant = process.env['CLAUDE_CONFIG_DIR'];
     delete process.env['CLAUDE_CONFIG_DIR'];
     try {
-      expect(dossierClaudeParDefaut('/home/user/Orbith', '/home/user')).toBe(path.join('/home/user', '.claude', 'projects', '-home-user-Orbith'));
+      expect(dossierClaudeParDefaut('/home/user/Orbith', '/home/user')).toBe(
+        path.join('/home/user', '.claude', 'projects', path.resolve('/home/user/Orbith').replace(/[^A-Za-z0-9]/g, '-')),
+      );
+      if (process.platform !== 'win32') {
+        expect(dossierClaudeParDefaut('/home/user/Orbith', '/home/user')).toBe(path.join('/home/user', '.claude', 'projects', '-home-user-Orbith'));
+      }
     } finally {
       if (avant !== undefined) process.env['CLAUDE_CONFIG_DIR'] = avant;
     }
