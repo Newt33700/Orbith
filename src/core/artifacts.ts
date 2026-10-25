@@ -18,7 +18,8 @@ export type ArtifactType =
   | 'incident'
   | 'menaces'
   | 'strategie-test'
-  | 'retro';
+  | 'retro'
+  | 'analyse';
 
 export interface Artifact {
   type: ArtifactType;
@@ -77,6 +78,7 @@ export const ARTIFACT_TYPES: readonly ArtifactType[] = [
   'menaces',
   'strategie-test',
   'retro',
+  'analyse',
 ];
 const TYPES: readonly string[] = ARTIFACT_TYPES;
 

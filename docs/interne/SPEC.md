@@ -39,10 +39,10 @@ src/checks/              # check rules used by `orbith check` (§4.5)
 src/audit/               # `orbith audit` (collect + HTML render)
 src/sbom/                # `orbith sbom` (collect, CycloneDX, licence policy) (§12)
 content/                 # THE CORE, copied to <project>/.orbith/ on install
-  agents/                # guide po sm ux architecte dev qa devops securite test-architect (.md)
+  agents/                # guide po sm ux architecte dev qa devops securite test-architect analyste redacteur-technique (.md)
   workflows/             # correctif evolution projet atelier retro relecture-adverse changement-de-cap (.md)
   templates/             # brief prd ux architecture adr epic story release-notes environnements bug change incident
-                         # menaces strategie-test retro contexte-projet (.md)
+                         # menaces strategie-test retro analyse contexte-projet (.md)
   rules/                 # validation-humaine confidentialite tracabilite nouvelle-session couts-ia documentation (.md)
   config/                # config.yaml (default, commented) dor.md dod.md
   csr/CSR.exemple.md     # example only — the real CSR lives in the company's private repo
@@ -119,7 +119,7 @@ documentation: { controle: true, code: [src/] }   # §14 (check on by default; `
 Every Orbith document has YAML frontmatter with at least:
 
 ```yaml
-type: brief | prd | ux | architecture | adr | epic | story | release-notes | environnements | change | incident | menaces | strategie-test | retro
+type: brief | prd | ux | architecture | adr | epic | story | release-notes | environnements | change | incident | menaces | strategie-test | retro | analyse
 statut: brouillon | en-revue | validé
 ```
 
@@ -144,6 +144,7 @@ Canonical locations (used by `next`, `check`, `trace`):
 | menaces | docs/architecture/menaces.md |
 | strategie-test | docs/architecture/strategie-test.md |
 | retro | docs/livraisons/retro-<version>.md |
+| analyse | docs/produit/analyse.md |
 
 Scanning uses the frontmatter `type` (files without it are ignored), the table above is where agents write.
 
@@ -381,7 +382,7 @@ export async function etatValidation(root: string, file: string, doc?: Doc): Pro
 
 // artifacts.ts
 export type ArtifactType = 'brief'|'prd'|'ux'|'architecture'|'adr'|'epic'|'story'|'release-notes'|'environnements'
-  |'change'|'incident'|'menaces'|'strategie-test'|'retro';
+  |'change'|'incident'|'menaces'|'strategie-test'|'retro'|'analyse';
 export const ARTIFACT_TYPES: readonly ArtifactType[];
 export interface Artifact { type: ArtifactType; chemin: string /* posix relative */; id?: string; titre?: string;
   statut?: string; etat: EtatValidation; data: Record<string, unknown>; body: string; }
@@ -441,11 +442,13 @@ Agent registry (single source, `src/adapters/agents.ts`):
 | atelier | workflows/atelier.md | /orbith:atelier | /orbith-atelier | Atelier : plusieurs agents discutent ensemble |
 | securite | agents/securite.md | /orbith:securite | /orbith-securite | Sécurité : modélisation des menaces, revue des US sensibles |
 | test-architect | agents/test-architect.md | /orbith:test-archi | /orbith-test-archi | Test Architect : stratégie de test par risque |
+| analyste | agents/analyste.md | /orbith:analyste | /orbith-analyste | Analyste : brainstorming, hypothèses, risques et alternatives avant le brief |
+| redacteur-technique | agents/redacteur-technique.md | /orbith:redacteur | /orbith-redacteur | Rédacteur technique : README, guides, schémas Mermaid, exactitude vérifiée dans le code |
 | retro | workflows/retro.md | /orbith:retro | /orbith-retro | Rétrospective après livraison, à partir des métriques et des constats QA |
 | relecture-adverse | workflows/relecture-adverse.md | /orbith:relecture-adverse | /orbith-relecture-adverse | Relecture adverse : passe critique avant de valider PRD, architecture ou US |
 | changement-de-cap | workflows/changement-de-cap.md | /orbith:changement-de-cap | /orbith-changement-de-cap | Changement de cap : impact d'un changement de besoin sur les epics et les US |
 
-14 entries: 10 agents and 4 workflows (atelier, retro, relecture-adverse, changement-de-cap); `orbith install` and
+16 entries: 12 agents and 4 workflows (atelier, retro, relecture-adverse, changement-de-cap); `orbith install` and
 `orbith update` generate one Gemini and one Claude command per entry.
 
 Opt-in third platform `copilot` (GitHub Copilot in VS Code; not in the default `plateformes`): one workspace prompt
@@ -454,7 +457,7 @@ Markdown link to `../../.orbith/<file>`, no copied content) and a marked block i
 linking the rules, CSR and project context. Copilot has no project-level read-deny file, so none is generated.
 Format source: code.visualstudio.com/docs/agent-customization/prompt-files and …/custom-instructions.
 `config.yaml` rejects unknown platforms, listing the allowed values (`gemini, claude, copilot`). Advanced agents/workflows (securite,
-test-architect, retro, relecture-adverse, changement-de-cap) follow the §8 conventions; their output documents are
+test-architect, analyste, redacteur-technique, retro, relecture-adverse, changement-de-cap) follow the §8 conventions; their output documents are
 regular artifacts (§13).
 A third platform is deliberately not implemented: `Plateforme` is a closed union validated in `core/config.ts`
 and `cli/install.ts`, so an adapter is not trivial (see docs/guide/agents-avances.md).
@@ -667,11 +670,15 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   deprecated → avertissement, unknown license → info. SPDX `OR` is lenient, `AND`/`WITH` strict. No policy → no results.
   Guide: `docs/guide/integrite-sbom.md`.
 
-## 13. Advanced-agent documents (`menaces`, `strategie-test`, `retro`)
+## 13. Advanced-agent documents (`menaces`, `strategie-test`, `retro`, `analyse`)
 
 - Artifact types written by the Security agent (`docs/architecture/menaces.md`), the Test Architect
   (`docs/architecture/strategie-test.md`) and the `retro` workflow (`docs/livraisons/retro-<version>.md`).
   Templates: `content/templates/{menaces,strategie-test,retro}.md` (frontmatter `type` + `statut: brouillon`).
+- `analyse` (`docs/produit/analyse.md`, template `content/templates/analyse.md`) is written by the Analyst agent before the
+  brief; `orbith next` (piste `projet`, no brief yet) suggests the Analyst as a secondary action. The Technical Writer
+  agent produces no typed artifact (it edits README/guides, never production code or validated documents). Templates
+  architecture, ux, environnements and epic carry commented Mermaid examples.
 - They are validated like any other artifact (`orbith valider <file>`, hash recorded in the registry, `check`
   detects later edits). Agents never write `statut: validé`.
 - `orbith next` appends a low-priority `valider` suggestion for each of these documents still not validated.
