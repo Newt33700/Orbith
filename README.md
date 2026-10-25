@@ -172,7 +172,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith install` | Installe Orbith dans le projet (agents, commandes Gemini et Claude, configuration) |
 | `npx orbith next` | Indique la prochaine action recommandée (sans IA) |
 | `npx orbith valider <fichier>` | Marque un document comme validé, après confirmation humaine |
-| `npx orbith check` | Vérifie le projet : CSR, validations (et chaîne d'audit des registres, rôles), traçabilité, documentation, secrets, licences, agents personnalisés. Échoue en cas d'erreur |
+| `npx orbith check` | Vérifie le projet : CSR, validations (et chaîne d'audit des registres, rôles), traçabilité, documentation, secrets, licences, agents personnalisés, provenance IA. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
 | `npx orbith version <numéro>` | Crée une version (exemple : `1.1.0.0`) : y ajoute les user stories fusionnées depuis la version précédente et prépare le brouillon des notes de version |
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
@@ -182,6 +182,8 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith init-context` | Crée le contexte projet d'un projet existant (stack, arborescence, scripts, tests), à compléter par un agent (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
 | `npx orbith preparation` | Vérifie la préparation à l'implémentation (brief, PRD, architecture, epics, US) : PASS, CONCERNS ou FAIL (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
+| `npx orbith couts importer` | Importe les compteurs de jetons réels de Claude Code dans `couts_ia` d'une US (`source: mesuré`, `--us US-NNN`), sans toucher aux estimations (voir [provenance-couts.md](docs/guide/provenance-couts.md)) |
+| `npx orbith provenance` | Liste, par US et document, les commits co-écrits par une IA (`Co-Authored-By:`), le modèle et la validation ou revue humaine ; `--enregistrer` tient le registre chaîné `.orbith/provenance.json` (voir [provenance-couts.md](docs/guide/provenance-couts.md)) |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
 | `npx orbith decouper <fichier>` | Découpe un document Markdown volumineux en extraits par section (`.orbith/extraits/<nom>/`, sans IA, sans toucher au document) ; les agents lisent l'index puis les sections utiles, et `check` signale les extraits périmés (voir [documents-volumineux.md](docs/guide/documents-volumineux.md)) |
 | `npx orbith sbom` | Produit la liste des composants (SBOM CycloneDX JSON) ; `check` contrôle les licences interdites et la chaîne d'audit des registres (voir [integrite-sbom.md](docs/guide/integrite-sbom.md)) |
@@ -196,7 +198,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 
 Options utiles : `--yes` (sans question, pour les scripts ; réservé à un usage humain pour `valider`, `deploiement` et
 `release`), `--cwd <dossier>` (travailler sur un autre dossier, accepté par toutes les commandes), `--format json`
-pour `next`, `check`, `version`, `preparation`, `autopilote`, `metriques` (aussi `csv`) et `audit`, `--sortie <fichier>` pour
+pour `next`, `check`, `version`, `preparation`, `autopilote`, `metriques` (aussi `csv`), `provenance` et `audit`, `--sortie <fichier>` pour
 `trace`, `metriques`, `audit`, `sbom` et `csr import`. `npx orbith <commande> --help` liste toutes les options.
 
 ## Une tâche = une session
@@ -572,6 +574,7 @@ Fichier `.orbith/contexte-projet.md` qui garde les conventions, les patterns et 
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
 | [integrite-sbom.md](docs/guide/integrite-sbom.md) | Sécurité, conformité | Journal d'audit chaîné, SBOM, licences |
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
+| [provenance-couts.md](docs/guide/provenance-couts.md) | Chefs de projet, FinOps, auditeurs | Coûts IA réels (Claude Code), provenance IA du code et contrôle humain |
 | [contexte-preparation.md](docs/guide/contexte-preparation.md) | Leads tech, POs | Contexte projet, projet existant, check de préparation |
 | [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
 | [documents-volumineux.md](docs/guide/documents-volumineux.md) | Tout le monde | Découper un PRD ou une architecture trop long pour les agents |

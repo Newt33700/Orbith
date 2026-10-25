@@ -12,6 +12,7 @@ import {
 } from '../core/index.js';
 import { buildContext, runAll, type CheckResult } from '../checks/index.js';
 import { buildTraces, type StoryTrace } from '../cli/trace-report.js';
+import { collecterProvenance, type RapportProvenance } from '../cli/provenance.js';
 
 export interface AuditArtifact {
   type: string;
@@ -52,6 +53,8 @@ export interface AuditData {
   validations: AuditArtifact[];
   tracabilite: StoryTrace[];
   controles: CheckResult[];
+  /** Commits co-écrits par une IA, par US et document (facultatif). */
+  provenance?: RapportProvenance;
 }
 
 export const ETAT_LIBELLES: Record<EtatValidation, string> = {
@@ -112,6 +115,7 @@ export async function collectAudit(root: string, now: Date = new Date()): Promis
   const traces = await buildTraces(root, arts);
   const controles = await runAll(await buildContext(root));
   const repo = await isGitRepo(root);
+  const provenance = await collecterProvenance(root).catch(() => undefined);
   let branche = '';
   let commit = '';
   let auteur = '';
@@ -155,5 +159,6 @@ export async function collectAudit(root: string, now: Date = new Date()): Promis
     validations,
     tracabilite: traces,
     controles,
+    ...(provenance ? { provenance } : {}),
   };
 }

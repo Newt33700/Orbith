@@ -1,4 +1,5 @@
-import type { AuditData } from './collect.js';
+import { ETAT_LIBELLES, type AuditData } from './collect.js';
+import { sansControleHumain } from '../cli/provenance.js';
 
 export function escapeHtml(value: unknown): string {
   return String(value ?? '')
@@ -48,6 +49,7 @@ const CATEGORIES: [string, string][] = [
   ['secrets', 'Secrets'],
   ['sbom', 'Licences (SBOM)'],
   ['agents', 'Agents personnalisés'],
+  ['provenance', 'Provenance IA'],
 ];
 
 function badge(kind: 'ok' | 'warn' | 'err' | 'info', text: string): string {
@@ -60,6 +62,28 @@ function etatBadge(etat: string, libelle: string): string {
 
 function list(items: string[]): string {
   return items.length ? `<ul class="plain">${items.map((i) => `<li>${i}</li>`).join('')}</ul>` : '—';
+}
+
+function provenanceSection(d: AuditData): string {
+  const p = d.provenance;
+  if (!p) return '';
+  const rows = p.lignes
+    .map((l) => {
+      const alerte = sansControleHumain(l);
+      const val = l.validation ? `${e(l.validation.par)} (${e(l.validation.le)})` : e(ETAT_LIBELLES[l.etat]);
+      const revue = l.revueHumaine.length ? e(l.revueHumaine.join(', ')) : l.revueQa ? 'aucune (revue QA par agent seulement)' : 'aucune';
+      return `<tr${alerte ? ' class="pb"' : ''}><th scope="row">${e(l.cle)}<br><small>${e(l.titre)}</small></th><td>${e(l.colonne ?? l.type)}</td><td>${list(l.commits.map((c) => `<code>${e(c.commit.slice(0, 7))}</code> ${e(c.ia.join(', '))}`))}</td><td>${e(l.modeles.join(', ') || 'inconnu')}</td><td>${val}</td><td>${alerte ? badge('warn', revue) : revue}</td></tr>`;
+    })
+    .join('');
+  return `
+<section id="provenance" aria-labelledby="h-provenance">
+<h2 id="h-provenance">Provenance IA</h2>
+<p>${e(p.commitsIa)} commit(s) portent un pied <code>Co-Authored-By:</code> désignant une IA${p.sansLien ? ` (dont ${e(p.sansLien)} sans US ni document lié)` : ''}. Les lignes en rouge signalent une US terminée sans validation humaine ni revue humaine du code tracées.</p>
+<table><caption>Code et documents co-écrits par une IA, et contrôle humain associé</caption>
+<thead><tr><th scope="col">US / document</th><th scope="col">Colonne</th><th scope="col">Commits IA</th><th scope="col">Modèle(s)</th><th scope="col">Validation humaine</th><th scope="col">Revue humaine du code</th></tr></thead>
+<tbody>${rows || '<tr><td colspan="6">Aucune US ni aucun document lié à un commit co-écrit par une IA.</td></tr>'}</tbody></table>
+</section>
+`;
 }
 
 export function renderHtml(d: AuditData): string {
@@ -149,7 +173,7 @@ ${kpi(couverture, `couverture de traçabilité (${s.usTraceesTerminees}/${s.usTe
 <thead><tr><th scope="col">US</th><th scope="col">Statut</th><th scope="col">Colonne</th><th scope="col">Commits</th><th scope="col">Tests</th><th scope="col">Notes de livraison</th></tr></thead>
 <tbody>${traceRows || '<tr><td colspan="6">Aucune user story.</td></tr>'}</tbody></table>
 </section>
-
+${provenanceSection(d)}
 <section id="conformite" aria-labelledby="h-conformite">
 <h2 id="h-conformite">Conformité CSR et contrôles</h2>
 ${controles}

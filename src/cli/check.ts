@@ -11,6 +11,7 @@ const CATEGORIES: { id: CheckCategorie; titre: string }[] = [
   { id: 'secrets', titre: 'Secrets' },
   { id: 'sbom', titre: 'Licences (SBOM)' },
   { id: 'agents', titre: 'Agents personnalisés' },
+  { id: 'provenance', titre: 'Provenance IA' },
 ];
 
 function ligne(r: CheckResult): string {
@@ -22,7 +23,7 @@ function ligne(r: CheckResult): string {
 export function register(program: Command): void {
   program
     .command('check')
-    .description('Vérifie la conformité (CSR, validations, traçabilité, documentation, secrets, licences, agents personnalisés)')
+    .description('Vérifie la conformité (CSR, validations, traçabilité, documentation, secrets, licences, agents personnalisés, provenance IA)')
     .option('--format <format>', 'format de sortie (texte|json)', 'texte')
     .option('--cwd <dir>', 'dossier de travail')
     .action(async (opts: { format: string; cwd?: string }) => {

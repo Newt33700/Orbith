@@ -13,3 +13,4 @@ export * from './csr-source.js';
 export * from './fsutil.js';
 export * from './ui.js';
 export * from './extraits.js';
+export * from './provenance.js';

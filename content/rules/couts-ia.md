@@ -39,3 +39,6 @@ Cette règle est permanente et s'applique à CHAQUE tâche liée à une user sto
 9. Montre l'estimation à l'humain en une ligne, en disant clairement que c'est une estimation, par exemple :
    « Coût IA estimé pour cette tâche : environ 0,59 EUR (estimation, pas une facture). »
 10. Si tu ne connais pas ton modèle, écris `modele: inconnu` et utilise la clé `defaut`. Ne devine pas le nom du modèle.
+11. N'écris jamais toi-même `source: mesuré` : cette valeur est réservée aux entrées importées par un humain avec
+    `npx orbith couts importer` (compteurs réels de l'outil). Ne modifie ni ne supprime ces entrées, et ne les
+    recopie pas dans une estimation.
