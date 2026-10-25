@@ -11,7 +11,7 @@ Avant de proposer un commit, passe cette liste. Pour chaque ligne : « mis à jo
 raison en quelques mots.
 
 - [ ] **README** du projet : installation, commandes, options, exemples, captures de sortie.
-- [ ] **Guides utilisateur** (`docs/guide/` ou l'équivalent du projet) : procédures, tableaux, exemples.
+- [ ] **Guides utilisateur** (le dossier de guides du projet, par exemple `docs/guide/`) : procédures, tableaux, exemples.
 - [ ] **Documentation technique** : architecture, ADR, spécification interne. Une décision d'architecture nouvelle ou
       modifiée passe par l'architecte et un ADR, jamais par une simple mise à jour silencieuse.
 - [ ] **Commentaires du code** : les commentaires et docstrings des fonctions modifiées décrivent le nouveau

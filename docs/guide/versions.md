@@ -20,11 +20,11 @@ La proposition vient de deux sources :
 
 | Signal | Effet |
 |---|---|
-| Commit `feat…` ou US terminée | version **mineure** (1.2.0 → 1.3.0) |
+| Commit `feat…` ou US terminée (non étiquetée `bug`) | version **mineure** (1.2.0 → 1.3.0) |
 | Commit `fix…` ou US étiquetée `bug` | version **correctif** (1.2.0 → 1.2.1) |
 | Commit avec `!` (`feat(US-012)!: …`), pied de commit `BREAKING CHANGE:` ou US étiquetée `breaking` | version **majeure** (1.2.0 → 2.0.0) |
 
-Le plus fort l'emporte. Les autres types (`docs`, `chore`, `refactor`…) ne changent pas le numéro à eux seuls.
+Une US terminée étiquetée `bug` ne donne donc pas une mineure mais un correctif. Le plus fort l'emporte. Les autres types (`docs`, `chore`, `refactor`…) ne changent pas le numéro à eux seuls.
 Sans tag existant, le calcul part de 0.0.0. Seuls les tags atteignables depuis la branche courante comptent : sur une branche de maintenance, un tag plus récent d'une autre branche est ignoré pour le calcul, mais il empêche toujours de recréer le même tag.
 
 Pour marquer une rupture sur une US, ajoute l'étiquette `breaking` dans ses `labels` :
@@ -62,6 +62,10 @@ npx orbith release 1.3.0
    Orbith te prévient (le tag contiendra sa dernière version commitée). Il te prévient aussi quand le changelog
    reprend des commits d'US pas encore terminées.
 
+Le commit `chore(release): v1.3.0` ne porte pas d'identifiant d'US (`US-NNN`). Il peut donc apparaître comme
+**avertissement** de traçabilité dans `npx orbith check` (« Commit … sans identifiant de story »). C'est attendu : c'est
+un commit technique de version, rien à corriger ni à réécrire.
+
 Orbith **ne pousse jamais**. Il t'indique la commande à lancer toi-même : `git push && git push origin v1.3.0`.
 
 ### Options
@@ -72,6 +76,7 @@ Orbith **ne pousse jamais**. Il t'indique la commande à lancer toi-même : `git
 | `--sans-tag` | Écrit seulement `CHANGELOG.md` : ni commit ni tag. Orbith affiche ensuite les commandes `git add`, `git commit` et `git tag` à lancer toi-même (commite avant de taguer, sinon le tag ne contient pas le changelog) |
 | `--dry-run` | Affiche le changelog prévu sans rien écrire (le brouillon de notes n'est pas créé non plus) |
 | `--date AAAA-MM-JJ` | Date de la version (aujourd'hui par défaut, date locale) |
+| `--cwd <dir>` | Dossier de travail (le projet Orbith à utiliser, au lieu du dossier courant) |
 
 Orbith n'écrase jamais un fichier `docs/livraisons/release-notes-<version>.md` existant : s'il n'est pas reconnu
 comme notes de cette version (en-tête `type: release-notes` et `version`), la commande s'arrête et te le dit.
