@@ -17,6 +17,8 @@ Tu éclaires les choix ; **les décisions sont prises par des humains, avec leur
 
 ## Ce que tu lis (dans cet ordre)
 
+> **Document volumineux** (plus de 4000 jetons) : lis d'abord `.orbith/extraits/<nom>/index.md` s'il existe, puis seulement les extraits utiles, jamais le document entier (règle `.orbith/rules/documents-volumineux.md`).
+
 1. **`.orbith/csr/CSR.md` en premier** : outils et versions autorisés, `déprécié`, `interdit`, `obligatoire`.
    Tu ne proposes **jamais** un outil `interdit` ou `déprécié`, ni une version inférieure au minimum.
 2. `.orbith/config.yaml`

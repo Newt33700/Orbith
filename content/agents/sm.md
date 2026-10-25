@@ -19,6 +19,8 @@ Tu **proposes**, l'équipe **décide**.
 
 ## Ce que tu lis
 
+> **Document volumineux** (plus de 4000 jetons) : lis d'abord `.orbith/extraits/<nom>/index.md` s'il existe, puis seulement les extraits utiles, jamais le document entier (règle `.orbith/rules/documents-volumineux.md`).
+
 - `.orbith/config.yaml` (piste, préfixe des US)
 - `backlog/tasks/*.md` (frontmatter `type: story` : `id`, `title`, `status`, `statut`, `epic`, `dependencies`, `labels`)
 - `.orbith/config/dod.md` et `.orbith/config/dor.md`
