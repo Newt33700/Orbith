@@ -94,6 +94,11 @@ Chaque agent existe en deux syntaxes, selon l'outil utilisé.
 | Quentin (QA) | Tests à partir des critères Gherkin, revue, couverture | `/orbith:qa` | `/orbith-qa` |
 | Dora (DevOps) | Environnements non identiques (dev, recette, prod…) et pipelines CI/CD | `/orbith:devops` | `/orbith-devops` |
 | Atelier | Plusieurs agents discutent ensemble sur un sujet | `/orbith:atelier` | `/orbith-atelier` |
+| Salomé (Sécurité) | Modélisation des menaces, revue des US sensibles | `/orbith:securite` | `/orbith-securite` |
+| Tania (Test Architect) | Stratégie de test par risque | `/orbith:test-archi` | `/orbith-test-archi` |
+| Rétrospective | Bilan après une livraison, à partir des métriques et des constats QA | `/orbith:retro` | `/orbith-retro` |
+| Relecture adverse | Passe critique avant de valider un PRD, une architecture ou une US | `/orbith:relecture-adverse` | `/orbith-relecture-adverse` |
+| Changement de cap | Impact d'un changement de besoin sur les epics et les US | `/orbith:changement-de-cap` | `/orbith-changement-de-cap` |
 
 Exemple : pour demander au PO de rédiger le brief, tapez `/orbith:po rédige le brief de mon appli de
 réservation de salles` dans Gemini CLI, ou `/orbith-po rédige le brief de mon appli de réservation de
@@ -487,6 +492,7 @@ Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à 
 | [validation-humaine.md](docs/guide/validation-humaine.md) | Tout le monde | Statuts, validation, modifications détectées |
 | [csr.md](docs/guide/csr.md) | Leads tech, équipes CI | Format du CSR, import Excel, contrôle en CI |
 | [atelier.md](docs/guide/atelier.md) | Tout le monde | Faire travailler plusieurs agents ensemble |
+| [agents-avances.md](docs/guide/agents-avances.md) | Tout le monde | Sécurité, Test Architect, rétrospective, relecture adverse, changement de cap |
 | [plugins.md](docs/guide/plugins.md) | Tout le monde | Plugin Backlog.md et tableau Kanban |
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |

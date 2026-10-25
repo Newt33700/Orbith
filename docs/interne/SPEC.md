@@ -362,6 +362,18 @@ Agent registry (single source, `src/adapters/agents.ts`):
 | dev | agents/dev.md | /orbith:dev | /orbith-dev | Développeur : implémente une US validée |
 | qa | agents/qa.md | /orbith:qa | /orbith-qa | QA : tests Gherkin, revue, couverture des critères |
 | atelier | workflows/atelier.md | /orbith:atelier | /orbith-atelier | Atelier : plusieurs agents discutent ensemble |
+| securite | agents/securite.md | /orbith:securite | /orbith-securite | Sécurité : modélisation des menaces, revue des US sensibles |
+| test-architect | agents/test-architect.md | /orbith:test-archi | /orbith-test-archi | Test Architect : stratégie de test par risque |
+| retro | workflows/retro.md | /orbith:retro | /orbith-retro | Rétrospective après livraison, à partir des métriques et des constats QA |
+| relecture-adverse | workflows/relecture-adverse.md | /orbith:relecture-adverse | /orbith-relecture-adverse | Relecture adverse : passe critique avant de valider PRD, architecture ou US |
+| changement-de-cap | workflows/changement-de-cap.md | /orbith:changement-de-cap | /orbith-changement-de-cap | Changement de cap : impact d'un changement de besoin sur les epics et les US |
+
+Advanced agents/workflows (securite, test-architect, retro, relecture-adverse, changement-de-cap) follow the §8
+conventions. Their output documents (`docs/architecture/menaces.md`, `docs/architecture/strategie-test.md`,
+`docs/livraisons/retro-<version>.md`) carry types unknown to `ARTIFACT_TYPES`, so they are working documents
+ignored by `scanArtifacts` and not validatable via `orbith valider` (always `statut: brouillon`/`en-revue`).
+A third platform is deliberately not implemented: `Plateforme` is a closed union validated in `core/config.ts`
+and `cli/install.ts`, so an adapter is not trivial (see docs/guide/agents-avances.md).
 
 Generated files only **reference** core files, e.g. Gemini `.gemini/commands/orbith/po.toml`:
 
