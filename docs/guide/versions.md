@@ -49,7 +49,8 @@ npx orbith release 1.3.0
    - une US citée dans les notes n'est pas **Terminée** ;
    - `npx orbith check` signale une erreur ;
    - les notes de version ne sont **pas validées** par un humain ;
-   - le numéro n'est pas supérieur au dernier tag, ou le tag existe déjà.
+   - le numéro n'est pas supérieur au dernier tag, ou le tag existe déjà (y compris s'il a été créé sur une autre
+     branche et n'est pas atteignable depuis ta position : le message le précise).
 3. **Confirmation humaine.** Orbith montre la section du changelog et demande confirmation. Après ton accord, il :
    - ajoute la section en tête de `CHANGELOG.md` (créé si besoin, fins de ligne du fichier conservées) ;
    - enregistre dans un commit `chore(release): v1.3.0` `CHANGELOG.md` et, s'ils ne sont pas encore commités, les notes
@@ -60,7 +61,9 @@ npx orbith release 1.3.0
    Si le commit échoue (hook `pre-commit`, par exemple), `CHANGELOG.md` est remis dans son état d'avant et aucun tag
    n'est créé : corrige le problème et relance. Si une US citée dans les notes a des modifications non commitées,
    Orbith te prévient (le tag contiendra sa dernière version commitée). Il te prévient aussi quand le changelog
-   reprend des commits d'US pas encore terminées.
+   reprend des commits d'US pas encore terminées. Enfin, si presque rien d'autre que les fichiers de version n'est
+   suivi par Git (moins de 3 fichiers hors `.orbith/`), Orbith t'avertit que le tag serait quasi vide : commite d'abord
+   ton travail.
 
 Le commit `chore(release): v1.3.0` ne porte pas d'identifiant d'US (`US-NNN`). Il peut donc apparaître comme
 **avertissement** de traçabilité dans `npx orbith check` (« Commit … sans identifiant de story »). C'est attendu : c'est

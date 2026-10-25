@@ -103,3 +103,15 @@ export async function gitUnstage(root: string, paths: string[]): Promise<void> {
     await run(root, ['rm', '--cached', '-q', '--ignore-unmatch', '--', ...paths]);
   }
 }
+
+/**
+ * Content of a file as committed at HEAD (`git show HEAD:./<rel>`, `rel` relative to `root`);
+ * null when there is no commit, the folder is not a repository or the file is not tracked at HEAD.
+ */
+export async function gitShowHead(root: string, rel: string): Promise<string | null> {
+  try {
+    return await run(root, ['show', `HEAD:./${rel}`]);
+  } catch {
+    return null;
+  }
+}

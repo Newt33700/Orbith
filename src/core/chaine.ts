@@ -54,3 +54,40 @@ export function verifierChaine(entries: readonly { precedent?: unknown }[]): Eta
   }
   return { etat: 'ok' };
 }
+
+function sansPrecedent(entry: object): string {
+  const { precedent: _p, ...reste } = entry as { precedent?: unknown };
+  return canonique(reste);
+}
+
+/**
+ * Entries of the committed journal (`head`) that are gone or altered in the working copy (`travail`):
+ * what the chain alone cannot see (removing only the LAST entry leaves a valid chain).
+ * - `append-seul` (deployments): the committed entries must be an unchanged prefix of the working ones.
+ * - `remplacement` (validations): `recordValidation` replaces the entry of a file by a new one at the end and
+ *   rechains everything, so `precedent` is ignored and an entry is legitimately replaced when the working copy
+ *   still has an entry for the same `fichier`. Anything else is a removal.
+ * Returns the indexes (0-based, in `head`) of the missing or altered entries.
+ */
+export function entreesPerdues(
+  head: readonly object[],
+  travail: readonly object[],
+  mode: 'append-seul' | 'remplacement',
+): number[] {
+  const perdues: number[] = [];
+  if (mode === 'append-seul') {
+    head.forEach((h, i) => {
+      const t = travail[i];
+      if (!t || hashEntree(t) !== hashEntree(h)) perdues.push(i);
+    });
+    return perdues;
+  }
+  const contenus = new Set(travail.map(sansPrecedent));
+  const fichiers = new Set(travail.map((t) => (t as { fichier?: unknown }).fichier));
+  head.forEach((h, i) => {
+    if (contenus.has(sansPrecedent(h))) return;
+    if (fichiers.has((h as { fichier?: unknown }).fichier)) return;
+    perdues.push(i);
+  });
+  return perdues;
+}

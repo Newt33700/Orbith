@@ -154,7 +154,7 @@ Pour démarrer un nouveau produit de zéro.
 10. Dev, QA, puis livraison, comme dans l'évolution.
 
 Pour savoir quelle est la prochaine étape, lancez `npx orbith next`. La commande lit l'état du projet et
-indique l'action recommandée.
+indique l'action recommandée, avec les commandes des seules plateformes configurées (Gemini, Claude, Copilot).
 
 ## Commandes de la CLI
 

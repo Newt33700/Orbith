@@ -19,6 +19,7 @@ Modifier, retirer ou insérer une entrée à la main change son empreinte et cas
 |---|---|
 | Chaîne intacte | rien à signaler |
 | Entrée modifiée, retirée ou insérée | **erreur** : « Chaîne d'audit rompue à l'entrée N » |
+| Entrée commitée disparue ou changée (dépôt Git) | **erreur** : « Entrée supprimée ou modifiée » |
 | Ancien registre sans chaîne | **avertissement** : il sera chaîné au prochain `orbith valider` (ou `orbith deploiement`) |
 
 `orbith valider` et `orbith deploiement` **refusent d'écrire** dans un registre à la chaîne rompue : rechaîner effacerait la trace de la retouche. Restaure le fichier depuis l'historique du dépôt, puis relance la commande.
@@ -29,7 +30,7 @@ Rien à faire. Un registre sans `precedent` reste lisible et valable ; `check` p
 
 ### Limites à connaître
 
-- Le chaînage détecte une retouche **au milieu** du journal. Retirer uniquement la **dernière** entrée n'est pas détectable par le fichier seul : committe régulièrement les registres, l'historique du dépôt sert alors d'ancrage.
+- Le chaînage seul détecte une retouche **au milieu** du journal. Retirer uniquement la **dernière** entrée est détecté par un second contrôle : dans un dépôt Git, `check` compare le registre à sa version commitée et signale en **erreur** « Entrée supprimée ou modifiée » toute entrée commitée qui a disparu. Committe donc régulièrement les registres. Sans Git, ou tant que le registre n'est pas commité, ce contrôle ne s'applique pas. Une réécriture qui garde chaque fichier validé (hash changé, chaîne recalculée) ressemble à une revalidation légitime.
 - Quelqu'un qui recalcule toute la chaîne à la main produit un registre cohérent. La protection est un garde-fou contre l'erreur et la retouche discrète, pas une signature cryptographique.
 
 ## SBOM : `npx orbith sbom`
