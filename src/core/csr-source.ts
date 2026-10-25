@@ -93,7 +93,8 @@ async function fromGit(src: Extract<ParsedSource, { kind: 'git' }>): Promise<str
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'orbith-csr-'));
   try {
     const dest = path.join(tmp, 'repo');
-    const args = ['clone', '--depth', '1', '--quiet'];
+    // Copie octet pour octet : pas de conversion LF → CRLF par Git sous Windows.
+    const args = ['-c', 'core.autocrlf=false', 'clone', '--depth', '1', '--quiet', '--config', 'core.autocrlf=false'];
     if (src.ref) args.push('--branch', src.ref);
     args.push('--', src.repo, dest);
     await git(args, tmp);
