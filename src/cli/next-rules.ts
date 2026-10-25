@@ -118,8 +118,19 @@ function storyActions(arts: Artifact[]): Action[] {
   if (stories.length > 0 && open.length === 0) {
     const notes = ofType(arts, 'release-notes');
     const ids = stories.map((s) => s.id).filter((i): i is string => !!i);
-    const covered = notes.some((n) => ids.every((id) => mentions(n.body, id)));
-    if (covered) {
+    const covering = notes.filter((n) => ids.every((id) => mentions(n.body, id)));
+    const aValider = covering.find((n) => n.etat !== 'validé');
+    const aDeployer = covering.find((n) => n.etat === 'validé' && n.data['mis_en_prod_le'] == null);
+    if (aValider && !covering.some((n) => n.data['mis_en_prod_le'] != null)) {
+      actions.push(valider(aValider, `Relis les notes de version (${aValider.chemin}) puis valide-les avant de livrer.`));
+    } else if (aDeployer) {
+      const version = aDeployer.data['version'] != null ? String(aDeployer.data['version']) : '<version>';
+      actions.push({
+        kind: 'humain',
+        message: 'Notes de version validées : après la mise en production réelle, enregistre-la (dates des US, indicateurs DORA).',
+        cli: `npx orbith deploiement ${version}`,
+      });
+    } else if (covering.length > 0) {
       actions.push({ kind: 'fini', message: 'Tout est livré 🎉 Bravo !' });
     } else {
       actions.push(agent('sm', 'Toutes les US sont terminées : prépare les notes de livraison.'));

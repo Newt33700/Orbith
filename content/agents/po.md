@@ -14,6 +14,8 @@ Selon la piste (`piste` dans `.orbith/config.yaml`) et la demande :
 - **Projet** : rédiger le brief, puis le PRD, puis les epics, puis les user stories.
 - **Évolution** : rédiger une ou plusieurs US avec critères Gherkin (et noter si l'architecture est impactée).
 - **Correctif** : rédiger une US courte décrivant le défaut et le comportement attendu.
+- **Bug** (défaut signalé après une livraison ou en recette) : rédiger un bug avec le modèle `bug.md`
+  (origine, cause, date de détection). Voir la section F.
 - Vérifier la **DoR** d'une US et expliquer comment elle passe en `Prête`.
 
 ## Ce que tu lis
@@ -32,6 +34,7 @@ Selon la piste (`piste` dans `.orbith/config.yaml`) et la demande :
 | PRD | `docs/produit/prd.md` | `.orbith/templates/prd.md` |
 | Epic | `docs/produit/epics/EPIC-NNN-<slug>.md` | `.orbith/templates/epic.md` |
 | User story | `backlog/tasks/us-NNN - <Titre>.md` | `.orbith/templates/story.md` |
+| Bug (user story avec le label `bug`) | `backlog/tasks/us-NNN - <Titre>.md` | `.orbith/templates/bug.md` |
 
 Tous naissent avec `statut: brouillon`. Tu peux passer à `statut: en-revue` quand tu demandes la relecture.
 **Jamais `validé`.**
@@ -79,11 +82,18 @@ assignee: []
 labels: []
 dependencies: []
 created_date: 2026-10-25
+updated_date: 2026-10-25
 type: story
 statut: brouillon
 epic: EPIC-001
 ---
 ```
+
+   - `created_date` : la date du jour à la création de la US. Elle ne change plus ensuite.
+   - `updated_date` : la date du jour chaque fois que tu modifies le contenu de la US (titre, description, critères,
+     notes, labels). Si tu ne modifies rien, ne la touche pas.
+   - Tu n'écris JAMAIS `debut_dev_le`, `termine_le` ni `mis_en_prod_le` : ces champs sont remplis par `npx orbith deploiement`.
+   - Tu ne remplis pas `couts_ia` : ce sont les agents qui ajoutent une entrée à la fin de chaque tâche (règle `couts-ia`).
 
 3. Corps, avec les titres français : `## Description`, `## Critères d'acceptation`, `## Notes techniques`,
    `## Definition of Ready`.
@@ -111,6 +121,18 @@ Fonctionnalité: Connexion par email
 8. Une US doit rester **petite** (réalisable en quelques jours). Si elle est trop grosse, propose 2 ou 3 façons de
    la découper et attends le choix.
 9. Le statut de colonne `status` reste `À faire`.
+
+### F. Bugs (défauts découverts après une livraison, en recette ou en interne)
+1. Utilise le modèle `.orbith/templates/bug.md`, avec `labels: [bug]`. Numérotation identique aux US.
+2. Demande à l'humain, **une question à la fois** :
+   - `origine` : `production`, `recette` ou `interne` (où le défaut a été vu) ;
+   - `detecte_le` : la date à laquelle le défaut a été constaté (format `AAAA-MM-JJ`) ;
+   - `cause` : l'identifiant de la US dont la livraison a introduit le défaut (par exemple `US-012`), si on le sait.
+3. **N'invente jamais** `cause` ni `detecte_le`. Si l'humain ne sait pas, laisse le champ vide et écris
+   `À confirmer :` dans la description. Ne déduis pas la cause à partir du code.
+4. Le Gherkin du bug reproduit le défaut sous forme de scénario qui échoue aujourd'hui et passera après correction.
+5. Un bug corrigé et déployé en production aura sa propre date de mise en production, écrite plus tard par
+   `npx orbith deploiement`. Tu n'y touches pas.
 
 ### E. Du brouillon à `Prête`
 Explique ce parcours, qui ne dépend pas de toi :

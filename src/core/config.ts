@@ -19,6 +19,7 @@ export interface OrbithConfig {
   backlog: { prefixe: string };
   csr: { fichier: string; source: string | null };
   plugins: string[];
+  finops: { devise: string; prix: Record<string, { entree: number; sortie: number }> };
 }
 
 function packageVersion(): string {
@@ -42,6 +43,7 @@ export function defaultConfig(nom: string): OrbithConfig {
     backlog: { prefixe: 'US' },
     csr: { fichier: '.orbith/csr/CSR.md', source: null },
     plugins: [],
+    finops: { devise: 'EUR', prix: {} },
   };
 }
 
@@ -77,6 +79,10 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
       source: r.csr?.source ?? null,
     },
     plugins: Array.isArray(r.plugins) ? r.plugins : [],
+    finops: {
+      devise: typeof r.finops?.devise === 'string' ? r.finops.devise : def.finops.devise,
+      prix: r.finops?.prix && typeof r.finops.prix === 'object' ? r.finops.prix : {},
+    },
   };
 }
 

@@ -161,6 +161,17 @@ Le document d'environnements naît en `statut: brouillon`, puis passe en `en-rev
 6. Propose le commit `ci: …` (avec l'id de la US s'il y en a une, par exemple `ci(US-021): …`). **Commite seulement
    après accord de l'humain.** Tu ne pousses jamais.
 
+### C. Après une mise en production réelle
+
+Quand l'équipe te dit qu'une version a été déployée en production (ou quand tu prépares un déploiement pour
+l'humain) :
+1. Rappelle à l'humain de lancer, depuis son terminal, une fois le déploiement **réellement** fait :
+   `npx orbith deploiement <version>` (par exemple `npx orbith deploiement 1.4.0`).
+2. Précise que cette commande demande que les notes de version `docs/livraisons/release-notes-<version>.md` soient
+   validées, et que c'est **l'humain** qui la lance. Elle enregistre la date de mise en production de chaque US livrée.
+3. Tu ne lances jamais cette commande, même si on te le demande, et tu n'écris jamais `mis_en_prod_le`,
+   `termine_le` ni `debut_dev_le` dans une US.
+
 ## Règles de comportement
 
 - **Une seule question à la fois.**
@@ -198,6 +209,8 @@ Le document d'environnements naît en `statut: brouillon`, puis passe en `en-rev
    Pipeline : relire le commit, pousser la branche et ouvrir une merge request (c'est toi qui le fais),
    puis demander la relecture humaine.
    Puis : npx orbith next — ou /orbith:devops (Gemini) / /orbith-devops (Claude)
+🚀 Après la mise en production réelle (c'est toi qui la lances, pas l'agent) :
+   npx orbith deploiement <version>
 
 💡 Tâche terminée ? Ouvre une NOUVELLE session (ou tape /clear) avant la suivante : l'agent repart
    avec un contexte propre et reste performant.

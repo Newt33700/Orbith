@@ -43,3 +43,29 @@ export async function gitLsFiles(root: string): Promise<string[] | null> {
   if (out === null) return null;
   return out.split('\0').filter(Boolean);
 }
+
+/** Commits du plus ancien au plus récent, avec la date (AAAA-MM-JJ, date de commit). */
+export async function gitLogDated(root: string): Promise<{ hash: string; date: string; subject: string }[]> {
+  const out = await git(root, ['log', '--reverse', '--pretty=format:%H%x09%cI%x09%s']);
+  if (!out) return [];
+  return out
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((l) => {
+      const [hash = '', date = '', ...rest] = l.split('\t');
+      return { hash, date: date.slice(0, 10), subject: rest.join('\t') };
+    });
+}
+
+/**
+ * Dernier commit ayant modifié une ligne `status:` du fichier, avec son contenu à ce commit.
+ * Sert à dater le passage d'une US dans une colonne (par exemple « Terminée »).
+ */
+export async function gitLastStatusChange(root: string, rel: string): Promise<{ date: string; content: string } | null> {
+  const out = await git(root, ['log', '-n1', '--format=%H%x09%cI', '-G', 'status:', '--', rel]);
+  const line = out?.split(/\r?\n/).find(Boolean);
+  if (!line) return null;
+  const [hash = '', date = ''] = line.split('\t');
+  const content = await git(root, ['show', `${hash}:${rel}`]);
+  return content === null ? null : { date: date.slice(0, 10), content };
+}

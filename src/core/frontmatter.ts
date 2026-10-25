@@ -19,12 +19,16 @@ const OPTIONS = {
   },
 };
 
-export async function readDoc(file: string): Promise<Doc> {
+export function parseDoc(content: string): Doc {
   // CRLF (Windows) normalisé : gray-matter laisse sinon un \r en fin de valeur YAML.
-  const raw = (await fs.readFile(file, 'utf8')).replace(/\r\n/g, '\n');
+  const raw = content.replace(/\r\n/g, '\n');
   // Options fournies : désactive aussi le cache interne de gray-matter (il partage les objets `data` entre appels).
   const parsed = matter(raw, OPTIONS);
   return { data: (parsed.data ?? {}) as Record<string, unknown>, body: parsed.content };
+}
+
+export async function readDoc(file: string): Promise<Doc> {
+  return parseDoc(await fs.readFile(file, 'utf8'));
 }
 
 export async function writeDoc(file: string, doc: Doc): Promise<void> {
