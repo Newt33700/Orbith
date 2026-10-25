@@ -446,7 +446,14 @@ Agent registry (single source, `src/adapters/agents.ts`):
 | changement-de-cap | workflows/changement-de-cap.md | /orbith:changement-de-cap | /orbith-changement-de-cap | Changement de cap : impact d'un changement de besoin sur les epics et les US |
 
 14 entries: 10 agents and 4 workflows (atelier, retro, relecture-adverse, changement-de-cap); `orbith install` and
-`orbith update` generate one Gemini and one Claude command per entry. Advanced agents/workflows (securite,
+`orbith update` generate one Gemini and one Claude command per entry.
+
+Opt-in third platform `copilot` (GitHub Copilot in VS Code; not in the default `plateformes`): one workspace prompt
+file `.github/prompts/<claude command>.prompt.md` per entry (frontmatter `description`, `argument-hint`; body is a
+Markdown link to `../../.orbith/<file>`, no copied content) and a marked block in `.github/copilot-instructions.md`
+linking the rules, CSR and project context. Copilot has no project-level read-deny file, so none is generated.
+Format source: code.visualstudio.com/docs/agent-customization/prompt-files and …/custom-instructions.
+`config.yaml` rejects unknown platforms, listing the allowed values (`gemini, claude, copilot`). Advanced agents/workflows (securite,
 test-architect, retro, relecture-adverse, changement-de-cap) follow the §8 conventions; their output documents are
 regular artifacts (§13).
 A third platform is deliberately not implemented: `Plateforme` is a closed union validated in `core/config.ts`

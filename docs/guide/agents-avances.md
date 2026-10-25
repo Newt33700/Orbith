@@ -57,10 +57,23 @@ chargent ensuite, dans de nouvelles sessions, et vous re-validez.
   vous le rappelle tant qu'un de ces documents n'est pas validé.
 - Comme toujours : ouvrez une **nouvelle session** entre deux tâches.
 
-## Piste : une troisième plateforme
+## Troisième plateforme : GitHub Copilot (facultative)
 
-Orbith génère aujourd'hui des commandes pour Gemini CLI et Claude Code. Ajouter une plateforme n'est pas
-trivial avec l'architecture actuelle : la liste des plateformes est fermée (configuration, option
-`--plateformes` de l'installation) et chaque outil a sa propre syntaxe de commandes. La démarche serait :
-écrire un adaptateur dans `src/adapters/` qui lit la liste unique des agents (`src/adapters/agents.ts`),
-élargir le type des plateformes, puis ajouter des tests. Cette piste n'est pas réalisée.
+En plus de Gemini CLI et Claude Code, Orbith sait générer les commandes pour **GitHub Copilot dans VS Code**.
+Cette plateforme n'est pas activée par défaut. Pour l'activer :
+
+- à l'installation : `npx orbith install --plateformes gemini,claude,copilot` (ou seulement `claude,copilot`) ;
+- sur un projet existant : ajoutez `copilot` à `plateformes` dans `.orbith/config.yaml`, puis `npx orbith update`.
+
+Orbith génère alors :
+
+- `.github/prompts/orbith.prompt.md`, `orbith-po.prompt.md`, … (les 14 commandes, mêmes noms que pour
+  Claude Code) : dans le chat Copilot, tapez `/orbith-po` suivi de votre demande. Chaque fichier ne contient
+  qu'un lien vers l'agent dans `.orbith/` ;
+- un bloc balisé `<!-- orbith:debut -->` … `<!-- orbith:fin -->` dans `.github/copilot-instructions.md`, qui
+  pointe vers les règles, le CSR et le contexte projet. Le reste du fichier vous appartient.
+
+Limite : Copilot n'offre pas de fichier de projet pour interdire la lecture des fichiers sensibles (`.env`,
+clés…). L'exclusion de contenu se règle dans les paramètres GitHub du dépôt ou de l'organisation ; à défaut,
+seule la règle de confidentialité d'Orbith protège ces fichiers. `npx orbith next` affiche toujours les
+commandes Gemini et Claude : sous Copilot, utilisez le nom de la commande Claude (`/orbith-…`).

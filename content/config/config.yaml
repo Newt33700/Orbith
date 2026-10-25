@@ -12,6 +12,7 @@ projet:
 # Plateformes d'IA pour lesquelles Orbith génère les commandes.
 #   gemini : Gemini CLI (commandes /orbith:po, etc.)
 #   claude : Claude Code (commandes /orbith-po, etc.)
+#   copilot : GitHub Copilot dans VS Code (facultatif ; .github/prompts/orbith-po.prompt.md, etc.)
 plateformes: [gemini, claude]
 
 # Piste par défaut, selon le type de travail :

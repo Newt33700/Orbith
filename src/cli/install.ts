@@ -26,7 +26,7 @@ import { runAdapters } from '../adapters/index.js';
 
 const execFileAsync = promisify(execFile);
 
-const PLATEFORMES: Plateforme[] = ['gemini', 'claude'];
+const PLATEFORMES: readonly Plateforme[] = ['gemini', 'claude', 'copilot'];
 const PISTES: Piste[] = ['correctif', 'evolution', 'projet'];
 export const CORE_DIRS = ['agents', 'workflows', 'templates', 'rules'] as const;
 const SKELETON_DIRS = [
@@ -111,7 +111,7 @@ async function copySkeleton(
   }
 }
 
-function parseList<T extends string>(raw: string, allowed: T[], what: string): T[] {
+function parseList<T extends string>(raw: string, allowed: readonly T[], what: string): T[] {
   const values = raw
     .split(',')
     .map((s) => s.trim().toLowerCase())
@@ -157,6 +157,7 @@ export async function runInstall(opts: InstallOptions): Promise<void> {
         options: [
           { value: 'gemini', label: 'Gemini CLI' },
           { value: 'claude', label: 'Claude Code' },
+          { value: 'copilot', label: 'GitHub Copilot (VS Code)', hint: 'facultatif' },
         ],
         initialValues: ['gemini', 'claude'],
         required: true,
@@ -281,7 +282,7 @@ export function register(program: Command): void {
   program
     .command('install')
     .description('Installe Orbith dans le projet')
-    .option('--plateformes <liste>', 'plateformes à générer (gemini,claude)')
+    .option('--plateformes <liste>', 'plateformes à générer (gemini,claude,copilot ; défaut : gemini,claude)')
     .option('--piste <piste>', 'piste par défaut (correctif, evolution, projet)')
     .option('--nom <nom>', 'nom du projet')
     .option('--csr-source <source>', 'source du CSR (chemin, git+https://…#fichier, URL https)')
