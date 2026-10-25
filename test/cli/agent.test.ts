@@ -77,11 +77,11 @@ describe('orbith agent new / list', () => {
 
   it("n'écrase jamais un fichier existant et refuse un nom du cœur ou invalide", async () => {
     await runInstall({ cwd: root, yes: true, nom: 'demo' });
-    await runAgentNew('redacteur', { cwd: root, yes: true });
-    const avant = await read('.orbith/custom/agents/redacteur.md');
-    expect(avant).toContain('Agent personnalisé « redacteur » (à compléter)');
-    await expect(runAgentNew('redacteur', { cwd: root, yes: true })).rejects.toThrow(/existe déjà/);
-    expect(await read('.orbith/custom/agents/redacteur.md')).toBe(avant);
+    await runAgentNew('juriste', { cwd: root, yes: true });
+    const avant = await read('.orbith/custom/agents/juriste.md');
+    expect(avant).toContain('Agent personnalisé « juriste » (à compléter)');
+    await expect(runAgentNew('juriste', { cwd: root, yes: true })).rejects.toThrow(/existe déjà/);
+    expect(await read('.orbith/custom/agents/juriste.md')).toBe(avant);
     await expect(runAgentNew('qa', { cwd: root, yes: true })).rejects.toThrow(/agent du cœur/);
     await expect(runAgentNew('archi', { cwd: root, yes: true })).rejects.toThrow(/architecte/);
     await expect(runAgentNew('Pas Bon', { cwd: root, yes: true })).rejects.toBeInstanceOf(OrbithError);
