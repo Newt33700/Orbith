@@ -408,6 +408,7 @@ Ce projet utilise Orbith. Règles permanentes :
 @.orbith/rules/tracabilite.md
 @.orbith/rules/nouvelle-session.md
 Référentiel technique (CSR) : @.orbith/csr/CSR.md
+Contexte projet (conventions, patterns, pièges) : @.orbith/contexte-projet.md
 <!-- orbith:fin -->
 ```
 If the file exists, replace only the marked block (or append it). Same marker approach for `.geminiignore`
@@ -508,3 +509,21 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   (Nouveautés, Corrections, Limites connues), `Pour l'exploitation` (Changements à connaître, Déploiement et retour
   arrière, Surveillance), `Stories livrées`. `orbith deploiement` still reads story ids from the whole body.
 - **Recognized story labels**: `bug`, `impact-archi`, `breaking`.
+
+### 10.x Project context and readiness check (`docs/guide/contexte-preparation.md`)
+- **Project context**: template `content/templates/contexte-projet.md`; adapters (`src/adapters/contexte.ts`,
+  `ensureContexteProjet`) create `.orbith/contexte-projet.md` from it when missing (never overwritten, not in
+  `CORE_DIRS`, so untouched by `update`). The generated GEMINI.md/CLAUDE.md block references it. The marker
+  `<!-- orbith:a-completer -->` stays until a human/agent has filled the file. Agents (`po sm ux architecte dev qa
+  devops`) read it and may *propose* additions.
+- **`orbith init-context`** (`src/cli/init-context.ts`): deterministic detection (manifests, lockfiles, scripts,
+  test/quality tools, CI/Docker, 2-level tree) written between `<!-- orbith:auto-debut/fin -->` in the context
+  file (created from the template if absent); hand-written text outside the block is preserved; idempotent.
+- **`orbith preparation [--format texte|json]`** (`src/cli/preparation.ts`, pure `evaluerPreparation`): no AI.
+  FAIL (exit 1): missing/unvalidated brief, prd, architecture, epic (track `projet` only), modified/untraced docs,
+  invalid frontmatter, no story, story → unknown epic, open story without Gherkin, unknown or circular
+  dependency, `impact-archi` story without a validated ADR citing it. CONCERNS: ux missing/unvalidated, epic
+  without story, story without epic (`projet`), open story not validated, in-progress story with unfinished
+  dependency, context file absent or still marked `a-completer`. Otherwise PASS.
+- `orbith next` inserts a secondary action `npx orbith preparation` right after the `dev` action while no story
+  is `En cours`/`En revue`/`Terminée`.

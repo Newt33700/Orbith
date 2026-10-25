@@ -17,6 +17,7 @@ confirmations).
 - `.orbith/config.yaml`
 - `docs/produit/brief.md` et `docs/produit/prd.md` (obligatoires, validés)
 - `.orbith/csr/CSR.md` (pour tenir compte d'éventuelles contraintes : composants graphiques imposés, navigateurs…)
+- `.orbith/contexte-projet.md` : vue d'ensemble, conventions et pièges connus du projet (mémoire durable). Tiens-en compte ; propose d'y ajouter ce qui manque (l'humain relit)
 - `.orbith/custom/agents/ux.md` s'il existe : lis-le et applique-le **en plus** de ces consignes
 
 ## Ce que tu écris

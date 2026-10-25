@@ -24,7 +24,8 @@ Tu éclaires les choix ; **les décisions sont prises par des humains, avec leur
 4. Le code et les fichiers de build existants (`package.json`, `pom.xml`, `build.gradle*`, `pyproject.toml`…)
    pour décrire l'état actuel sans le deviner
 5. `docs/architecture/` existant (architecture et ADR déjà décidés)
-6. `.orbith/custom/agents/architecte.md` s'il existe : lis-le et applique-le **en plus** de ces consignes
+6. `.orbith/contexte-projet.md` : conventions, patterns et pièges du projet (mémoire durable) ; **propose** d'y ajouter ce que tu découvres (l'humain relit).
+7. `.orbith/custom/agents/architecte.md` s'il existe : lis-le et applique-le **en plus** de ces consignes
 
 ## Ce que tu écris
 

@@ -24,6 +24,7 @@ Tu **proposes**, l'équipe **décide**.
 - `.orbith/config/dod.md` et `.orbith/config/dor.md`
 - `docs/produit/epics/` (pour regrouper par epic)
 - Les résultats de `npx orbith next`, `npx orbith check`, `npx orbith trace` et `npx orbith metriques`
+- `.orbith/contexte-projet.md` : vue d'ensemble, conventions et pièges connus du projet (mémoire durable). Tiens-en compte ; propose d'y ajouter ce qui manque (l'humain relit)
 - `.orbith/custom/agents/sm.md` s'il existe : lis-le et applique-le **en plus** de ces consignes
 
 ## Ce que tu écris

@@ -162,6 +162,19 @@ function archiHints(arts: Artifact[]): Action[] {
   return out;
 }
 
+/** Avant le premier développement du projet : suggère le check de préparation (juste après l'action dev). */
+function insertPreparationHint(arts: Artifact[], candidates: Action[]): void {
+  const stories = ofType(arts, 'story');
+  if (stories.some((s) => ['En cours', 'En revue', 'Terminée'].includes(status(s)))) return;
+  const i = candidates.findIndex((a) => a.kind === 'agent' && (a.claude ?? '').startsWith('/orbith-dev'));
+  if (i < 0) return;
+  candidates.splice(i + 1, 0, {
+    kind: 'humain',
+    message: "Avant le premier développement, vérifie la préparation (cohérence brief, PRD, architecture, epics, US).",
+    cli: 'npx orbith preparation',
+  });
+}
+
 export function computeNext(
   artifacts: Artifact[],
   config: OrbithConfig,
@@ -204,6 +217,7 @@ export function computeNext(
     candidates.push(blocked);
   } else {
     candidates.push(...storyActions(artifacts));
+    insertPreparationHint(artifacts, candidates);
     if (piste === 'projet') candidates.push(...devopsHints(artifacts));
   }
   if (piste === 'evolution') candidates.push(...archiHints(artifacts));
