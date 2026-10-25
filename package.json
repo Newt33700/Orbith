@@ -1,0 +1,55 @@
+{
+  "name": "orbith",
+  "version": "0.1.0",
+  "description": "Méthode agile pilotée par l'IA : une équipe d'agents experts (PO, Architecte, Dev, UX, QA…) pour Gemini CLI et Claude Code, avec la validation humaine au centre.",
+  "type": "module",
+  "bin": {
+    "orbith": "bin/orbith.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "content",
+    "plugins",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli/index.ts",
+    "test": "vitest run",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Newt33700/Orbith.git"
+  },
+  "keywords": [
+    "agile",
+    "ai",
+    "agents",
+    "gemini-cli",
+    "claude-code",
+    "scrum",
+    "backlog"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^1.8.1",
+    "commander": "^15.0.0",
+    "exceljs": "^4.4.0",
+    "gray-matter": "^4.0.3",
+    "picocolors": "^1.1.1",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,0 +1,28 @@
+# Pipeline GitLab CI du projet {{nom}}.
+# Le job `orbith-check` vérifie la conformité CSR, les validations humaines,
+# la traçabilité et l'absence de secrets. Il bloque la fusion si une erreur est trouvée.
+
+stages:
+  - qualite
+  # Ajoute ici les étapes de ton projet, par exemple : build, test, deploy.
+
+orbith-check:
+  stage: qualite
+  image: node:22
+  script:
+    - npx orbith check
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+# Décommente et adapte ce job pour lancer les tests du projet.
+#
+# tests:
+#   stage: qualite
+#   image: node:22
+#   script:
+#     - npm ci
+#     - npm test
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+#     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

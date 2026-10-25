@@ -1,0 +1,69 @@
+# {{nom}}
+
+<!-- Remplace le texte ci-dessous par la description de ton projet. -->
+
+> Décris ici en une phrase à quoi sert le projet, pour qui, et quel problème il résout.
+
+## Contexte
+
+Ce projet est piloté avec **Orbith** : une équipe d'agents IA guide le travail, et chaque
+décision importante est validée par un humain.
+
+## Démarrer avec Orbith
+
+Lance cette commande à la racine du projet pour savoir quoi faire :
+
+```bash
+npx orbith next
+```
+
+Orbith te dit ce qu'il faut faire ensuite, avec la commande exacte à lancer.
+
+### Commandes principales
+
+| Commande | À quoi elle sert |
+|---|---|
+| `npx orbith next` | Affiche la prochaine action recommandée |
+| `npx orbith valider <fichier>` | Valide un document (seul un humain peut le faire) |
+| `npx orbith check` | Vérifie le CSR, les validations, la traçabilité et les secrets |
+| `npx orbith trace` | Produit la matrice de traçabilité (US, commits, tests, livraisons) |
+| `npx orbith csr import <fichier.xlsx>` | Importe le CSR depuis un fichier Excel |
+| `npx orbith update` | Met à jour les agents et les règles Orbith |
+| `npx orbith plugin list` | Liste les plugins disponibles |
+
+### Agents disponibles
+
+Dans Claude Code, tape `/orbith` ou `/orbith-po`, `/orbith-dev`, etc.
+Dans Gemini CLI, tape `/orbith:guide` ou `/orbith:po`, `/orbith:dev`, etc.
+
+> **Astuce : une tâche, une session.**
+> Ouvre une **nouvelle session** (ou tape `/clear`) avant chaque nouvelle tâche.
+> Un contexte propre garde l'agent rapide et précis.
+
+## Règles du projet
+
+- Ne mets jamais de mot de passe, de clé d'API ou de donnée personnelle dans un prompt ou dans le code.
+- Chaque commit porte l'identifiant de sa user story, par exemple `feat(US-001): ...`.
+- Les documents validés sont modifiés seulement après revue humaine.
+
+## Organisation du dépôt
+
+```text
+.orbith/            Configuration et règles Orbith (ne pas modifier sans raison)
+docs/produit/       Brief, PRD, UX et épics
+docs/architecture/  Architecture et décisions (ADR)
+docs/livraisons/    Notes de livraison par version
+backlog/tasks/      User stories
+src/                Code source
+tests/              Tests automatisés
+```
+
+## Installation et développement
+
+<!-- Ajoute ici les commandes pour installer les dépendances, lancer le projet et les tests. -->
+
+```bash
+# npm install
+# npm run dev
+# npm test
+```
