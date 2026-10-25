@@ -7,7 +7,26 @@ import { exists } from './fsutil.js';
 import { readFileSync } from 'node:fs';
 import { packageRoot } from './paths.js';
 
-export type Plateforme = 'gemini' | 'claude';
+export type Plateforme = 'gemini' | 'claude' | 'copilot';
+/** Plateformes reconnues. `copilot` est facultative : absente des valeurs par défaut. */
+export const PLATEFORMES: readonly Plateforme[] = ['gemini', 'claude', 'copilot'];
+
+function lirePlateformes(raw: unknown, def: Plateforme[]): Plateforme[] {
+  if (raw == null) return def;
+  if (!Array.isArray(raw)) {
+    throw new OrbithError(
+      `Fichier .orbith/config.yaml invalide : \`plateformes\` doit être une liste (valeurs permises : ${PLATEFORMES.join(', ')}).`,
+    );
+  }
+  for (const v of raw) {
+    if (typeof v !== 'string' || !(PLATEFORMES as readonly string[]).includes(v)) {
+      throw new OrbithError(
+        `Fichier .orbith/config.yaml invalide : plateforme inconnue « ${String(v)} » (valeurs permises : ${PLATEFORMES.join(', ')}).`,
+      );
+    }
+  }
+  return [...new Set(raw as Plateforme[])];
+}
 export type Piste = 'correctif' | 'evolution' | 'projet';
 
 /** Cibles facultatives par indicateur DORA (`dora.cibles`). La fréquence est un minimum, les autres des maximums. */
@@ -118,7 +137,7 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
     version: 1,
     orbith_version: r.orbith_version ?? def.orbith_version,
     projet: { nom: r.projet?.nom ?? def.projet.nom },
-    plateformes: Array.isArray(r.plateformes) ? r.plateformes : def.plateformes,
+    plateformes: lirePlateformes(r.plateformes, def.plateformes),
     piste: r.piste ?? def.piste,
     backlog: { prefixe: r.backlog?.prefixe ?? def.backlog.prefixe },
     csr: {

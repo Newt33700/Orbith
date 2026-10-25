@@ -54,7 +54,8 @@ et indiquent toujours la prochaine action à faire.
 ## Prérequis
 
 - **Node.js 22 ou plus récent** (vérifiez avec `node --version`).
-- **Gemini CLI** ou **Claude Code**, installé et connecté à votre compte.
+- **Gemini CLI** ou **Claude Code**, installé et connecté à votre compte (ou, en option, **GitHub Copilot**
+  dans VS Code : `npx orbith install --plateformes claude,copilot`).
 - **Git** (recommandé : il permet la traçabilité et l'identification de la personne qui valide).
 
 ## Installation
@@ -83,7 +84,9 @@ Pour un premier pas détaillé, lisez [docs/guide/demarrage.md](docs/guide/demar
 ## Les agents
 
 Orbith installe 14 commandes : 10 agents et 4 workflows (atelier, rétrospective, relecture adverse, changement de
-cap). Chaque commande existe en deux syntaxes, selon l'outil utilisé.
+cap). Chaque commande existe en deux syntaxes, selon l'outil utilisé. Si vous avez activé GitHub Copilot
+(facultatif, voir [agents avancés](docs/guide/agents-avances.md)), utilisez dans son chat le nom de la colonne
+Claude Code (`/orbith-po`, etc.).
 
 | Agent | Rôle | Gemini CLI | Claude Code |
 |---|---|---|---|

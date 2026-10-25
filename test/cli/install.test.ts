@@ -55,7 +55,16 @@ describe('orbith install', () => {
   });
 
   it('refuse une plateforme inconnue', async () => {
-    await expect(runInstall({ cwd: root, yes: true, plateformes: 'copilot' })).rejects.toThrow(/Plateforme invalide/);
+    await expect(runInstall({ cwd: root, yes: true, plateformes: 'cursor' })).rejects.toThrow(
+      /Plateforme invalide : cursor.*gemini, claude, copilot/,
+    );
+  });
+
+  it('installe GitHub Copilot sur demande (opt-in)', async () => {
+    await runInstall({ cwd: root, yes: true, plateformes: 'claude,copilot' });
+    expect(await exists(path.join(root, '.github/prompts/orbith-po.prompt.md'))).toBe(true);
+    expect(await exists(path.join(root, '.github/copilot-instructions.md'))).toBe(true);
+    expect(await exists(path.join(root, 'GEMINI.md'))).toBe(false);
   });
 
   it('est idempotent', async () => {
