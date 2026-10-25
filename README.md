@@ -161,6 +161,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés (voir [metriques.md](docs/guide/metriques.md)) |
 | `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
+| `npx orbith sbom` | Produit la liste des composants (SBOM CycloneDX JSON) ; `check` contrôle les licences interdites et la chaîne d'audit des registres (voir [integrite-sbom.md](docs/guide/integrite-sbom.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
 | `npx orbith csr sync` | Récupère le CSR depuis la source interne déclarée dans `.orbith/config.yaml` |
 | `npx orbith update` | Met à jour les agents et les règles, sans toucher à votre configuration |
@@ -489,6 +490,7 @@ Estimation du prix de l'utilisation d'un agent IA pour une tâche, calculée à 
 | [atelier.md](docs/guide/atelier.md) | Tout le monde | Faire travailler plusieurs agents ensemble |
 | [plugins.md](docs/guide/plugins.md) | Tout le monde | Plugin Backlog.md et tableau Kanban |
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
+| [integrite-sbom.md](docs/guide/integrite-sbom.md) | Sécurité, conformité | Journal d'audit chaîné, SBOM, licences |
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
 

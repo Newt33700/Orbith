@@ -1,8 +1,9 @@
 import { scanAll } from '../core/index.js';
+import { chaineResultats } from './chaine.js';
 import type { CheckContext, CheckResult } from './types.js';
 
 export async function run(ctx: CheckContext): Promise<CheckResult[]> {
-  const res: CheckResult[] = [];
+  const res: CheckResult[] = [...(await chaineResultats(ctx.root))];
   const { artifacts, problems } = await scanAll(ctx.root);
   for (const pb of problems) {
     res.push({

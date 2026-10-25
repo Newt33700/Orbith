@@ -5,6 +5,7 @@ import { ORBITH_DIR, toPosixRelative } from './paths.js';
 import { readDoc, type Doc } from './frontmatter.js';
 import { exists } from './fsutil.js';
 import { OrbithError } from './errors.js';
+import { chainer, verifierChaine, type EtatChaine } from './chaine.js';
 
 export type EtatValidation = 'validé' | 'non-validé' | 'modifié' | 'non-tracé';
 
@@ -14,6 +15,8 @@ export interface ValidationEntry {
   par: string;
   email: string;
   le: string;
+  /** Empreinte de l'entrée précédente du registre (journal chaîné, voir chaine.ts). */
+  precedent?: string;
 }
 
 export function hashBody(body: string): string {
@@ -40,9 +43,25 @@ export async function loadRegistry(root: string): Promise<ValidationEntry[]> {
   return Array.isArray(json?.validations) ? json.validations : [];
 }
 
+/** État de la chaîne du registre des validations (lecture seule). */
+export async function etatChaineRegistre(root: string): Promise<EtatChaine> {
+  return verifierChaine(await loadRegistry(root));
+}
+
+/**
+ * Enregistre une validation (remplace l'entrée du fichier) puis rechaîne le registre.
+ * Un registre à la chaîne rompue est refusé : le rechaîner effacerait la trace de l'édition manuelle.
+ * Un ancien registre sans chaîne est chaîné à cette occasion (migration douce).
+ */
 export async function recordValidation(root: string, entry: ValidationEntry): Promise<void> {
-  const entries = (await loadRegistry(root)).filter((e) => e.fichier !== entry.fichier);
-  entries.push(entry);
+  const actuel = await loadRegistry(root);
+  const chaine = verifierChaine(actuel);
+  if (chaine.etat === 'rompue') {
+    throw new OrbithError(
+      `Le registre .orbith/validations.json a été modifié à la main (chaîne rompue à l'entrée ${chaine.index + 1}). Restaure-le depuis git avant de continuer.`,
+    );
+  }
+  const entries = chainer([...actuel.filter((e) => e.fichier !== entry.fichier), entry]);
   const file = registryPath(root);
   await fs.mkdir(path.dirname(file), { recursive: true });
   await fs.writeFile(file, JSON.stringify({ version: 1, validations: entries }, null, 2) + '\n', 'utf8');

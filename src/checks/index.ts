@@ -3,6 +3,7 @@ import { run as runCsr } from './csr.js';
 import { run as runSecrets } from './secrets.js';
 import { run as runTracabilite } from './tracabilite.js';
 import { run as runValidations } from './validations.js';
+import { run as runSbom } from './sbom.js';
 import type { CheckContext, CheckResult } from './types.js';
 
 export * from './types.js';
@@ -20,12 +21,12 @@ export async function buildContext(root: string): Promise<CheckContext> {
 
 export async function runAll(ctx: CheckContext): Promise<CheckResult[]> {
   const out: CheckResult[] = [];
-  for (const run of [runCsr, runValidations, runTracabilite, runSecrets]) {
+  for (const run of [runCsr, runValidations, runTracabilite, runSecrets, runSbom]) {
     try {
       out.push(...(await run(ctx)));
     } catch (e) {
       out.push({
-        categorie: run === runCsr ? 'csr' : run === runValidations ? 'validations' : run === runTracabilite ? 'tracabilite' : 'secrets',
+        categorie: run === runCsr ? 'csr' : run === runValidations ? 'validations' : run === runTracabilite ? 'tracabilite' : run === runSbom ? 'sbom' : 'secrets',
         niveau: 'erreur',
         message: `Échec de la vérification : ${e instanceof Error ? e.message : String(e)}`,
       });

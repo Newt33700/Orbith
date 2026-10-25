@@ -20,6 +20,8 @@ export interface OrbithConfig {
   csr: { fichier: string; source: string | null };
   plugins: string[];
   finops: { devise: string; prix: Record<string, { entree: number; sortie: number }> };
+  /** Politique de licences (optionnelle) : s'ajoute à la catégorie « Licences » du CSR. */
+  sbom?: { licences_interdites: string[] };
 }
 
 function packageVersion(): string {
@@ -67,7 +69,11 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
   }
   const r = raw as Partial<OrbithConfig>;
   const def = defaultConfig(r.projet?.nom ?? path.basename(root));
+  const interdites = Array.isArray(r.sbom?.licences_interdites)
+    ? r.sbom.licences_interdites.filter((x): x is string => typeof x === 'string' && x.trim() !== '')
+    : [];
   return {
+    ...(interdites.length ? { sbom: { licences_interdites: interdites } } : {}),
     version: 1,
     orbith_version: r.orbith_version ?? def.orbith_version,
     projet: { nom: r.projet?.nom ?? def.projet.nom },
