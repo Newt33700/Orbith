@@ -14,7 +14,8 @@ Deux commandes :
 La proposition vient de deux sources :
 
 - les **commits** (Conventional Commits) depuis le dernier tag `vX.Y.Z` ;
-- les **US** terminées et pas encore mises en production.
+- les **US** terminées et pas encore mises en production. Une US déjà citée dans les notes d'une version publiée
+  (tag existant) n'est plus comptée, même avant `orbith deploiement`.
 
 | Signal | Effet |
 |---|---|
@@ -49,9 +50,16 @@ npx orbith release 1.3.0
    - les notes de version ne sont **pas validées** par un humain ;
    - le numéro n'est pas supérieur au dernier tag, ou le tag existe déjà.
 3. **Confirmation humaine.** Orbith montre la section du changelog et demande confirmation. Après ton accord, il :
-   - ajoute la section en tête de `CHANGELOG.md` (créé si besoin) ;
-   - enregistre ce seul fichier dans un commit `chore(release): v1.3.0` ;
+   - ajoute la section en tête de `CHANGELOG.md` (créé si besoin, fins de ligne du fichier conservées) ;
+   - enregistre dans un commit `chore(release): v1.3.0` `CHANGELOG.md` et, s'ils ne sont pas encore commités, les notes
+     de version et `.orbith/validations.json` (le tag contient ainsi les notes et leur validation). Tes autres
+     fichiers, modifiés ou indexés, ne sont pas touchés ;
    - crée le tag annoté `v1.3.0` **en local**.
+
+   Si le commit échoue (hook `pre-commit`, par exemple), `CHANGELOG.md` est remis dans son état d'avant et aucun tag
+   n'est créé : corrige le problème et relance. Si une US citée dans les notes a des modifications non commitées,
+   Orbith te prévient (le tag contiendra sa dernière version commitée). Il te prévient aussi quand le changelog
+   reprend des commits d'US pas encore terminées.
 
 Orbith **ne pousse jamais**. Il t'indique la commande à lancer toi-même : `git push && git push origin v1.3.0`.
 
@@ -60,9 +68,12 @@ Orbith **ne pousse jamais**. Il t'indique la commande à lancer toi-même : `git
 | Option | Effet |
 |---|---|
 | `--yes` | Pas de question (réservé à un humain qui lance un script) |
-| `--sans-tag` | Écrit seulement `CHANGELOG.md` : ni commit ni tag |
+| `--sans-tag` | Écrit seulement `CHANGELOG.md` : ni commit ni tag. Orbith affiche ensuite les commandes `git add`, `git commit` et `git tag` à lancer toi-même (commite avant de taguer, sinon le tag ne contient pas le changelog) |
 | `--dry-run` | Affiche le changelog prévu sans rien écrire (le brouillon de notes n'est pas créé non plus) |
-| `--date AAAA-MM-JJ` | Date de la version (aujourd'hui par défaut) |
+| `--date AAAA-MM-JJ` | Date de la version (aujourd'hui par défaut, date locale) |
+
+Orbith n'écrase jamais un fichier `docs/livraisons/release-notes-<version>.md` existant : s'il n'est pas reconnu
+comme notes de cette version (en-tête `type: release-notes` et `version`), la commande s'arrête et te le dit.
 
 ## Ensuite
 
