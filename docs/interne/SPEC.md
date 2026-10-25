@@ -108,7 +108,7 @@ roles:
 Every Orbith document has YAML frontmatter with at least:
 
 ```yaml
-type: brief | prd | ux | architecture | adr | epic | story | release-notes | environnements | change | incident
+type: brief | prd | ux | architecture | adr | epic | story | release-notes | environnements | change | incident | menaces | strategie-test | retro
 statut: brouillon | en-revue | validé
 ```
 
@@ -130,6 +130,9 @@ Canonical locations (used by `next`, `check`, `trace`):
 | release-notes | docs/livraisons/release-notes-*.md |
 | change | docs/livraisons/changes/CHG-NNN-*.md |
 | incident | docs/livraisons/incidents/INC-NNN-*.md |
+| menaces | docs/architecture/menaces.md |
+| strategie-test | docs/architecture/strategie-test.md |
+| retro | docs/livraisons/retro-<version>.md |
 
 Scanning uses the frontmatter `type` (files without it are ignored), the table above is where agents write.
 
@@ -587,3 +590,13 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   `sbom.licences_interdites` in config.yaml. `check` category `sbom` (`src/checks/sbom.ts`): forbidden → erreur,
   deprecated → avertissement, unknown license → info. SPDX `OR` is lenient, `AND`/`WITH` strict. No policy → no results.
   Guide: `docs/guide/integrite-sbom.md`.
+
+## 12. Advanced-agent documents (`menaces`, `strategie-test`, `retro`)
+
+- Artifact types written by the Security agent (`docs/architecture/menaces.md`), the Test Architect
+  (`docs/architecture/strategie-test.md`) and the `retro` workflow (`docs/livraisons/retro-<version>.md`).
+  Templates: `content/templates/{menaces,strategie-test,retro}.md` (frontmatter `type` + `statut: brouillon`).
+- They are validated like any other artifact (`orbith valider <file>`, hash recorded in the registry, `check`
+  detects later edits). Agents never write `statut: validé`.
+- `orbith next` appends a low-priority `valider` suggestion for each of these documents still not validated.
+  `trace` and `audit` need no specific handling (no US link); `audit` lists them with the other artifacts.
