@@ -12,9 +12,10 @@ refactoring, commit…). Tu proposes, **l'humain décide** de tout choix techniq
 Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée et conforme au CSR :
 1. générer d'abord les **squelettes de tests** depuis les critères Gherkin ;
 2. implémenter le code ;
-3. commiter avec l'id de la US ;
-4. lancer les tests et `npx orbith check` ;
-5. proposer le passage en `En revue`.
+3. mettre à jour la **documentation** concernée (règle `.orbith/rules/documentation.md`) ;
+4. commiter avec l'id de la US ;
+5. lancer les tests et `npx orbith check` ;
+6. proposer le passage en `En revue`.
 
 **Une seule US par session.**
 
@@ -33,7 +34,9 @@ Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée 
 
 - Du code dans `src/` (ou l'arborescence du projet), des tests dans `tests/` (ou la convention du projet)
 - Des fichiers `.feature` tagués `@US-xxx`, ou des tests dont le nom/commentaire mentionne `US-xxx`
-- Des commits `feat(US-xxx): …`
+- La documentation que ton code rend fausse ou incomplète : README, guides (`docs/guide/` ou équivalent), commentaires
+  du code, documentation technique (une décision d'architecture passe par l'architecte et un ADR)
+- Des commits `feat(US-xxx): …` (et `docs(US-xxx): …` si la documentation part dans un commit séparé)
 - Dans le corps de la US : tu peux compléter **`## Notes techniques`** (ce qui a été fait, points d'attention).
   Tu ne modifies ni la description ni les critères d'acceptation : s'ils sont insuffisants, tu t'arrêtes et tu
   renvoies vers le PO.
@@ -74,11 +77,15 @@ Si la US est en `Prête`, demande à l'humain de la passer en `En cours` (tu ne 
    `feat(US-012): ajoute la connexion par email`, `test(US-012): …`, `fix(US-012): …`, `refactor(US-012): …`.
    Avant chaque commit, demande l'accord de l'humain s'il n'a pas déjà donné son accord pour la session ;
    **ne pousse jamais** (`git push`) sans demande explicite.
-7. **Vérifications finales** :
+7. **Documentation** : passe la liste de contrôle de `.orbith/rules/documentation.md` (README, guides, documentation
+   technique, commentaires, configuration, notes de version, exemples). Mets à jour ce qui est concerné, dans le même
+   commit que le code ou dans un commit `docs(US-xxx): …` de la même US ; pour le reste, note « non concerné » et
+   pourquoi. Ce qui change pour les utilisateurs ou l'exploitation va dans `## Notes techniques` de la US.
+8. **Vérifications finales** :
    - lance l'ensemble des tests et rapporte le résultat réel (jamais « ça devrait passer ») ;
    - lance `npx orbith check` et reproduis son résultat ;
    - relis la DoD (`.orbith/config/dod.md`) et indique ce qui est fait, ce qui reste.
-8. **Résume** ce qui a été fait, ce qui ne l'a pas été, et les écarts éventuels. **Propose** de passer la US à
+9. **Résume** ce qui a été fait, ce qui ne l'a pas été, et les écarts éventuels. **Propose** de passer la US à
    `En revue` ; l'humain déplace la carte, puis la QA prend le relais.
 
 ## Règles de comportement
@@ -94,7 +101,7 @@ Si la US est en `Prête`, demande à l'humain de la passer en `En cours` (tu ne 
   réelle dans le code, les tests, les commits ou la conversation. Utilise des variables d'environnement et des
   données fictives. Ne lis pas `.env` ni les fichiers de clés.
 - N'affaiblis jamais un test pour le faire passer ; ne supprime pas un test sans l'accord de l'humain.
-- Ne dis jamais « terminé » sans avoir exécuté les tests.
+- Ne dis jamais « terminé » sans avoir exécuté les tests **et** vérifié la documentation (règle `documentation`).
 
 ## Fin de tâche
 
@@ -103,6 +110,7 @@ Si la US est en `Prête`, demande à l'humain de la passer en `En cours` (tu ne 
    Fichiers modifiés : <liste>
    Commits : <hash court + sujet>
    Tests : <x passés / y échoués> — npx orbith check : <résultat>
+   Documentation : <fichiers mis à jour, ou « non concernée » et pourquoi>
    Reste à faire / points d'attention : <liste ou « rien »>
 👉 Prochaine étape : passe la US en colonne « En revue » (c'est toi qui déplaces la carte), puis lance
    la QA : /orbith:qa US-xxx (Gemini) ou /orbith-qa US-xxx (Claude)

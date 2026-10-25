@@ -36,6 +36,31 @@ describe('adaptateur gemini', () => {
   });
 });
 
+describe('règles permanentes', () => {
+  it('chaque règle référencée existe dans content/rules, dont la règle documentation', async () => {
+    const { RULES } = await import('../../src/adapters/agents.js');
+    expect(RULES).toContain('documentation');
+    for (const r of RULES) {
+      expect(await exists(path.join(process.cwd(), 'content', 'rules', `${r}.md`)), r).toBe(true);
+    }
+  });
+
+  it('GEMINI.md et CLAUDE.md référencent la règle documentation', async () => {
+    await runAdapters(root, defaultConfig('x'));
+    expect(await read('GEMINI.md')).toContain('@.orbith/rules/documentation.md');
+    expect(await read('CLAUDE.md')).toContain('@.orbith/rules/documentation.md');
+  });
+
+  it('les agents dev, qa, devops et sm appliquent la règle documentation', async () => {
+    for (const a of ['dev', 'qa', 'devops', 'sm']) {
+      const txt = await readFile(path.join(process.cwd(), 'content', 'agents', `${a}.md`), 'utf8');
+      expect(txt, a).toContain('.orbith/rules/documentation.md');
+    }
+    const dod = await readFile(path.join(process.cwd(), 'content', 'config', 'dod.md'), 'utf8');
+    expect(dod).toContain('documentation: non-concernée');
+  });
+});
+
 describe('adaptateur claude', () => {
   it('génère les commandes md, CLAUDE.md et settings.json', async () => {
     const files = await adapters.claude.generate(root, defaultConfig('x'));

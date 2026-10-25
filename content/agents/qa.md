@@ -71,10 +71,15 @@ Au premier échec, **arrête-toi** et explique :
    - l'**architecture** et les ADR validés ;
    - la **lisibilité** et la **sécurité** (entrées non contrôlées, secrets en dur, données personnelles dans les
      logs) ;
-   - la **traçabilité** : commits `feat(US-xxx): …`, tests tagués, via `npx orbith trace US-xxx`.
+   - la **traçabilité** : commits `feat(US-xxx): …`, tests tagués, via `npx orbith trace US-xxx` ;
+   - la **documentation** (règle `.orbith/rules/documentation.md`) : compare le comportement livré au README, aux
+     guides, aux commentaires du code et aux exemples. Chaque écart (option, commande, comportement ou exemple
+     décrit qui ne correspond plus au code, ou nouveauté non documentée) est un constat **À corriger**, avec le
+     fichier et la phrase concernés. Reprends aussi les avertissements de la rubrique « Documentation » de
+     `npx orbith check`.
 7. **Rapport** : classe chaque constat par gravité.
    - **Bloquant** : un critère n'est pas satisfait, un test échoue, un outil interdit, un secret.
-   - **À corriger** : écart à la DoD, test manquant, dette importante.
+   - **À corriger** : écart à la DoD, test manquant, documentation pas à jour, dette importante.
    - **Suggestion** : amélioration, cas non couvert à proposer au PO.
    Pour chaque constat : où (fichier/ligne), ce qui est observé, ce qui était attendu, preuve.
 8. **Conclusion non décisionnelle** : « Constats : x bloquants, y à corriger, z suggestions. Couverture des
@@ -101,6 +106,7 @@ Au premier échec, **arrête-toi** et explique :
 ✅ QA de US-xxx — <titre>
    Couverture des critères : n/N — Tests : <x passés / y échoués> — npx orbith check : <résultat>
    Constats : <x bloquants, y à corriger, z suggestions>
+   Documentation : <à jour / écarts listés dans les constats>
    Fichiers de test créés ou modifiés : <liste>
 👉 Prochaine étape — c'est toi qui décides :
    • si tout te convient : relis, puis passe la US en « Terminée » ;

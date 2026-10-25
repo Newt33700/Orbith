@@ -142,15 +142,15 @@ Pour chaque élément :
 ### Exemple de sortie
 
 ```
-Contrôle CSR
-  ✖ Erreur : AngularJS est interdit (dépendance « angular » détectée dans package.json)
-  ⚠ Avertissement : moment est déprécié, utiliser date-fns
-  ✖ Erreur : Node.js 20.11 détecté, version minimale du CSR : 22
-
-1 erreur, 1 avertissement
+Cadre de référence (CSR)
+  ❌ Node.js 18 (package.json) est inférieur à la version minimale du CSR (22). [package.json]
+  ❌ AngularJS est interdit par le CSR (fin de vie, sécurité non maintenue) — utilisé dans package.json. [package.json]
+  ⚠️  moment est déprécié selon le CSR (utiliser date-fns) — utilisé dans package.json. [package.json]
+…
+❌ 2 erreur(s), 1 avertissement(s)
 ```
 
-Le format exact peut varier légèrement. Pour une lecture automatique, utilisez `npx orbith check --format json`.
+Les autres rubriques de `check` (validations, traçabilité, documentation, secrets, licences) suivent le même format. Pour une lecture automatique, utilisez `npx orbith check --format json`.
 
 ## Bonnes pratiques
 

@@ -36,8 +36,11 @@ cd chemin/vers/mon-projet
 ## Étape 2 : installer Orbith
 
 ```bash
-npx orbith install
+npx github:Newt33700/Orbith install
 ```
+
+Une fois Orbith publié sur npm, la commande s'écrit `npx orbith install`. Dans la suite de ce guide, les commandes
+sont écrites `npx orbith …`.
 
 Orbith vous pose quelques questions :
 
@@ -51,9 +54,13 @@ Pour éviter les questions :
 npx orbith install --plateformes gemini,claude --piste evolution --nom mon-projet --yes
 ```
 
-L'installation copie les agents dans `.orbith/`, crée les commandes Gemini et Claude, et ajoute un bloc Orbith à
-`GEMINI.md` ou `CLAUDE.md`. Votre contenu existant est conservé. Pour un projet existant, Orbith ne remplace jamais
-un fichier : il le laisse en place et vous prévient.
+L'installation copie les agents dans `.orbith/`, crée les commandes Gemini et Claude (14 de chaque), et ajoute un bloc
+Orbith à `GEMINI.md` ou `CLAUDE.md`. Votre contenu existant est conservé. Pour un projet existant, Orbith ne remplace
+jamais un fichier : il le laisse en place et vous prévient.
+
+**Projet existant** : lancez ensuite `npx orbith init-context`. La commande décrit votre projet (stack, scripts,
+tests, arborescence) dans `.orbith/contexte-projet.md`, que les agents lisent avant d'écrire du code. Voir
+[contexte-preparation.md](contexte-preparation.md).
 
 ## Étape 3 : vérifier l'installation
 
@@ -61,8 +68,9 @@ un fichier : il le laisse en place et vous prévient.
 npx orbith next
 ```
 
-Sur un projet vide, vous devriez voir : « commencez par le brief, lancez `/orbith:po` (Gemini) ou `/orbith-po`
-(Claude Code) ». C'est normal : la première étape est de définir le besoin.
+Sur un projet vide, avec la piste par défaut `evolution`, vous devriez voir : « Pas encore de US : lance le PO pour
+écrire la première US », avec `/orbith:po` (Gemini) et `/orbith-po` (Claude Code). Avec la piste `projet`, la première
+étape est le brief. C'est normal : on commence toujours par définir le besoin.
 
 ## Étape 4 : premier lancement dans Gemini CLI
 
@@ -127,10 +135,13 @@ Relancez Gemini CLI ou Claude Code depuis le dossier du projet.
 Configurez votre nom et votre adresse (voir le début de ce guide), puis relancez `npx orbith valider`.
 
 **Mettre Orbith à jour**
-Lancez `npx orbith update`. Votre configuration, votre CSR et votre dossier `custom/` ne sont pas modifiés.
+Lancez `npx orbith update`. Votre configuration, votre CSR, votre dossier `custom/`, votre contexte projet et vos
+registres de validation ne sont pas modifiés ; les nouveaux agents, modèles et règles sont ajoutés.
 
 ## Pour aller plus loin
 
 - Product Owner ou chef de projet : [guide-po.md](guide-po.md).
 - Lead tech ou développeur : [guide-dev.md](guide-dev.md).
+- Environnements et pipeline : [guide-devops.md](guide-devops.md).
 - Comprendre les validations : [validation-humaine.md](validation-humaine.md).
+- Tous les guides : tableau « Documentation détaillée » du [README](../../README.md#documentation-détaillée).

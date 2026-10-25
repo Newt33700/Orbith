@@ -38,7 +38,15 @@ export interface OrbithConfig {
   roles?: { quatre_yeux: boolean; valideurs: Record<string, string[]> };
   /** Politique de licences (optionnelle) : s'ajoute à la catégorie « Licences » du CSR. */
   sbom?: { licences_interdites: string[] };
+  /**
+   * Facultatif : contrôle « code modifié sans documentation » de `orbith check` (actif par défaut).
+   * `controle: false` le désactive ; `code` liste les préfixes de chemins considérés comme du code (défaut `src/`).
+   */
+  documentation?: { controle: boolean; code: string[] };
 }
+
+/** Préfixes de chemins considérés comme du code par défaut (contrôle de documentation). */
+export const DOCUMENTATION_CODE_DEFAUT = ['src/'] as const;
 
 function lireCiblesDora(raw: unknown): DoraCibles | undefined {
   if (raw == null) return undefined;
@@ -140,6 +148,16 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
     cfg.roles = { quatre_yeux: (r.roles as { quatre_yeux?: unknown }).quatre_yeux === true, valideurs };
   }
   if (interdites.length) cfg.sbom = { licences_interdites: interdites };
+  if (r.documentation && typeof r.documentation === 'object') {
+    const d = r.documentation as { controle?: unknown; code?: unknown };
+    const code = Array.isArray(d.code)
+      ? d.code.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim())
+      : [];
+    cfg.documentation = {
+      controle: d.controle !== false,
+      code: code.length ? code : [...DOCUMENTATION_CODE_DEFAUT],
+    };
+  }
   return cfg;
 }
 

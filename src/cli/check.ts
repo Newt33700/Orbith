@@ -7,6 +7,7 @@ const CATEGORIES: { id: CheckCategorie; titre: string }[] = [
   { id: 'csr', titre: 'Cadre de référence (CSR)' },
   { id: 'validations', titre: 'Validations' },
   { id: 'tracabilite', titre: 'Traçabilité' },
+  { id: 'documentation', titre: 'Documentation' },
   { id: 'secrets', titre: 'Secrets' },
   { id: 'sbom', titre: 'Licences (SBOM)' },
 ];
@@ -20,7 +21,7 @@ function ligne(r: CheckResult): string {
 export function register(program: Command): void {
   program
     .command('check')
-    .description('Vérifie la conformité (CSR, validations, traçabilité, secrets)')
+    .description('Vérifie la conformité (CSR, validations, traçabilité, documentation, secrets, licences)')
     .option('--format <format>', 'format de sortie (texte|json)', 'texte')
     .option('--cwd <dir>', 'dossier de travail')
     .action(async (opts: { format: string; cwd?: string }) => {

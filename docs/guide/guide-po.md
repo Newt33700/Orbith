@@ -168,6 +168,16 @@ Toutes les stories de la version reçoivent alors leur date de mise en productio
 > Le point de départ est le commit enregistré à la création de la version précédente. Pour une première version
 > à partir d'un tag existant, utilisez `npx orbith version 1.1.0.0 --depuis v1.0.0`.
 
+## Avant de passer la main à l'équipe technique
+
+- **Une passe critique** avant de valider un PRD, une epic ou une story : `/orbith-relecture-adverse <fichier>`
+  (voir [agents-avances.md](agents-avances.md)).
+- **Vérifiez la cohérence de l'ensemble** (brief, PRD, architecture, epics, stories, dépendances), sans IA :
+  `npx orbith preparation`. Le verdict est PASS, CONCERNS ou FAIL (voir
+  [contexte-preparation.md](contexte-preparation.md)).
+- **Le besoin change en cours de route ?** `/orbith-changement-de-cap` mesure l'impact sur les epics et les stories
+  avant toute modification.
+
 ## Points de vigilance
 
 - **Pas de données réelles** dans les échanges : noms de clients, adresses, données de production. Utilisez des

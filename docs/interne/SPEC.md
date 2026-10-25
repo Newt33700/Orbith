@@ -33,13 +33,18 @@ src/core/                # shared library (see §5) — the ONLY place for share
 src/adapters/gemini/     # generates Gemini CLI files
 src/adapters/claude/     # generates Claude Code files
 src/adapters/index.ts    # adapter registry
-src/checks/              # check rules used by `orbith check`
+src/adapters/agents.ts   # agent registry (§6), RULES, deny/ignore lists
+src/adapters/contexte.ts # creates .orbith/contexte-projet.md (§10.2)
+src/checks/              # check rules used by `orbith check` (§4.5)
+src/audit/               # `orbith audit` (collect + HTML render)
+src/sbom/                # `orbith sbom` (collect, CycloneDX, licence policy) (§12)
 content/                 # THE CORE, copied to <project>/.orbith/ on install
-  agents/                # guide.md po.md sm.md ux.md architecte.md dev.md qa.md
-  workflows/             # correctif.md evolution.md projet.md atelier.md
-  templates/             # brief.md prd.md ux.md architecture.md adr.md epic.md story.md release-notes.md
-  rules/                 # validation-humaine.md confidentialite.md tracabilite.md nouvelle-session.md
-  config/                # config.yaml (default) dor.md dod.md
+  agents/                # guide po sm ux architecte dev qa devops securite test-architect (.md)
+  workflows/             # correctif evolution projet atelier retro relecture-adverse changement-de-cap (.md)
+  templates/             # brief prd ux architecture adr epic story release-notes environnements bug change incident
+                         # menaces strategie-test retro contexte-projet (.md)
+  rules/                 # validation-humaine confidentialite tracabilite nouvelle-session couts-ia documentation (.md)
+  config/                # config.yaml (default, commented) dor.md dod.md
   csr/CSR.exemple.md     # example only — the real CSR lives in the company's private repo
   projet/                # files copied at project init (see §4.2)
 plugins/backlog-md/      # orbith-plugin.json + install logic
@@ -53,9 +58,6 @@ Dependencies already installed (do NOT add others without asking the orchestrato
 `commander`, `@clack/prompts`, `gray-matter`, `yaml`, `exceljs`, `picocolors`; dev: `typescript`, `vitest`,
 `@types/node`, `tsx`. Use `node:fs/promises`, `node:path`, `node:crypto`, `node:child_process`.
 
-Node binary for this machine: prefix every shell command with
-`export PATH=/private/tmp/claude-501/-Users-fabjuly-Documents-Sources-Orbith/cf277e1f-dac4-4fd8-a1d9-865d0b936286/scratchpad/node/current/bin:$PATH`.
-
 ## 3. Installed project layout
 
 ```
@@ -65,19 +67,22 @@ mon-projet/
 │   ├── config.yaml                               # project config (§3.1)
 │   ├── config/dor.md config/dod.md               # editable by the team
 │   ├── csr/CSR.md                                # copy of CSR.exemple.md at install
+│   ├── contexte-projet.md                        # project memory (§10.2), created if missing, never overwritten
 │   ├── custom/                                   # local overrides, never touched by update
-│   └── validations.json                          # human validation registry (§3.3)
-├── GEMINI.md / CLAUDE.md                         # generated, reference .orbith/rules/*
+│   ├── validations.json                          # human validation registry (§3.3), chained (§12)
+│   └── deploiements.json                         # deployment registry (§4.6c), chained (§12), created on first use
+├── GEMINI.md / CLAUDE.md                         # generated, reference .orbith/rules/*, CSR, project context
 ├── .gemini/commands/orbith/*.toml                # generated
 ├── .claude/commands/orbith-*.md                  # generated
 ├── .claude/settings.json                         # generated/merged: deny reading secrets
 ├── .geminiignore                                 # generated
 ├── docs/produit/        brief.md prd.md ux.md epics/EPIC-001-*.md
-├── docs/architecture/   architecture.md adr/ADR-001-*.md
-├── docs/livraisons/     release-notes-<version>.md
+├── docs/architecture/   architecture.md environnements.md menaces.md strategie-test.md adr/ADR-001-*.md
+├── docs/livraisons/     release-notes-<version>.md retro-<version>.md changes/ incidents/ audit-*.html
 ├── backlog/tasks/       user stories (one file per US, Backlog.md compatible — §3.4)
 ├── src/ tests/
 ├── .gitlab-ci.yml                                # runs `npx orbith check`
+├── CHANGELOG.md                                  # written by `orbith release` (§10.1)
 └── README.md .gitignore .editorconfig
 ```
 
@@ -96,11 +101,17 @@ csr:
   fichier: .orbith/csr/CSR.md
   source: null                  # git+https/git+ssh repo, https URL or local file (`orbith csr sync`)
 plugins: []                     # e.g. [backlog-md]
-# Optional keys (absent = feature off, see section 11 "Change requests and role matrix"):
-changements: { exiger_pour_deploiement: false }
-roles:
+finops:
+  devise: EUR
+  prix: { defaut: { entree: 3, sortie: 15 } }   # price per million tokens, per model family (§4.6d)
+# Optional keys (absent = default behaviour):
+changements: { exiger_pour_deploiement: false }   # §11
+roles:                                            # §11
   quatre_yeux: false            # validator must not be the author of the file's last commit
   valideurs: { prd: [alice@corp.fr, "Bob Martin"], change: [ops@corp.fr] }   # type (or "*") -> emails / git names
+dora: { cibles: { frequence_par_semaine: 1, delai_jours: 7, taux_echec_pct: 10, retablissement_heures: 24 } }  # §4.6d
+sbom: { licences_interdites: [AGPL-3.0] }         # §12
+documentation: { controle: true, code: [src/] }   # §14 (check on by default; `controle: false` disables it)
 ```
 
 ### 3.2 Artifacts and the `statut` field
@@ -185,7 +196,7 @@ All commands: run from anywhere inside a project (root = nearest dir containing 
 Exit code 0 = OK, 1 = problem found / error. Colored output with `picocolors`, interactive prompts with
 `@clack/prompts`. Every command supports `--cwd <dir>`. Non-interactive mode for CI/tests: `--yes`.
 
-### 4.1 `orbith install [--plateformes gemini,claude] [--piste evolution] [--nom <nom>] [--yes]`
+### 4.1 `orbith install [--plateformes gemini,claude] [--piste evolution] [--nom <nom>] [--csr-source <source>] [--yes]`
 1. Detect if target dir is empty (ignoring `.git`) → "nouveau projet" (also copy `content/projet/*` skeleton,
    run `git init` if no `.git`) else "projet existant" (never overwrite existing user files; skip with a warning).
 2. Copy `content/{agents,workflows,templates,rules}` → `.orbith/`, `content/config/{dor,dod}.md` → `.orbith/config/`,
@@ -239,7 +250,13 @@ Runs all checks, prints a French report grouped by category, exit 1 if any **err
   stories `Terminée` with no commit referencing them → avertissement.
 - **secrets**: scan tracked text files (git ls-files, else walk excluding node_modules/.git/dist) for common
   patterns (AWS keys, private key headers, `password\s*=\s*['"][^'"]+`, generic tokens, `.env` committed) → erreur.
-Each check lives in `src/checks/<name>.ts` and exports `run(ctx): Promise<CheckResult[]>`.
+- **validations** also includes the chained-registry check (`src/checks/chaine.ts`, §12) and governance
+  (`src/checks/gouvernance.ts`, §11); **documentation** (`src/checks/documentation.ts`, §14); **sbom** (licence policy,
+  `src/checks/sbom.ts`, §12).
+Each check lives in `src/checks/<name>.ts` and exports `run(ctx): Promise<CheckResult[]>`. Categories, in output
+order: `csr`, `validations`, `tracabilite`, `documentation`, `secrets`, `sbom` (`CheckCategorie` in
+`src/checks/types.ts`; titles in `src/cli/check.ts` and `src/audit/render.ts`). `--format json` prints
+`{ conforme, erreurs, avertissements, resultats[] }`.
 
 ### 4.6 `orbith trace [ID] [--sortie <fichier.md>]`
 Builds a markdown traceability matrix: per story → title, statut, board status, validated by/when, commits
@@ -305,11 +322,19 @@ Expected columns (case/accents-insensitive matching): Outil, Version min, Statut
 Writes CSR.md with a header (source file, date). Prints how many tools imported.
 
 ### 4.8 `orbith update [--yes]`
-Re-copies `content/{agents,workflows,templates,rules}` into `.orbith/` (overwriting), never touches
-`config.yaml`, `config/`, `csr/`, `custom/`, `validations.json`; bumps `orbith_version`; re-runs adapters.
+Re-copies `content/{agents,workflows,templates,rules}` (`CORE_DIRS` in `src/cli/install.ts`, whole directories, so new
+agents/templates/rules propagate) into `.orbith/` (overwriting), never touches `config.yaml`, `config/`, `csr/`
+(except a `csr.source` sync), `custom/`, `contexte-projet.md`, `validations.json`, `deploiements.json`; bumps
+`orbith_version`; re-runs adapters (all `AGENTS` commands regenerated).
 
 ### 4.9 `orbith plugin add <nom>` / `orbith plugin list`
-Loads `plugins/<nom>/orbith-plugin.json`, runs its installer, adds name to `config.plugins`.
+Loads `plugins/<nom>/orbith-plugin.json`, runs its installer, adds name to `config.plugins`. `list` shows available
+and enabled plugins.
+
+### 4.10 Other commands
+`orbith csr sync` (§10), `orbith audit` (§10), `orbith version` / `orbith release` (§10.1), `orbith init-context` /
+`orbith preparation` (§10.2), `orbith sbom` (§12). Every command also accepts `--cwd <dir>`; `--help` is the
+reference for options.
 
 ## 5. Core library API (`src/core/`) — shared by all commands
 
@@ -329,7 +354,12 @@ export class OrbithError extends Error {}            // message in French, shown
 // config.ts
 export interface OrbithConfig { version: 1; orbith_version: string; projet: { nom: string };
   plateformes: Plateforme[]; piste: Piste; backlog: { prefixe: string };
-  csr: { fichier: string; source: string | null }; plugins: string[]; }
+  csr: { fichier: string; source: string | null }; plugins: string[];
+  finops: { devise: string; prix: Record<string, { entree: number; sortie: number }> };
+  dora?: { cibles?: DoraCibles }; changements?: { exiger_pour_deploiement: boolean };
+  roles?: { quatre_yeux: boolean; valideurs: Record<string, string[]> };
+  sbom?: { licences_interdites: string[] }; documentation?: { controle: boolean; code: string[] }; }
+export const DORA_CIBLES_CLES; export const DOCUMENTATION_CODE_DEFAUT; // ['src/']
 export type Plateforme = 'gemini' | 'claude';
 export type Piste = 'correctif' | 'evolution' | 'projet';
 export function defaultConfig(nom: string): OrbithConfig;
@@ -350,10 +380,14 @@ export async function recordValidation(root: string, entry: ValidationEntry): Pr
 export async function etatValidation(root: string, file: string, doc?: Doc): Promise<EtatValidation>;
 
 // artifacts.ts
-export type ArtifactType = 'brief'|'prd'|'ux'|'architecture'|'adr'|'epic'|'story'|'release-notes';
+export type ArtifactType = 'brief'|'prd'|'ux'|'architecture'|'adr'|'epic'|'story'|'release-notes'|'environnements'
+  |'change'|'incident'|'menaces'|'strategie-test'|'retro';
+export const ARTIFACT_TYPES: readonly ArtifactType[];
 export interface Artifact { type: ArtifactType; chemin: string /* posix relative */; id?: string; titre?: string;
   statut?: string; etat: EtatValidation; data: Record<string, unknown>; body: string; }
+export async function scanAll(root: string): Promise<{ artifacts: Artifact[]; problems: FrontmatterProblem[] }>;
 export async function scanArtifacts(root: string): Promise<Artifact[]>;
+export function storyStatus(a: { data: Record<string, unknown> }): string; // board column, accent/case-insensitive
 export function hasGherkin(body: string): boolean;   // ```gherkin block or Scénario:/Scenario: lines in AC section
 export const STORY_STATUSES = ['À faire','Prête','En cours','En revue','Terminée'] as const;
 
@@ -362,6 +396,11 @@ export async function gitUser(root: string): Promise<{ name: string; email: stri
 export async function isGitRepo(root: string): Promise<boolean>;
 export async function gitLog(root: string, max: number): Promise<{ hash: string; subject: string }[]>;
 export async function gitLsFiles(root: string): Promise<string[] | null>;
+export async function gitLogFiles(root: string, max: number): Promise<{ hash: string; subject: string; files: string[] }[]>;
+export async function gitLogDated(root: string): Promise<{ hash: string; date: string; subject: string }[]>;
+export async function gitLastAuthor(root: string, rel: string): Promise<{ name: string; email: string } | null>;
+// also: gitLastStatusChange (git.ts); git-release.ts (§10.1), roles.ts and changes.ts (§11), chaine.ts (§12),
+// csr-source.ts (§10).
 
 // fsutil.ts
 export async function exists(p: string): Promise<boolean>;
@@ -398,6 +437,7 @@ Agent registry (single source, `src/adapters/agents.ts`):
 | architecte | agents/architecte.md | /orbith:archi | /orbith-archi | Architecte : architecture conforme au CSR, ADR |
 | dev | agents/dev.md | /orbith:dev | /orbith-dev | Développeur : implémente une US validée |
 | qa | agents/qa.md | /orbith:qa | /orbith-qa | QA : tests Gherkin, revue, couverture des critères |
+| devops | agents/devops.md | /orbith:devops | /orbith-devops | DevOps : pipelines CI/CD, environnements non identiques |
 | atelier | workflows/atelier.md | /orbith:atelier | /orbith-atelier | Atelier : plusieurs agents discutent ensemble |
 | securite | agents/securite.md | /orbith:securite | /orbith-securite | Sécurité : modélisation des menaces, revue des US sensibles |
 | test-architect | agents/test-architect.md | /orbith:test-archi | /orbith-test-archi | Test Architect : stratégie de test par risque |
@@ -405,10 +445,10 @@ Agent registry (single source, `src/adapters/agents.ts`):
 | relecture-adverse | workflows/relecture-adverse.md | /orbith:relecture-adverse | /orbith-relecture-adverse | Relecture adverse : passe critique avant de valider PRD, architecture ou US |
 | changement-de-cap | workflows/changement-de-cap.md | /orbith:changement-de-cap | /orbith-changement-de-cap | Changement de cap : impact d'un changement de besoin sur les epics et les US |
 
-Advanced agents/workflows (securite, test-architect, retro, relecture-adverse, changement-de-cap) follow the §8
-conventions. Their output documents (`docs/architecture/menaces.md`, `docs/architecture/strategie-test.md`,
-`docs/livraisons/retro-<version>.md`) carry types unknown to `ARTIFACT_TYPES`, so they are working documents
-ignored by `scanArtifacts` and not validatable via `orbith valider` (always `statut: brouillon`/`en-revue`).
+14 entries: 10 agents and 4 workflows (atelier, retro, relecture-adverse, changement-de-cap); `orbith install` and
+`orbith update` generate one Gemini and one Claude command per entry. Advanced agents/workflows (securite,
+test-architect, retro, relecture-adverse, changement-de-cap) follow the §8 conventions; their output documents are
+regular artifacts (§13).
 A third platform is deliberately not implemented: `Plateforme` is a closed union validated in `core/config.ts`
 and `cli/install.ts`, so an adapter is not trivial (see docs/guide/agents-avances.md).
 
@@ -444,6 +484,8 @@ Ce projet utilise Orbith. Règles permanentes :
 @.orbith/rules/confidentialite.md
 @.orbith/rules/tracabilite.md
 @.orbith/rules/nouvelle-session.md
+@.orbith/rules/couts-ia.md
+@.orbith/rules/documentation.md
 Référentiel technique (CSR) : @.orbith/csr/CSR.md
 Contexte projet (conventions, patterns, pièges) : @.orbith/contexte-projet.md
 <!-- orbith:fin -->
@@ -488,7 +530,8 @@ run `npx orbith valider <file>`), behavior rules (propose 2-3 options for struct
 decide alone; never write `statut: validé`; ask one question at a time; simple French for beginners; explain
 jargon), and an end-of-task block: summary of what was produced, the next command, and the new-session
 reminder. Agents read `.orbith/config.yaml`, `.orbith/csr/CSR.md`, DoR/DoD files when relevant. Overrides:
-if `.orbith/custom/agents/<name>.md` exists, the agent must read it and apply it on top.
+if `.orbith/custom/agents/<name>.md` exists, the agent must read it and apply it on top. Agents that change code or
+pipelines (`dev`, `devops`) apply the documentation rule (§14) and report it in their end-of-task block.
 
 ## 9. Backlog.md compatibility (verified with backlog.md v1.55.3)
 
@@ -595,6 +638,8 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
 - **`orbith trace`** appends a « Demandes de changement » table; `orbith audit` lists changes with other artifacts.
 - Logic: `src/core/roles.ts` (`valideursDuType`, `refusRole`, `refusQuatreYeux`).
 
+## 12. Chained audit journal and SBOM
+
 - **Chained audit journal** (`src/core/chaine.ts`): every entry of `.orbith/validations.json` and
   `.orbith/deploiements.json` carries `precedent` = SHA-256 of the previous entry's canonical JSON (sorted keys,
   `precedent` included); the first one uses `GENESE` (64 zeros). `recordValidation` replaces the file's entry, then
@@ -610,7 +655,7 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   deprecated → avertissement, unknown license → info. SPDX `OR` is lenient, `AND`/`WITH` strict. No policy → no results.
   Guide: `docs/guide/integrite-sbom.md`.
 
-## 12. Advanced-agent documents (`menaces`, `strategie-test`, `retro`)
+## 13. Advanced-agent documents (`menaces`, `strategie-test`, `retro`)
 
 - Artifact types written by the Security agent (`docs/architecture/menaces.md`), the Test Architect
   (`docs/architecture/strategie-test.md`) and the `retro` workflow (`docs/livraisons/retro-<version>.md`).
@@ -619,3 +664,18 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   detects later edits). Agents never write `statut: validé`.
 - `orbith next` appends a low-priority `valider` suggestion for each of these documents still not validated.
   `trace` and `audit` need no specific handling (no US link); `audit` lists them with the other artifacts.
+
+## 14. Documentation kept up to date (rule + check)
+
+- **Rule** `content/rules/documentation.md` (in `RULES`, hence in the GEMINI.md/CLAUDE.md block): any code change made
+  or proposed by an agent updates, in the same commit or at the latest in the same story, the documentation it makes
+  wrong or incomplete (README, user guides, technical docs/ADR, code comments, documented config, release-note input
+  in `## Notes techniques`, runnable examples), with a checklist; an agent never says "done" without reporting it.
+  Applied by `dev` (procedure step + end-of-task line), `qa` (gap = « À corriger » finding), `devops` (pipeline
+  docs), `sm` (DoD proof, release notes); DoD item « Documentation à jour » is made verifiable.
+- **Check** `src/checks/documentation.ts`, category `documentation`, level `avertissement` only (never fails `check`):
+  over the last 50 commits (same window as `tracabilite`), commits are grouped by story id found in the subject; a
+  story whose commits touch a code path (prefixes `documentation.code`, default `src/`) and no documentation file
+  (`docs/**`, `README*`, `CHANGELOG*`, any `*.md|*.mdx|*.adoc|*.rst`, excluding `backlog/**` and `.orbith/**` except
+  `.orbith/contexte-projet.md`) is reported. Skipped when the story frontmatter has `documentation: non-concernée`
+  (accent/case-insensitive; also `aucune`), when `documentation.controle: false`, or outside a git repository.
