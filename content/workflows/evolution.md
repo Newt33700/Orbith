@@ -23,7 +23,8 @@ Légende : 🔒 = **point de validation humaine** : rien n'avance tant qu'une pe
 | 5 | Tests puis développement (une US par session) | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | Tests `@US-NNN`, code, commits `feat(US-NNN): …` |
 | 6 | Tests exécutables, couverture des critères, revue de code | QA | `/orbith:qa US-NNN` · `/orbith-qa US-NNN` | Rapport de QA |
 | 6 🔒 | **Revue humaine** ; si c'est bon, la US passe en `Terminée` | Toi | colonne du tableau → `Terminée` | US terminée |
-| 7 | Notes de version et traçabilité | SM | `/orbith:sm` · `/orbith-sm` | `docs/livraisons/release-notes-<version>.md` |
+| 7 | **Créer la version** : les US fusionnées depuis la version précédente y sont ajoutées automatiquement | Toi (PO humain) | `npx orbith version <numéro>` (exemple : `1.1.0.0`) | `.orbith/versions.json`, brouillon `docs/livraisons/release-notes-<numéro>.md` |
+| 7 | Rédiger les notes de version (langage utilisateur) et la traçabilité | SM | `/orbith:sm` · `/orbith-sm` | `docs/livraisons/release-notes-<version>.md` |
 | 7 🔒 | **Relire et valider** les notes de version, puis livrer | Toi | `npx orbith valider docs/livraisons/release-notes-<version>.md` | Livraison décidée par l'humain |
 | 8 🔒 | Après la mise en production réelle : enregistrer la date de mise en production | Toi | `npx orbith deploiement <version>` | Dates de mise en production des US livrées (pour les métriques) |
 

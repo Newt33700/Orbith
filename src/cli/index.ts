@@ -8,6 +8,7 @@ import { register as registerValider } from './valider.js';
 import { register as registerCheck } from './check.js';
 import { register as registerTrace } from './trace.js';
 import { register as registerTests } from './tests.js';
+import { register as registerVersion } from './version.js';
 import { register as registerDeploiement } from './deploiement.js';
 import { register as registerMetriques } from './metriques.js';
 import { register as registerCsr } from './csr.js';
@@ -58,6 +59,7 @@ for (const register of [
   registerCheck,
   registerTrace,
   registerTests,
+  registerVersion,
   registerDeploiement,
   registerMetriques,
   registerCsr,

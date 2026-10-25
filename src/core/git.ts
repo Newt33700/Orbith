@@ -69,3 +69,28 @@ export async function gitLastStatusChange(root: string, rel: string): Promise<{ 
   const content = await git(root, ['show', `${hash}:${rel}`]);
   return content === null ? null : { date: date.slice(0, 10), content };
 }
+
+/** Commit courant (HEAD), ou null hors dépôt / dépôt sans commit. */
+export async function gitHead(root: string): Promise<string | null> {
+  return (await git(root, ['rev-parse', '--verify', '-q', 'HEAD']))?.trim() || null;
+}
+
+/** Sujets (et corps) des commits accessibles depuis HEAD et pas depuis `depuis` (tout l'historique si absent). */
+export async function gitLogSince(root: string, depuis?: string): Promise<{ hash: string; message: string }[]> {
+  const range = depuis ? [`${depuis}..HEAD`] : ['HEAD'];
+  const out = await git(root, ['log', '--format=%H%x1f%B%x1e', ...range]);
+  if (!out) return [];
+  return out
+    .split('\x1e')
+    .map((r) => r.trim())
+    .filter(Boolean)
+    .map((r) => {
+      const i = r.indexOf('\x1f');
+      return { hash: r.slice(0, i), message: r.slice(i + 1) };
+    });
+}
+
+/** true si `ref` désigne un commit connu du dépôt. */
+export async function gitHasCommit(root: string, ref: string): Promise<boolean> {
+  return (await git(root, ['cat-file', '-e', `${ref}^{commit}`])) !== null;
+}

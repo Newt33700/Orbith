@@ -91,7 +91,8 @@ ou l'agent de la première étape.
 
 Commandes terminal : `npx orbith next` (que faire ensuite), `npx orbith valider <fichier>` (valider un
 document), `npx orbith check` (conformité au CSR, validations, secrets), `npx orbith trace [US-xxx]`
-(traçabilité), `npx orbith deploiement <version>` (enregistrer une mise en production : c'est une personne qui la
+(traçabilité), `npx orbith version <numéro>` (créer une version avec les US fusionnées depuis la précédente : c'est le PO
+qui la lance), `npx orbith deploiement <version>` (enregistrer une mise en production : c'est une personne qui la
 lance, après un vrai déploiement), `npx orbith metriques` (mesures de livraison DORA et coûts IA estimés),
 `npx orbith update` (mettre à jour Orbith).
 
