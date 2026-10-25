@@ -48,7 +48,7 @@ describe('adaptateur claude', () => {
     expect(await read('CLAUDE.md')).toContain('@.orbith/csr/CSR.md');
     const settings = JSON.parse(await read('.claude/settings.json'));
     expect(settings.permissions.deny).toContain('Read(./.env)');
-    expect(AGENTS).toHaveLength(9);
+    expect(AGENTS).toHaveLength(14);
   });
 
   it('frontmatter des commandes md est du YAML valide', () => {
@@ -102,6 +102,43 @@ describe('adaptateur claude', () => {
     await writeFile(path.join(root, '.claude/settings.json'), '{ pas du json');
     await expect(adapters.claude.generate(root, defaultConfig('x'))).rejects.toThrow(/settings\.json/);
     expect(await read('.claude/settings.json')).toBe('{ pas du json');
+  });
+});
+
+describe('agents avancés (sécurité, test architect, workflows)', () => {
+  const nouveaux = [
+    ['securite', 'agents/securite.md', 'orbith:securite', 'orbith-securite'],
+    ['test-architect', 'agents/test-architect.md', 'orbith:test-archi', 'orbith-test-archi'],
+    ['retro', 'workflows/retro.md', 'orbith:retro', 'orbith-retro'],
+    ['relecture-adverse', 'workflows/relecture-adverse.md', 'orbith:relecture-adverse', 'orbith-relecture-adverse'],
+    ['changement-de-cap', 'workflows/changement-de-cap.md', 'orbith:changement-de-cap', 'orbith-changement-de-cap'],
+  ] as const;
+
+  it('sont enregistrés avec des commandes Gemini et Claude', () => {
+    for (const [key, file, gemini, claude] of nouveaux) {
+      const a = AGENTS.find((x) => x.key === key);
+      expect(a, key).toBeDefined();
+      expect(a).toMatchObject({ file, gemini, claude });
+    }
+  });
+
+  it('génèrent les commandes qui référencent un fichier du contenu livré', async () => {
+    await adapters.gemini.generate(root, defaultConfig('x'));
+    await adapters.claude.generate(root, defaultConfig('x'));
+    for (const [, file, gemini, claude] of nouveaux) {
+      expect(await exists(path.join(process.cwd(), 'content', file)), file).toBe(true);
+      const toml = await read(`.gemini/commands/orbith/${gemini.split(':')[1]}.toml`);
+      expect(toml).toContain(`@{.orbith/${file}}`);
+      expect(await read(`.claude/commands/${claude}.md`)).toContain(`@.orbith/${file}`);
+    }
+  });
+
+  it("ne produisent jamais « statut: validé » et rappellent la nouvelle session", async () => {
+    for (const [, file] of nouveaux) {
+      const txt = await readFile(path.join(process.cwd(), 'content', file), 'utf8');
+      expect(txt, file).not.toMatch(/^statut:\s*validé/m);
+      expect(txt, file).toContain('NOUVELLE session');
+    }
   });
 });
 
