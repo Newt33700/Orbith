@@ -154,6 +154,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith valider <fichier>` | Marque un document comme validé, après confirmation humaine |
 | `npx orbith check` | Vérifie le projet : CSR, validations, traçabilité, secrets. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
+| `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
 | `npx orbith csr sync` | Récupère le CSR depuis la source interne déclarée dans `.orbith/config.yaml` |
@@ -298,11 +299,11 @@ mon-projet/
 ├── .claude/commands/orbith-*.md  # Commandes Claude Code
 ├── docs/
 │   ├── produit/                  # brief.md, prd.md, ux.md, epics/EPIC-001-*.md
-│   ├── architecture/             # architecture.md, adr/ADR-001-*.md
+│   ├── architecture/             # architecture.md, environnements.md, adr/ADR-001-*.md
 │   └── livraisons/               # release-notes-<version>.md
 ├── backlog/tasks/                # Les user stories (us-001 - Titre.md, une par fichier)
-├── src/  tests/                  # Votre code et vos tests
-├── .gitlab-ci.yml                # Lance `npx orbith check` à chaque modification
+├── src/  tests/                  # Votre code et vos tests (tests/features/ : squelettes de `orbith tests`)
+├── .gitlab-ci.yml                # Lance `npx orbith check` ; complété par l'agent DevOps (environnements)
 └── README.md  .gitignore  .editorconfig
 ```
 
@@ -457,7 +458,6 @@ La version 0.1 se concentre sur le parcours de base. Prochaines étapes prévues
 
 - **Connecteurs Jira et Confluence** via le serveur MCP « IT for IT », pour lire et publier sans copier-coller.
 - **D'autres écosystèmes CSR**, au-delà de Node.js, Java et Python.
-- **Source CSR centralisée** : récupération automatique du référentiel depuis un dépôt privé.
 
 ## Contribuer
 

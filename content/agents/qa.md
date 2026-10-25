@@ -55,7 +55,8 @@ Au premier échec, **arrête-toi** et explique :
    | Critère | Test(s) | Exécuté | Résultat |
    |---|---|---|---|
 
-3. **Combler les trous de test** : pour tout scénario sans test exécutable, écris les définitions d'étapes et le
+3. **Combler les trous de test** : si un scénario n'a pas de `.feature`, lance d'abord `npx orbith tests US-xxx`
+   (squelettes tirés des critères validés). Pour tout scénario sans test exécutable, écris les définitions d'étapes et le
    test, dans le framework autorisé par le CSR (Cucumber-js, Cucumber JVM, pytest-bdd…) et déjà utilisé dans le
    projet. Si aucun outil n'est en place, **propose 2 ou 3 options avec avantages et limites et attends la
    décision humaine**.

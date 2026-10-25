@@ -94,7 +94,7 @@ backlog:
   prefixe: US                   # story id prefix → US-001
 csr:
   fichier: .orbith/csr/CSR.md
-  source: null                  # V2: private git repo / internal npm package
+  source: null                  # git+https/git+ssh repo, https URL or local file (`orbith csr sync`)
 plugins: []                     # e.g. [backlog-md]
 ```
 
@@ -235,6 +235,12 @@ Each check lives in `src/checks/<name>.ts` and exports `run(ctx): Promise<CheckR
 Builds a markdown traceability matrix: per story → title, statut, board status, validated by/when, commits
 (hash + subject), tests referencing it (files containing `@ID` or `ID`), release notes mentioning it.
 With ID: detail for one story. Prints to stdout or writes file.
+
+### 4.6b `orbith tests [ID] [--dossier tests/features] [--force]`
+Deterministic (no AI) test skeletons: for each story with `statut: validé` and Gherkin acceptance criteria
+(```gherkin blocks, else the « Critères d'acceptation » section), writes `<dossier>/<id>.feature`
+(`<id>-2.feature`… for extra blocks), adding `@ID`, a `Fonctionnalité:` line and `# language: fr` when missing.
+Existing files are kept unless `--force`. Non-validated stories are skipped (human validation first).
 
 ### 4.7 `orbith csr import <fichier.xlsx> [--sortie <fichier>]` (default: `csr.fichier` from config)
 Reads an Excel workbook with exceljs. Each sheet → a `## <sheet name>` section and a markdown table.

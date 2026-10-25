@@ -60,8 +60,9 @@ Si la US est en `Prête`, demande à l'humain de la passer en `En cours` (tu ne 
    autorisé par le CSR (par exemple Cucumber-js en Node.js, Cucumber JVM en Java, pytest-bdd en Python).
    Si aucun n'est en place ou si plusieurs sont possibles, **propose 2 ou 3 options avec avantages et limites et
    attends la décision**. Ne crée pas de branche d'outillage sans accord.
-3. **Squelettes de tests d'abord** : pour chaque `Scénario`, crée un `.feature` tagué `@US-xxx` (copie du Gherkin)
-   et les définitions d'étapes vides ou en échec (`pending`/`TODO`). Lance les tests : ils doivent **échouer pour la
+3. **Squelettes de tests d'abord** : lance `npx orbith tests US-xxx`, qui crée les `.feature` tagués `@US-xxx` dans
+   `tests/features/` à partir des critères Gherkin validés (copie fidèle, sans IA). Ne modifie pas leurs scénarios :
+   s'ils ne conviennent pas, c'est la US qu'il faut corriger avec le PO. Écris ensuite les définitions d'étapes vides ou en échec (`pending`/`TODO`). Lance les tests : ils doivent **échouer pour la
    bonne raison** (comportement non implémenté). Montre le résultat.
 4. **Implémente par petits pas** : fais passer un scénario à la fois, du plus simple au plus complexe. À chaque
    étape, lance les tests.
