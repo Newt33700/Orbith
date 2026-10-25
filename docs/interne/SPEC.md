@@ -251,7 +251,7 @@ Human command run after a real deployment. Requires validated release notes for 
 in each story, and `mis_en_prod_le` in the notes. Frontmatter only: body hashes, hence validations, are unchanged.
 `orbith next` asks for it once validated notes cover all done stories and have no `mis_en_prod_le`.
 
-### 4.6d `orbith metriques [--jours 90] [--format texte|json] [--sortie f]`
+### 4.6d `orbith metriques [--jours 90] [--format texte|json|csv] [--sortie f]`
 DORA metrics over the period, production deployments only:
 - deployment frequency (per week); lead time = median(`mis_en_prod_le` − `debut_dev_le` or first commit) of
   non-bug stories deployed in the period;
@@ -261,6 +261,21 @@ DORA metrics over the period, production deployments only:
 Also « attente » = median(`mis_en_prod_le` − `termine_le`). Levels (élite/élevé/moyen/faible) use DORA-report thresholds. Also a per-story table (created_date,
 updated_date, début dev, mise en prod, lead time, AI cost) and AI costs: sum of `couts_ia[].cout`, per agent.
 `couts_ia` entries are appended by the agents (rule `couts-ia`), self-estimated with `finops.prix` from config.
+
+Enriched DORA (all additive; absent data is reported « non mesurable », never 0):
+- optional config `dora.cibles` = `{frequence_par_semaine (min), delai_jours, taux_echec_pct, retablissement_heures (max)}`;
+  unknown key or non-numeric value → `OrbithError` at `loadConfig`. Output: `cibles[]` `{cle, cible, valeur, atteinte}`
+  (`atteinte: null` when the value is not measurable); absent when no target is configured.
+- trends: same metrics over the previous window of equal length (ends the day before the current start) →
+  `precedent` + `tendances[]` `{valeur, precedent, ecart, fleche ↑↓→, favorable}`; null if either side is unmeasurable.
+  A period with no production deployment has no frequency value.
+- `decoupageAttente`: `revue` = `revue_le` − `termine_le`; `recette` = first non-production registry deployment listing
+  the story − (`revue_le` ?? `termine_le`); `production` = `mis_en_prod_le` − recette date. Each = median over stories
+  having both dates (`{medianeJours, us}`, null when none). `revue_le` is an optional, human-written frontmatter field.
+- `taille`: per production deployment of the period `{version, date, us, commits}` (commits whose subject mentions one of
+  its stories; null without git) and medians `usParVersion`, `commitsParVersion`.
+- `--format csv`: one row per indicator, UTF-8 BOM, `;` separator, decimal comma. JSON/text/CSV all carry the reminder
+  that DORA measures a team, not individuals (JSON key `rappel`).
 
 ### 4.7 `orbith csr import <fichier.xlsx> [--sortie <fichier>]` (default: `csr.fichier` from config)
 Reads an Excel workbook with exceljs. Each sheet → a `## <sheet name>` section and a markdown table.
