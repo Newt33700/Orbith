@@ -569,14 +569,14 @@ pipelines (`dev`, `devops`) apply the documentation rule (§14) and report it in
 Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli/version.ts`, `src/cli/release.ts`,
 `src/core/git-release.ts` (tags, commits since a tag, annotated tag, path-limited commit). Guide: `docs/guide/versions.md`.
 
-- **`orbith version` (no argument; with a number it is §4.6b2) `[--format texte|json]`**: base = latest `vX.Y.Z` tag (else 0.0.0); inputs = commits since that tag
+- **`orbith version` (no argument; with a number it is §4.6b2) `[--format texte|json]`**: base = highest `vX.Y.Z` tag reachable from HEAD (`git tag --merged HEAD`, annotated or lightweight; tags only on other branches are ignored; else 0.0.0); inputs = commits since that tag
   + pending stories (`Terminée`, no `mis_en_prod_le`, or cited by a commit since the tag), excluding stories cited by
   the release notes of a version that already has a tag (`storiesDejaLivrees`). Bump = max of:
   major = `type!:` / `BREAKING CHANGE:` footer / story label `breaking` (case-insensitive, constant `BREAKING_LABEL`);
   minor = `feat` / done non-bug story; patch = `fix` / done story labelled `bug`. Other types do not bump.
   Read-only; prints the reasons; nothing proposed when no signal.
 - **`orbith release <version> [--yes] [--sans-tag] [--dry-run] [--date]`** (`vX.Y.Z` accepted):
-  1. refuses a non-SemVer version, an existing tag, or a version ≤ the latest tag;
+  1. refuses a non-SemVer version, an existing tag (checked against all tags, reachable or not), or a version ≤ the highest tag reachable from HEAD;
   2. no notes (`docs/livraisons/release-notes-<version>.md` or frontmatter `version`) → writes a draft (2 audiences)
      from the done pending stories, then fails (`--dry-run`: writes nothing; an existing unrecognized file at that
      path is never overwritten);

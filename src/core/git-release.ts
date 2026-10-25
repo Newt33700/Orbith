@@ -25,6 +25,15 @@ export async function gitTags(root: string): Promise<string[]> {
   }
 }
 
+/** Tag names reachable from HEAD (`git tag --merged HEAD`, git >= 2.7); empty when git fails or there is no commit. */
+export async function gitReachableTags(root: string): Promise<string[]> {
+  try {
+    return (await run(root, ['tag', '--merged', 'HEAD'])).split(/\r?\n/).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Commits reachable from HEAD and not from `since` (a tag), oldest first, with their full body
  * (needed to detect `BREAKING CHANGE:` footers). Without `since`: the whole history.
