@@ -5,6 +5,7 @@ import { run as runTracabilite } from './tracabilite.js';
 import { run as runValidations } from './validations.js';
 import { run as runSbom } from './sbom.js';
 import { run as runDocumentation } from './documentation.js';
+import { run as runExtraits } from './extraits.js';
 import type { CheckContext, CheckResult } from './types.js';
 
 export * from './types.js';
@@ -22,7 +23,7 @@ export async function buildContext(root: string): Promise<CheckContext> {
 
 export async function runAll(ctx: CheckContext): Promise<CheckResult[]> {
   const out: CheckResult[] = [];
-  for (const run of [runCsr, runValidations, runTracabilite, runDocumentation, runSecrets, runSbom]) {
+  for (const run of [runCsr, runValidations, runTracabilite, runDocumentation, runExtraits, runSecrets, runSbom]) {
     try {
       out.push(...(await run(ctx)));
     } catch (e) {

@@ -43,7 +43,7 @@ content/                 # THE CORE, copied to <project>/.orbith/ on install
   workflows/             # correctif evolution projet atelier retro relecture-adverse changement-de-cap (.md)
   templates/             # brief prd ux architecture adr epic story release-notes environnements bug change incident
                          # menaces strategie-test retro analyse contexte-projet (.md)
-  rules/                 # validation-humaine confidentialite tracabilite nouvelle-session couts-ia documentation (.md)
+  rules/                 # validation-humaine confidentialite tracabilite nouvelle-session couts-ia documentation documents-volumineux (.md)
   config/                # config.yaml (default, commented) dor.md dod.md
   csr/CSR.exemple.md     # example only — the real CSR lives in the company's private repo
   projet/                # files copied at project init (see §4.2)
@@ -112,6 +112,7 @@ roles:                                            # §11
 dora: { cibles: { frequence_par_semaine: 1, delai_jours: 7, taux_echec_pct: 10, retablissement_heures: 24 } }  # §4.6d
 sbom: { licences_interdites: [AGPL-3.0] }         # §12
 documentation: { controle: true, code: [src/] }   # §14 (check on by default; `controle: false` disables it)
+extraits: { seuil_jetons: 4000 }                  # §15 (large-document threshold, estimated tokens)
 ```
 
 ### 3.2 Artifacts and the `statut` field
@@ -334,7 +335,7 @@ and enabled plugins.
 
 ### 4.10 Other commands
 `orbith csr sync` (§10), `orbith audit` (§10), `orbith version` / `orbith release` (§10.1), `orbith init-context` /
-`orbith preparation` (§10.2), `orbith sbom` (§12). Every command also accepts `--cwd <dir>`; `--help` is the
+`orbith preparation` (§10.2), `orbith sbom` (§12), `orbith decouper` (§15). Every command also accepts `--cwd <dir>`; `--help` is the
 reference for options.
 
 ## 5. Core library API (`src/core/`) — shared by all commands
@@ -496,6 +497,7 @@ Ce projet utilise Orbith. Règles permanentes :
 @.orbith/rules/nouvelle-session.md
 @.orbith/rules/couts-ia.md
 @.orbith/rules/documentation.md
+@.orbith/rules/documents-volumineux.md
 Référentiel technique (CSR) : @.orbith/csr/CSR.md
 Contexte projet (conventions, patterns, pièges) : @.orbith/contexte-projet.md
 <!-- orbith:fin -->
@@ -698,3 +700,41 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   (`docs/**`, `README*`, `CHANGELOG*`, any `*.md|*.mdx|*.adoc|*.rst`, excluding `backlog/**` and `.orbith/**` except
   `.orbith/contexte-projet.md`) is reported. Skipped when the story frontmatter has `documentation: non-concernée`
   (accent/case-insensitive; also `aucune`), when `documentation.controle: false`, or outside a git repository.
+
+## 15. Large documents: sharding (`orbith decouper`)
+
+Goal: a 40-page PRD/architecture must not be loaded whole into an agent context ("one task = one session").
+Deterministic, no AI. Code: `src/core/extraits.ts` (logic), `src/cli/decouper.ts`, `src/checks/extraits.ts`.
+
+- **Command** `orbith decouper <fichier> [--niveau 2] [--sortie <dossier>] [--cwd]`. Reads a Markdown file
+  (`.md`, inside the project), strips frontmatter (`parseDoc`), splits the body at ATX headings of level <= N
+  (N in 1..6, default 2). Headings inside fenced code blocks (``` / ~~~, fence length honoured, unterminated fence
+  runs to EOF) are ignored; setext headings are not recognised. Text before the first heading is an
+  `Introduction` section (level 0); a heading with a lower level than N and no own content is not a section. No
+  heading <= N at all -> `OrbithError` (nothing written).
+- **Output** (default `.orbith/extraits/<slug of file name>/`): `index.md` (table: section, estimated tokens,
+  link) and one `NN-<slug>.md` per section (numbering starts at `00`). Tokens = `ceil(chars / 4)`
+  (`estimerJetons`). Output is derived, read-only for agents, listed in the generated project's ignore file
+  (`content/projet/_gitignore`). Same input -> byte-identical output.
+- **Never an artifact**: extracts and index have no frontmatter; line 1 is an HTML comment
+  `<!-- orbith-extrait source="<posix path>" sha256=<hash> [niveau=N] -->` followed by a visible read-only notice.
+  `scanAll` only reads `docs/produit|architecture|livraisons` and `backlog/tasks` and requires a `type`, so an
+  extract is never scanned even when `--sortie` points inside those folders.
+- **Hash**: `hashBody(corpsMarkdown(file))`, the very function used by the validation registry (§3.3), so the
+  extract hash equals the validated hash. The source is never written; a `validé` document stays `validé`.
+- **Safety**: the command only deletes files carrying the marker in a folder whose `index.md` has the same
+  `source`; a foreign or non-empty unmarked folder, a folder holding another document's shards, the source's own
+  folder, a path outside the project, or an extract used as input are refused (`OrbithError`).
+- **Check** (`src/checks/extraits.ts`, category `documentation`, run in `runAll` after the documentation check):
+  `avertissement` when an index's `sha256` differs from the current source body hash (or the source no longer
+  exists: orphan); `info` when an artifact body exceeds `extraits.seuil_jetons` (default 4000,
+  `EXTRAITS_SEUIL_DEFAUT`) and no index references it. Never an `erreur`; never throws. Changing only the
+  frontmatter (e.g. `statut`) does not make extracts stale.
+- **`orbith next`**: prints the same large-document hint under "À savoir :" (and `documents_volumineux` in
+  `--format json`, only when non-empty). `computeNext` is unchanged.
+- **Config** `extraits.seuil_jetons` (number >= 1, otherwise `loadConfig` throws); commented example in
+  `content/config/config.yaml`.
+- **Rule** `content/rules/documents-volumineux.md` (in `RULES`): above the threshold, read `index.md` first and
+  only the useful sections, never the whole document; never edit extracts; cite the source. Pointer added to
+  "Ce que tu lis" of `dev`, `qa`, `ux`, `architecte`, `sm`.
+- **Guide** `docs/guide/documents-volumineux.md`. Tests: `test/core/extraits.test.ts`, `test/cli/decouper.test.ts`.

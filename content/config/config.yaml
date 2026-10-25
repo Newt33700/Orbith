@@ -81,3 +81,9 @@ plugins: []
 # documentation:
 #   controle: false                   # désactive le contrôle
 #   code: [src/, lib/]                # dossiers considérés comme du code (défaut : src/)
+
+# Documents volumineux (facultatif) : au-delà de ce nombre de jetons estimés (caractères / 4), `npx orbith next` et
+# `npx orbith check` conseillent `npx orbith decouper <fichier>`, et les agents lisent l'index des extraits
+# (.orbith/extraits/<nom>/index.md) au lieu du document entier. Défaut : 4000.
+# extraits:
+#   seuil_jetons: 4000

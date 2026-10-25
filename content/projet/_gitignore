@@ -19,3 +19,6 @@ secrets/
 .vscode/
 .claude/settings.local.json
 .gemini/settings.local.json
+
+# Extraits de documents volumineux (dérivés de `orbith decouper`, régénérables)
+.orbith/extraits/

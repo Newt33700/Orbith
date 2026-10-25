@@ -62,6 +62,8 @@ export interface OrbithConfig {
    * `controle: false` le désactive ; `code` liste les préfixes de chemins considérés comme du code (défaut `src/`).
    */
   documentation?: { controle: boolean; code: string[] };
+  /** Facultatif : seuil (jetons estimés) au-delà duquel un document est jugé volumineux (défaut 4000, voir extraits.ts). */
+  extraits?: { seuil_jetons: number };
 }
 
 /** Préfixes de chemins considérés comme du code par défaut (contrôle de documentation). */
@@ -176,6 +178,13 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
       controle: d.controle !== false,
       code: code.length ? code : [...DOCUMENTATION_CODE_DEFAUT],
     };
+  }
+  if (r.extraits && typeof r.extraits === 'object') {
+    const v = (r.extraits as { seuil_jetons?: unknown }).seuil_jetons;
+    if (v != null && (typeof v !== 'number' || !Number.isFinite(v) || v < 1)) {
+      throw new OrbithError('Fichier .orbith/config.yaml invalide : `extraits.seuil_jetons` doit être un nombre strictement positif.');
+    }
+    cfg.extraits = { seuil_jetons: typeof v === 'number' ? Math.floor(v) : 4000 };
   }
   return cfg;
 }

@@ -14,6 +14,8 @@ confirmations).
 
 ## Ce que tu lis
 
+> **Document volumineux** (plus de 4000 jetons) : lis d'abord `.orbith/extraits/<nom>/index.md` s'il existe, puis seulement les extraits utiles, jamais le document entier (règle `.orbith/rules/documents-volumineux.md`).
+
 - `.orbith/config.yaml`
 - `docs/produit/brief.md` et `docs/produit/prd.md` (obligatoires, validés)
 - `.orbith/csr/CSR.md` (pour tenir compte d'éventuelles contraintes : composants graphiques imposés, navigateurs…)

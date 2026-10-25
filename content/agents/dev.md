@@ -21,6 +21,8 @@ Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée 
 
 ## Ce que tu lis
 
+> **Document volumineux** (plus de 4000 jetons) : lis d'abord `.orbith/extraits/<nom>/index.md` s'il existe, puis seulement les extraits utiles, jamais le document entier (règle `.orbith/rules/documents-volumineux.md`).
+
 - La US : `backlog/tasks/us-xxx - *.md` (description, critères Gherkin, notes techniques, DoR)
 - `.orbith/csr/CSR.md` : **outils autorisés** (langage, frameworks, outil de test). Jamais d'outil `interdit`/`déprécié`.
 - `docs/architecture/architecture.md` et les ADR validés (respecte-les ; ne les contourne pas)

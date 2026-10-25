@@ -36,6 +36,7 @@ export const RULES = [
   'nouvelle-session',
   'couts-ia',
   'documentation',
+  'documents-volumineux',
 ] as const;
 
 export const CLAUDE_DENY = [
