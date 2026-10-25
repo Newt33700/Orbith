@@ -91,8 +91,10 @@ la commande échoue. C'est volontaire : une validation qui ne correspond plus au
 
 ## Qui valide quoi ?
 
-Orbith ne fixe pas les personnes qui valident : cela dépend de votre organisation. Voici un exemple, à adapter à
-vos pratiques :
+Par défaut, Orbith ne fixe pas les personnes qui valident : cela dépend de votre organisation. Si vous le souhaitez,
+`.orbith/config.yaml` peut imposer une **matrice des rôles** (qui valide quel type de document) et le **principe des
+quatre yeux** (on ne valide pas ce qu'on a soi-même écrit) : voir [changements-roles.md](changements-roles.md).
+Voici un exemple de répartition, à adapter à vos pratiques :
 
 | Document | Validateur habituel |
 |---|---|
@@ -117,7 +119,10 @@ Il ne le demande pas : il prend le nom configuré dans Git. Si vous n'en avez pa
 [demarrage.md](demarrage.md)).
 
 **Où est enregistré l'historique des validations ?**
-Dans `.orbith/validations.json`. Ce fichier est versionné avec le projet, pour garder une trace partageable.
+Dans `.orbith/validations.json`. Ce fichier est versionné avec le projet, pour garder une trace partageable. C'est un
+journal **chaîné** : chaque entrée porte l'empreinte de la précédente (champ `precedent`). Ne le modifiez jamais à la
+main : `npx orbith check` signalerait une « chaîne d'audit rompue » et `npx orbith valider` refuserait d'écrire (voir
+[integrite-sbom.md](integrite-sbom.md)).
 
 **Puis-je annuler une validation ?**
 Repassez simplement le statut à `brouillon` ou `en-revue` dans l'en-tête, puis informez l'équipe. Le document n'est

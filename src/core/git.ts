@@ -38,6 +38,34 @@ export async function gitLog(root: string, max: number): Promise<{ hash: string;
     });
 }
 
+/** Derniers commits (du plus récent au plus ancien) avec les fichiers qu'ils modifient (chemins POSIX). */
+export async function gitLogFiles(
+  root: string,
+  max: number,
+): Promise<{ hash: string; subject: string; files: string[] }[]> {
+  const out = await git(root, [
+    '-c',
+    'core.quotePath=false',
+    'log',
+    `-n${Math.max(1, Math.floor(max))}`,
+    '--name-only',
+    '--pretty=format:%x1e%H%x09%s',
+  ]);
+  if (!out) return [];
+  return out
+    .split('\x1e')
+    .filter((b) => b.trim())
+    .map((bloc) => {
+      const [tete = '', ...lignes] = bloc.split(/\r?\n/);
+      const i = tete.indexOf('\t');
+      return {
+        hash: tete.slice(0, i),
+        subject: tete.slice(i + 1),
+        files: lignes.map((l) => l.trim()).filter(Boolean),
+      };
+    });
+}
+
 export async function gitLsFiles(root: string): Promise<string[] | null> {
   const out = await git(root, ['ls-files', '-z']);
   if (out === null) return null;

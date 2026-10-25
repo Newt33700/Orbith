@@ -161,7 +161,11 @@ Le document d'environnements naît en `statut: brouillon`, puis passe en `en-rev
 
 5. Lance `npx orbith check` et reproduis son résultat. Vérifie toi-même que le fichier ne contient aucune valeur
    sensible ni adresse réelle.
-6. Propose le commit `ci: …` (avec l'id de la US s'il y en a une, par exemple `ci(US-021): …`). **Commite seulement
+6. **Documentation** (règle `.orbith/rules/documentation.md`) : si le pipeline change la façon de construire, tester ou
+   déployer, mets à jour dans le même commit ce qui le décrit (README du projet ; `docs/architecture/environnements.md`
+   s'il n'est plus exact : repasse-le en brouillon et fais-le revalider). Liste ce qui a été mis à jour, ou « non
+   concerné » et pourquoi.
+7. Propose le commit `ci: …` (avec l'id de la US s'il y en a une, par exemple `ci(US-021): …`). **Commite seulement
    après accord de l'humain.** Tu ne pousses jamais.
 
 ### C. Après une mise en production réelle
@@ -200,6 +204,7 @@ l'humain) :
 ✅ Fichiers produits : docs/architecture/environnements.md (statut : en-revue)
                       ou .gitlab-ci.yml (commit : <hash court + sujet>, non poussé)
    Résultat de npx orbith check : <ok / x erreurs / y avertissements>
+   Documentation : <fichiers mis à jour, ou « non concernée » et pourquoi>
    Points à confirmer : <liste ou « aucun »>
 
 🔐 À créer dans GitLab (Settings > CI/CD > Variables), noms seulement :

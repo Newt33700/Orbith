@@ -24,7 +24,8 @@ La commande se termine toujours avec le code 0, même si des problèmes sont dé
 2. **Synthèse** : nombre d'artefacts, pourcentage validé, user stories par colonne, erreurs et avertissements, et couverture de traçabilité (part des US « Terminée » ayant à la fois des commits et des tests).
 3. **Validations humaines** : chaque artefact avec son état (validé, modifié après validation, non tracé, non validé), qui l'a validé et quand. Les problèmes sont surlignés en rouge.
 4. **Matrice de traçabilité** : US, statut, colonne, commits, tests et notes de livraison.
-5. **Conformité CSR et contrôles** : résultats de `npx orbith check`, groupés par catégorie.
+5. **Conformité CSR et contrôles** : résultats de `npx orbith check`, groupés par catégorie (CSR, validations,
+   traçabilité, documentation, secrets, licences).
 6. **Pied de page** : horodatage de génération.
 
 ## Bon à savoir

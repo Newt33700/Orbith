@@ -17,7 +17,7 @@ Légende : 🔒 = **point de validation humaine** : rien n'avance tant qu'une pe
 | 1 | Décrire le défaut : une **US courte** avec au moins un critère Gherkin (modèle de bug : origine, cause, date de détection) | PO | `/orbith:po` · `/orbith-po` | `backlog/tasks/us-NNN - <Titre>.md` (brouillon) |
 | 1 🔒 | **Relire et valider** la US | Toi | `npx orbith valider "backlog/tasks/us-NNN - <Titre>.md"` | `statut: validé` |
 | 2 | Contrôler la DoR et passer la US en `Prête` | Toi (PO humain) | colonne du tableau → `Prête` | US prête à être développée |
-| 3 | Écrire les tests puis corriger le code | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | Tests `@US-NNN`, code, commits `fix(US-NNN): …` |
+| 3 | Écrire les tests puis corriger le code | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | Tests `@US-NNN`, code, documentation à jour si concernée, commits `fix(US-NNN): …` |
 | 4 | Vérifier les tests et la conformité | Dev + QA | `/orbith:qa US-NNN` · `/orbith-qa US-NNN` ; `npx orbith check` | Rapport de QA |
 | 5 🔒 | **Revue humaine** du correctif ; si c'est bon, la US passe en `Terminée` | Toi | colonne du tableau → `Terminée` | US terminée |
 | 6 🔒 | Après la mise en production réelle du correctif : enregistrer la date de mise en production | Toi | `npx orbith deploiement <version>` | Date de mise en production (mesure du temps de rétablissement) |

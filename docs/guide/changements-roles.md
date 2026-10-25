@@ -81,7 +81,7 @@ roles:
 ```
 
 Les types sont ceux du champ `type` des documents : `brief`, `prd`, `ux`, `architecture`, `adr`, `epic`, `story`,
-`release-notes`, `environnements`, `change`, `incident`. Un type absent de la matrice (et sans entrée `"*"`) reste
+`release-notes`, `environnements`, `change`, `incident`, `menaces`, `strategie-test`, `retro`. Un type absent de la matrice (et sans entrée `"*"`) reste
 libre.
 
 - `npx orbith valider` refuse la validation si la personne n'est pas dans la liste.

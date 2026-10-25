@@ -66,6 +66,16 @@ Le détail (formats de fichiers, API du cœur, contrats des adaptateurs) est dan
 5. **Commits au format Conventional Commits** : `type(portée): description`, par exemple
    `feat(csr): importe les onglets Excel` ou `fix(check): ignore les fichiers supprimés`. Quand le
    changement concerne une user story, indiquez son identifiant dans la portée : `feat(US-012): ...`.
+6. **La documentation suit le code, dans la même pull request** : toute modification de code (y compris
+   générée par une IA) met à jour ce qu'elle rend faux ou incomplet. Liste de contrôle :
+   - `README.md` : tableaux des commandes, des agents et des guides, arborescence du projet généré, glossaire ;
+   - `docs/guide/` : le guide de la fonctionnalité (et sa ligne dans le tableau « Documentation détaillée » du README) ;
+   - `docs/interne/SPEC.md` : commandes et options (§4), API du cœur (§5), registre des agents (§6), formats ;
+   - `content/` : prompts des agents, modèles, règles et `config/config.yaml` commenté pour toute nouvelle clé ;
+   - commentaires du code et messages d'aide (`--help`) ;
+   - les exemples de commandes : lancez-les réellement dans un projet jetable.
+   Ne déclarez pas une contribution terminée sans avoir passé cette liste. La même obligation est imposée aux
+   agents des projets utilisateurs par la règle `content/rules/documentation.md`.
 
 ## Ajouter un agent
 
@@ -77,7 +87,10 @@ Un agent est un fichier Markdown de prompt, exposé sous forme de commande dans 
 3. Si l'agent doit apparaître dans les recommandations de `orbith next`, mettez à jour
    `src/cli/next-rules.ts`.
 4. Ajoutez les tests (adaptateurs et `next`) et lancez `npm test`.
-5. Documentez l'agent dans le tableau « Les agents » du README si l'agent est destiné aux utilisateurs.
+5. Documentez l'agent dans le tableau « Les agents » du README (et le nombre de commandes), dans le registre du
+   §6 de `docs/interne/SPEC.md` et dans le guide concerné (par exemple `docs/guide/agents-avances.md`).
+   `orbith update` copie automatiquement les nouveaux fichiers de `content/agents`, `workflows`, `templates` et
+   `rules` dans les projets.
 
 ## Ajouter une commande de CLI
 
@@ -88,7 +101,8 @@ Un agent est un fichier Markdown de prompt, exposé sous forme de commande dans 
    l'appel.
 4. Les messages sont en français. Les erreurs attendues doivent être des `OrbithError` avec un message
    qui indique la prochaine action à faire.
-5. Ajoutez les tests dans `test/cli/<commande>.test.ts`, et la commande dans le tableau de la CLI du README.
+5. Ajoutez les tests dans `test/cli/<commande>.test.ts`, la commande dans le tableau de la CLI du README, dans
+   le §4 de `docs/interne/SPEC.md` et dans le guide utilisateur concerné.
 
 ## Ajouter un plugin
 

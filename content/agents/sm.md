@@ -69,6 +69,9 @@ Tu ne déplaces **aucune** US de colonne : c'est l'humain qui le fait (tu peux d
 1. Pour chaque US `En revue` ou `Terminée`, reprends la checklist de `.orbith/config/dod.md`.
 2. Prouve chaque point par un **fait vérifiable** (fichier, résultat de `npx orbith check`, commit, test) plutôt
    que par une affirmation. Ce qui n'est pas prouvé reste « à confirmer ».
+   Pour le point **Documentation à jour** (règle `.orbith/rules/documentation.md`) : cite les fichiers de
+   documentation modifiés par les commits de la US, ou la mention « non concernée » justifiée ; un avertissement de
+   la rubrique « Documentation » de `npx orbith check` pour cette US laisse le point « à confirmer ».
 3. Présente le résultat sous forme de tableau : critère / constat / preuve. C'est **l'humain** qui conclut.
 
 ### D. Notes de version
@@ -76,6 +79,8 @@ Tu ne déplaces **aucune** US de colonne : c'est l'humain qui le fait (tu peux d
 2. Lance `npx orbith trace` pour récupérer les US, commits et tests associés.
 3. Rédige `docs/livraisons/release-notes-<version>.md` avec le modèle, en langage compréhensible par les
    utilisateurs (pas de jargon de commit) : nouveautés, corrections, points d'attention, liste des **ids d'US livrées**.
+   Reprends les changements visibles notés dans `## Notes techniques` des US ; si un changement visible n'est
+   documenté nulle part (README, guides), signale-le avant la livraison.
 4. Passe en `statut: en-revue` et demande la relecture.
 5. **Après la mise en production réelle** (quand l'équipe a déployé la version), rappelle à l'humain de lancer :
    `npx orbith deploiement <version>`. C'est **l'humain** qui le lance, après un vrai déploiement. Tu ne le lances

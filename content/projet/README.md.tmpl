@@ -25,8 +25,10 @@ Orbith te dit ce qu'il faut faire ensuite, avec la commande exacte à lancer.
 |---|---|
 | `npx orbith next` | Affiche la prochaine action recommandée |
 | `npx orbith valider <fichier>` | Valide un document (seul un humain peut le faire) |
-| `npx orbith check` | Vérifie le CSR, les validations, la traçabilité et les secrets |
+| `npx orbith check` | Vérifie le CSR, les validations, la traçabilité, la documentation, les secrets et les licences |
 | `npx orbith trace` | Produit la matrice de traçabilité (US, commits, tests, livraisons) |
+| `npx orbith preparation` | Vérifie que tout est prêt avant de développer (PASS, CONCERNS ou FAIL) |
+| `npx orbith metriques` | Indicateurs DORA et coûts IA estimés |
 | `npx orbith csr import <fichier.xlsx>` | Importe le CSR depuis un fichier Excel |
 | `npx orbith update` | Met à jour les agents et les règles Orbith |
 | `npx orbith plugin list` | Liste les plugins disponibles |
@@ -45,11 +47,13 @@ Dans Gemini CLI, tape `/orbith:guide` ou `/orbith:po`, `/orbith:dev`, etc.
 - Ne mets jamais de mot de passe, de clé d'API ou de donnée personnelle dans un prompt ou dans le code.
 - Chaque commit porte l'identifiant de sa user story, par exemple `feat(US-001): ...`.
 - Les documents validés sont modifiés seulement après revue humaine.
+- Toute modification du code met à jour la documentation concernée (ce README, `docs/`, commentaires) dans la même US.
 
 ## Organisation du dépôt
 
 ```text
 .orbith/            Configuration et règles Orbith (ne pas modifier sans raison)
+.orbith/contexte-projet.md  Conventions, patterns et pièges du projet (lu par les agents)
 docs/produit/       Brief, PRD, UX et épics
 docs/architecture/  Architecture et décisions (ADR)
 docs/livraisons/    Notes de livraison par version
