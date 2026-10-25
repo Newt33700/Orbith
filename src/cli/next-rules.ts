@@ -18,7 +18,7 @@ export interface NextResult {
   secondaires: Action[];
 }
 
-export type AgentKey = 'guide' | 'po' | 'sm' | 'ux' | 'architecte' | 'dev' | 'qa';
+export type AgentKey = 'guide' | 'po' | 'sm' | 'ux' | 'architecte' | 'dev' | 'qa' | 'devops';
 
 export function agent(key: AgentKey, message: string, arg?: string): Action {
   // Source unique des noms de commandes : src/adapters/agents.ts (ce que les adaptateurs génèrent vraiment).
@@ -128,6 +128,16 @@ function storyActions(arts: Artifact[]): Action[] {
   return actions;
 }
 
+/** Piste projet : décrire les environnements (non identiques) puis les faire valider avant le pipeline. */
+function devopsHints(arts: Artifact[]): Action[] {
+  const envs = ofType(arts, 'environnements');
+  if (envs.length === 0) {
+    return [agent('devops', "Décris les environnements (dev, recette, prod…) avec l'agent DevOps avant de créer le pipeline.")];
+  }
+  const pending = envs.find((a) => a.etat !== 'validé');
+  return pending ? [valider(pending, `Relis les environnements (${pending.chemin}) puis valide-les.`)] : [];
+}
+
 function archiHints(arts: Artifact[]): Action[] {
   const adrs = ofType(arts, 'adr').filter((a) => a.etat === 'validé');
   const out: Action[] = [];
@@ -183,6 +193,7 @@ export function computeNext(
     candidates.push(blocked);
   } else {
     candidates.push(...storyActions(artifacts));
+    if (piste === 'projet') candidates.push(...devopsHints(artifacts));
   }
   if (piste === 'evolution') candidates.push(...archiHints(artifacts));
 

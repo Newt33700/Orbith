@@ -2,6 +2,7 @@ import path from 'node:path';
 import type { Command } from 'commander';
 import { confirm, isCancel } from '@clack/prompts';
 import {
+  ARTIFACT_TYPES,
   OrbithError,
   estValide,
   exists,
@@ -16,7 +17,7 @@ import {
   writeDoc,
 } from '../core/index.js';
 
-const TYPES = ['brief', 'prd', 'ux', 'architecture', 'adr', 'epic', 'story', 'release-notes'];
+const TYPES: readonly string[] = ARTIFACT_TYPES;
 
 export interface ValiderOptions {
   cwd?: string;

@@ -76,3 +76,17 @@ describe('orbith valider', () => {
     }
   });
 });
+
+describe('orbith valider : environnements (agent DevOps)', () => {
+  it('accepte le document des environnements, vu ensuite par le scan', async () => {
+    const root = await makeProject('projet', true);
+    roots.push(root);
+    const tpl = await readFile(path.join(__dirname, '../../content/templates/environnements.md'), 'utf8');
+    await put(root, 'docs/architecture/environnements.md', tpl);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    expect(await runValider('docs/architecture/environnements.md', { cwd: root, yes: true })).toBe(true);
+    const { scanArtifacts } = await import('../../src/core/index.js');
+    const env = (await scanArtifacts(root)).find((a) => a.type === 'environnements');
+    expect(env?.etat).toBe('validé');
+  });
+});

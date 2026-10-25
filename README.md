@@ -92,6 +92,7 @@ Chaque agent existe en deux syntaxes, selon l'outil utilisé.
 | Arthur (Architecte) | Architecture conforme au CSR, décisions (ADR) | `/orbith:archi` | `/orbith-archi` |
 | Dani (Développeur) | Implémente une user story validée | `/orbith:dev` | `/orbith-dev` |
 | Quentin (QA) | Tests à partir des critères Gherkin, revue, couverture | `/orbith:qa` | `/orbith-qa` |
+| Dora (DevOps) | Environnements non identiques (dev, recette, prod…) et pipelines CI/CD | `/orbith:devops` | `/orbith-devops` |
 | Atelier | Plusieurs agents discutent ensemble sur un sujet | `/orbith:atelier` | `/orbith-atelier` |
 
 Exemple : pour demander au PO de rédiger le brief, tapez `/orbith:po rédige le brief de mon appli de
@@ -136,9 +137,11 @@ Pour démarrer un nouveau produit de zéro.
 4. 🔒 Validation UX.
 5. Architecte : rédige l'architecture et les ADR, conformes au CSR.
 6. 🔒 Validation de l'architecture.
-7. PO : découpe le PRD en epics, puis en user stories.
-8. 🔒 Validation des epics et des user stories.
-9. Dev, QA, puis livraison, comme dans l'évolution.
+7. DevOps : décrit les environnements (souvent différents entre eux), puis 🔒 validation, puis crée le pipeline,
+   relu en merge request.
+8. PO : découpe le PRD en epics, puis en user stories.
+9. 🔒 Validation des epics et des user stories.
+10. Dev, QA, puis livraison, comme dans l'évolution.
 
 Pour savoir quelle est la prochaine étape, lancez `npx orbith next`. La commande lit l'état du projet et
 indique l'action recommandée.
@@ -445,6 +448,7 @@ services) de façon sûre et normalisée.
 | [demarrage.md](docs/guide/demarrage.md) | Tout le monde | Installation pas à pas, premier lancement |
 | [guide-po.md](docs/guide/guide-po.md) | PO, chefs de projet | Du brief à une user story prête |
 | [guide-dev.md](docs/guide/guide-dev.md) | Leads tech, développeurs | Prendre une story, la développer, la livrer |
+| [guide-devops.md](docs/guide/guide-devops.md) | Leads tech, DevOps | Décrire les environnements et créer les pipelines |
 | [validation-humaine.md](docs/guide/validation-humaine.md) | Tout le monde | Statuts, validation, modifications détectées |
 | [csr.md](docs/guide/csr.md) | Leads tech, équipes CI | Format du CSR, import Excel, contrôle en CI |
 | [atelier.md](docs/guide/atelier.md) | Tout le monde | Faire travailler plusieurs agents ensemble |

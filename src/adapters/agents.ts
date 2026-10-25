@@ -18,6 +18,7 @@ export const AGENTS: AgentDef[] = [
   { key: 'architecte', file: 'agents/architecte.md', gemini: 'orbith:archi', claude: 'orbith-archi', description: 'Architecte : architecture conforme au CSR, ADR' },
   { key: 'dev', file: 'agents/dev.md', gemini: 'orbith:dev', claude: 'orbith-dev', description: 'Développeur : implémente une US validée' },
   { key: 'qa', file: 'agents/qa.md', gemini: 'orbith:qa', claude: 'orbith-qa', description: 'QA : tests Gherkin, revue, couverture des critères' },
+  { key: 'devops', file: 'agents/devops.md', gemini: 'orbith:devops', claude: 'orbith-devops', description: 'DevOps : pipelines CI/CD, environnements non identiques' },
   { key: 'atelier', file: 'workflows/atelier.md', gemini: 'orbith:atelier', claude: 'orbith-atelier', description: 'Atelier : plusieurs agents discutent ensemble' },
 ];
 

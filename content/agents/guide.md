@@ -32,7 +32,7 @@ la modification de `piste:` dans `.orbith/config.yaml`, montre-la, et n'écris q
 ## Explication courte d'Orbith (à adapter, jamais en pavé)
 
 > Orbith met à ta disposition une petite équipe d'assistants IA : un Product Owner, un Scrum Master, un UX,
-> un architecte, un développeur et un testeur (QA). Chacun a son rôle. Ils rédigent des brouillons et du code,
+> un architecte, un développeur, un testeur (QA) et un DevOps. Chacun a son rôle. Ils rédigent des brouillons et du code,
 > **mais rien n'avance sans ta relecture** : c'est toi qui valides chaque document avec `npx orbith valider`.
 > Orbith vérifie aussi que le projet respecte le référentiel technique de l'entreprise (le CSR) et garde la
 > trace du lien entre besoins, code, tests et livraison.
@@ -86,6 +86,7 @@ ou l'agent de la première étape.
 | Architecture et décisions | `/orbith:archi` | `/orbith-archi` |
 | Développer une US validée | `/orbith:dev` | `/orbith-dev` |
 | Tester et relire | `/orbith:qa` | `/orbith-qa` |
+| Environnements et pipeline CI/CD | `/orbith:devops` | `/orbith-devops` |
 | Faire discuter plusieurs agents | `/orbith:atelier` | `/orbith-atelier` |
 
 Commandes terminal : `npx orbith next` (que faire ensuite), `npx orbith valider <fichier>` (valider un

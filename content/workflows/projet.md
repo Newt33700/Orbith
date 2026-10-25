@@ -23,17 +23,21 @@ On valide avec `npx orbith valider <fichier>`.
 | 3 🔒 | Valider l'**UX** | Toi | `npx orbith valider docs/produit/ux.md` | | |
 | 4 | Architecture conforme au CSR + ADR | Architecte | `/orbith:archi` · `/orbith-archi` | `docs/architecture/architecture.md`, `adr/` | PRD, UX |
 | 4 🔒 | Valider l'**Architecture** et les **ADR** | Toi | `npx orbith valider docs/architecture/architecture.md` | | |
-| 5 | Epics puis user stories avec Gherkin | PO | `/orbith:po` · `/orbith-po` | `docs/produit/epics/`, `backlog/tasks/` | Architecture |
-| 5 🔒 | Valider les **Epics** et les **US** | Toi | `npx orbith valider <fichier>` | | |
-| 6 | Proposition de sprint | SM | `/orbith:sm` · `/orbith-sm` | (dans la conversation) | US validées et `Prête` |
-| 6 🔒 | **Décider** le contenu du sprint | Toi / l'équipe | cartes → `Prête` / `En cours` | | |
-| 7 | Tests puis développement (une US par session) | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | code, tests `@US-NNN`, commits | US validée |
-| 8 | Tests exécutables, couverture, revue de code | QA | `/orbith:qa US-NNN` · `/orbith-qa US-NNN` | rapport de QA | |
-| 8 🔒 | **Revue humaine** ; US → `Terminée` | Toi | colonne du tableau → `Terminée` | | |
-| 9 | Notes de version, traçabilité | SM | `/orbith:sm` · `/orbith-sm` | `docs/livraisons/release-notes-<version>.md` | US `Terminée` |
-| 9 🔒 | Valider les **notes de version** et décider de **livrer** | Toi | `npx orbith valider docs/livraisons/release-notes-<version>.md` | | |
+| 5 | Environnements : ce qui différencie dev, recette, préprod, prod | DevOps | `/orbith:devops` · `/orbith-devops` | `docs/architecture/environnements.md` | Architecture |
+| 5 🔒 | Valider les **Environnements** | Toi | `npx orbith valider docs/architecture/environnements.md` | | |
+| 6 | Pipeline CI/CD : intégration et déploiement automatiques | DevOps | `/orbith:devops` · `/orbith-devops` | `.gitlab-ci.yml` (commit `ci:`) | Environnements |
+| 6 🔒 | **Relire la merge request** du pipeline ; créer les variables et environnements protégés dans GitLab | Toi | revue de la merge request | | |
+| 7 | Epics puis user stories avec Gherkin | PO | `/orbith:po` · `/orbith-po` | `docs/produit/epics/`, `backlog/tasks/` | Architecture |
+| 7 🔒 | Valider les **Epics** et les **US** | Toi | `npx orbith valider <fichier>` | | |
+| 8 | Proposition de sprint | SM | `/orbith:sm` · `/orbith-sm` | (dans la conversation) | US validées et `Prête` |
+| 8 🔒 | **Décider** le contenu du sprint | Toi / l'équipe | cartes → `Prête` / `En cours` | | |
+| 9 | Tests puis développement (une US par session) | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | code, tests `@US-NNN`, commits | US validée |
+| 10 | Tests exécutables, couverture, revue de code | QA | `/orbith:qa US-NNN` · `/orbith-qa US-NNN` | rapport de QA | |
+| 10 🔒 | **Revue humaine** ; US → `Terminée` | Toi | colonne du tableau → `Terminée` | | |
+| 11 | Notes de version, traçabilité | SM | `/orbith:sm` · `/orbith-sm` | `docs/livraisons/release-notes-<version>.md` | US `Terminée` |
+| 11 🔒 | Valider les **notes de version** et décider de **livrer** | Toi | `npx orbith valider docs/livraisons/release-notes-<version>.md` | | |
 
-Les étapes 7 et 8 se répètent pour chaque US du sprint. Ensuite, on recommence un sprint (étape 6) jusqu'à ce que
+Les étapes 9 et 10 se répètent pour chaque US du sprint. Ensuite, on recommence un sprint (étape 8) jusqu'à ce que
 tout soit livré.
 
 ## Détail des étapes
@@ -49,16 +53,23 @@ pourras vérifier.
 interdit. Chaque décision importante est présentée en 2 ou 3 options ; **la décision est la tienne**, enregistrée à
 ton nom dans un ADR. Il lance `npx orbith check`.
 
-**5. Epics et US.** Le PO découpe en epics (grands blocs de valeur), puis en US avec critères Gherkin. Chaque US doit
+**5 à 6. Environnements et pipeline.** Le DevOps (Dora) te demande d'abord ce qui rend chaque environnement
+**différent** : hébergement, configuration, données, accès, qui valide un déploiement. Il ne suppose rien : ce que
+tu ne sais pas est noté « À confirmer ». Tu valides le document **avant** que le pipeline soit écrit. Ensuite, il
+écrit le pipeline (`.gitlab-ci.yml`) : une étape de déploiement par environnement, **jamais de secret dans le
+fichier**, et un déploiement de production toujours manuel et protégé. Tu relis la merge request, puis tu crées toi-même
+les variables et les environnements protégés dans GitLab (l'agent te donne la liste).
+
+**7. Epics et US.** Le PO découpe en epics (grands blocs de valeur), puis en US avec critères Gherkin. Chaque US doit
 satisfaire la DoR (liste « prête à développer »). Les US restent en colonne `À faire` ; une fois validées et la DoR
 confirmée, tu les passes en `Prête`.
 
-**6. Sprint.** Le SM te propose 2 ou 3 lots d'US avec leurs risques. **Tu décides** du lot retenu.
+**8. Sprint.** Le SM te propose 2 ou 3 lots d'US avec leurs risques. **Tu décides** du lot retenu.
 
-**7 à 8. Développement et QA.** Une US par session. Le dev écrit les tests depuis le Gherkin, puis le code ; la QA
+**9 à 10. Développement et QA.** Une US par session. Le dev écrit les tests depuis le Gherkin, puis le code ; la QA
 vérifie couverture et conformité et ne valide jamais elle-même. **Tu fais la revue finale.**
 
-**9. Livraison.** Le SM rédige les notes de version et la traçabilité. Tu relis, tu valides, tu décides de livrer.
+**11. Livraison.** Le SM rédige les notes de version et la traçabilité. Tu relis, tu valides, tu décides de livrer.
 
 ## Règle d'or : une nouvelle session entre chaque étape
 

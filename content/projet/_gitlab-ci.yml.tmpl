@@ -14,6 +14,7 @@ orbith-check:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'                # livraisons par tag : le contrôle tourne aussi
 
 # Décommente et adapte ce job pour lancer les tests du projet.
 #
