@@ -136,6 +136,38 @@ signal donné à l'équipe technique.
 
 Pour connaître la prochaine action à tout moment, lancez `npx orbith next`.
 
+## Étape 8 : créer une version
+
+Vous livrez par versions. Une version contient toutes les stories **fusionnées** (mergées) depuis la version
+précédente. Quand l'équipe est prête à livrer, créez la version avec son numéro :
+
+```bash
+npx orbith version 1.1.0.0
+```
+
+La commande :
+
+1. retrouve dans l'historique Git les stories citées dans les commits fusionnés depuis la version précédente (pour la
+   toute première version : tout l'historique) ;
+2. les enregistre dans `.orbith/versions.json` ;
+3. crée le brouillon des notes de version `docs/livraisons/release-notes-1.1.0.0.md`, avec les nouveautés, les
+   corrections (bugs) et le tableau des stories livrées ;
+4. vous signale les stories qui ont du code fusionné mais ne sont pas encore **Terminée** ou pas **validées** : à vous
+   de décider si elles partent dans cette version (retirez-les du brouillon sinon).
+
+Ensuite, le Scrum Master rédige les notes en langage utilisateur (`/orbith-sm`), vous les validez
+(`npx orbith valider docs/livraisons/release-notes-1.1.0.0.md`), et après la mise en production réelle :
+
+```bash
+npx orbith deploiement 1.1.0.0
+```
+
+Toutes les stories de la version reçoivent alors leur date de mise en production (`mis_en_prod_le`), utilisée par
+`npx orbith metriques` pour les indicateurs DORA.
+
+> Le point de départ est le commit enregistré à la création de la version précédente. Pour une première version
+> à partir d'un tag existant, utilisez `npx orbith version 1.1.0.0 --depuis v1.0.0`.
+
 ## Points de vigilance
 
 - **Pas de données réelles** dans les échanges : noms de clients, adresses, données de production. Utilisez des

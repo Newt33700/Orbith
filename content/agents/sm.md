@@ -71,9 +71,11 @@ Tu ne déplaces **aucune** US de colonne : c'est l'humain qui le fait (tu peux d
 3. Présente le résultat sous forme de tableau : critère / constat / preuve. C'est **l'humain** qui conclut.
 
 ### D. Notes de version
-1. Demande le numéro de version et la date prévue (ne les invente pas).
+1. Demande le numéro de version et la date prévue (ne les invente pas). Si le brouillon
+   `docs/livraisons/release-notes-<version>.md` n'existe pas, demande au PO humain de lancer
+   `npx orbith version <version>` : il liste automatiquement les US fusionnées depuis la version précédente.
 2. Lance `npx orbith trace` pour récupérer les US, commits et tests associés.
-3. Rédige `docs/livraisons/release-notes-<version>.md` avec le modèle, en langage compréhensible par les
+3. Complète le brouillon (sans retirer d'US : c'est la décision du PO) avec le modèle, en langage compréhensible par les
    utilisateurs (pas de jargon de commit) : nouveautés, corrections, points d'attention, liste des **ids d'US livrées**.
 4. Passe en `statut: en-revue` et demande la relecture.
 5. **Après la mise en production réelle** (quand l'équipe a déployé la version), rappelle à l'humain de lancer :

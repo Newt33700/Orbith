@@ -242,6 +242,15 @@ Deterministic (no AI) test skeletons: for each story with `statut: validé` and 
 (`<id>-2.feature`… for extra blocks), adding `@ID`, a `Fonctionnalité:` line and `# language: fr` when missing.
 Existing files are kept unless `--force`. Non-validated stories are skipped (human validation first).
 
+### 4.6b2 `orbith version <numero> [--depuis <ref>]`
+PO command. Number: digits and dots (`1.1.0.0`), optional `-suffix`. Stories = those whose id is mentioned
+(boundary-aware) in commit messages (subject and body, merge commits included) in `<prev>..HEAD`, where
+`<prev>` = `--depuis` or the `commit` of the last entry of `.orbith/versions.json` (whole history for the first).
+Appends `{numero, date, commit: HEAD, par, us[]}` to `.orbith/versions.json` and writes the draft
+`docs/livraisons/release-notes-<numero>.md` (`statut: brouillon`, Nouveautés / Corrections split on the `bug`
+label, Stories livrées table). Refuses duplicates and an existing notes file. Warns (does not exclude) stories
+not « Terminée » or not validated. `orbith deploiement <numero>` then dates every story listed in the notes.
+
 ### 4.6c `orbith deploiement <version> [--env production] [--date AAAA-MM-JJ] [--yes]`
 Human command run after a real deployment. Requires validated release notes for the version (frontmatter
 `version`, else `release-notes-<version>.md`). Appends `{version, env, date, par, email, us[]}` to
