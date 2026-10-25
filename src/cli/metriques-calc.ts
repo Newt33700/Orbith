@@ -12,6 +12,8 @@ export interface LigneUS {
   creee?: string;
   modifiee?: string;
   debutDev?: string;
+  /** Passage en « Terminée » (développée, relue, acceptée). */
+  terminee?: string;
   misEnProd?: string;
   /** Jours entre le début du développement (premier commit) et la mise en production. */
   leadTimeJours?: number;
@@ -23,6 +25,8 @@ export interface Metriques {
   devise: string;
   frequence: { deploiements: number; parSemaine: number; niveau: Niveau | null };
   leadTime: { medianeJours: number | null; us: number; niveau: Niveau | null };
+  /** Attente entre « Terminée » et la mise en production. */
+  attente: { medianeJours: number | null; us: number };
   tauxEchec: { pourcentage: number | null; deploiementsEnEchec: number; niveau: Niveau | null };
   retablissement: { medianeHeures: number | null; incidents: number; niveau: Niveau | null };
   couts: { total: number; parAgent: Record<string, number>; estimations: number };
@@ -109,7 +113,7 @@ export function calculerMetriques(
   arts: Artifact[],
   deploiements: Deploiement[],
   premiersCommits: Map<string, string>,
-  opts: { jours: number; aujourdhui?: string; devise: string },
+  opts: { jours: number; aujourdhui?: string; devise: string; terminees?: Map<string, string> },
 ): Metriques {
   const fin = opts.aujourdhui ?? new Date().toISOString().slice(0, 10);
   const debut = new Date(ms(fin) - opts.jours * JOUR).toISOString().slice(0, 10);
@@ -121,6 +125,7 @@ export function calculerMetriques(
   const lignes: LigneUS[] = stories.map((s) => {
     const debutDev = dateStr(s.data['debut_dev_le']) ?? premiersCommits.get(s.id);
     const misEnProd = dateStr(s.data['mis_en_prod_le']);
+    const terminee = dateStr(s.data['termine_le']) ?? opts.terminees?.get(s.id);
     const lead = debutDev && misEnProd ? Math.max(0, (ms(misEnProd) - ms(debutDev)) / JOUR) : undefined;
     return {
       id: s.id,
@@ -130,6 +135,7 @@ export function calculerMetriques(
       creee: dateStr(s.data['created_date']),
       modifiee: dateStr(s.data['updated_date']),
       debutDev,
+      terminee,
       misEnProd,
       leadTimeJours: lead != null ? arrondi(lead) : undefined,
       coutIa: arrondi(coutsIa(s).total, 2),
@@ -138,6 +144,10 @@ export function calculerMetriques(
 
   const leads = lignes.filter((l) => !l.bug && dansPeriode(l.misEnProd) && l.leadTimeJours != null).map((l) => l.leadTimeJours!);
   const leadMed = mediane(leads);
+  const attentes = lignes
+    .filter((l) => !l.bug && dansPeriode(l.misEnProd) && l.terminee)
+    .map((l) => Math.max(0, (ms(l.misEnProd!) - ms(l.terminee!)) / JOUR));
+  const attenteMed = mediane(attentes);
 
   // Bugs de production : `cause` désigne l'US dont la livraison a introduit l'incident.
   const bugsProd = stories.filter((s) => estBug(s) && String(s.data['origine'] ?? '').toLowerCase() === 'production');
@@ -167,6 +177,7 @@ export function calculerMetriques(
     devise: opts.devise,
     frequence: { deploiements: prod.length, parSemaine, niveau: prod.length > 0 ? niveauFrequence(parSemaine) : null },
     leadTime: { medianeJours: leadMed != null ? arrondi(leadMed) : null, us: leads.length, niveau: leadMed != null ? niveauLeadTime(leadMed) : null },
+    attente: { medianeJours: attenteMed != null ? arrondi(attenteMed) : null, us: attentes.length },
     tauxEchec: { pourcentage: pct, deploiementsEnEchec: enEchec, niveau: pct != null ? niveauEchec(pct) : null },
     retablissement: {
       medianeHeures: retabMed != null ? arrondi(retabMed) : null,

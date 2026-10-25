@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { Command } from 'commander';
 import { OrbithError, gitLogDated, isGitRepo, loadConfig, requireProjectRoot, scanArtifacts, ui } from '../core/index.js';
-import { loadDeploiements } from './deploiement.js';
+import { dateTerminee, loadDeploiements } from './deploiement.js';
 import { calculerMetriques, type Metriques, type Niveau } from './metriques-calc.js';
 import { mentions } from './trace-report.js';
 
@@ -28,6 +28,7 @@ export function renderMetriques(m: Metriques, projet: string): string {
   L.push('| Indicateur | Valeur |', '|---|---|');
   L.push(`| Fréquence de déploiement | ${m.frequence.deploiements} mise(s) en production, ${fr(m.frequence.parSemaine)} par semaine${niv(m.frequence.niveau)} |`);
   L.push(`| Délai de mise en production (médiane) | ${val(m.leadTime.medianeJours, 'jour(s)')}${m.leadTime.us ? ` sur ${m.leadTime.us} US` : ''}${niv(m.leadTime.niveau)} |`);
+  L.push(`| Attente avant mise en production (médiane) | ${val(m.attente.medianeJours, 'jour(s)')}${m.attente.us ? ` sur ${m.attente.us} US` : ''} |`);
   L.push(`| Taux d'échec des changements | ${m.tauxEchec.pourcentage == null ? 'pas encore de données' : `${fr(m.tauxEchec.pourcentage)} % (${m.tauxEchec.deploiementsEnEchec} déploiement(s) suivi(s) d'un bug de production)`}${niv(m.tauxEchec.niveau)} |`);
   L.push(`| Temps de rétablissement (médiane) | ${val(m.retablissement.medianeHeures, 'heure(s)')}${m.retablissement.incidents ? ` sur ${m.retablissement.incidents} incident(s)` : ''}${niv(m.retablissement.niveau)} |`);
   L.push('');
@@ -36,10 +37,10 @@ export function renderMetriques(m: Metriques, projet: string): string {
   const agents = Object.entries(m.couts.parAgent).sort((a, b) => b[1] - a[1]);
   if (agents.length) L.push('', ...agents.map(([a, c]) => `- ${a} : ${fr(c)} ${m.devise}`));
   L.push('', '## User stories', '');
-  L.push('| US | Type | Colonne | Créée | Modifiée | Début dev | Mise en prod | Délai (j) | Coût IA |', '|---|---|---|---|---|---|---|---|---|');
+  L.push('| US | Type | Colonne | Créée | Modifiée | Début dev | Terminée | Mise en prod | Délai (j) | Coût IA |', '|---|---|---|---|---|---|---|---|---|---|');
   for (const u of m.us) {
     L.push(
-      `| ${u.id} | ${u.bug ? 'bug' : 'US'} | ${u.colonne} | ${d(u.creee)} | ${d(u.modifiee)} | ${d(u.debutDev)} | ${d(u.misEnProd)} | ${u.leadTimeJours != null ? fr(u.leadTimeJours) : '—'} | ${u.coutIa ? `${fr(u.coutIa)} ${m.devise}` : '—'} |`,
+      `| ${u.id} | ${u.bug ? 'bug' : 'US'} | ${u.colonne} | ${d(u.creee)} | ${d(u.modifiee)} | ${d(u.debutDev)} | ${d(u.terminee)} | ${d(u.misEnProd)} | ${u.leadTimeJours != null ? fr(u.leadTimeJours) : '—'} | ${u.coutIa ? `${fr(u.coutIa)} ${m.devise}` : '—'} |`,
     );
   }
   L.push('');
@@ -58,16 +59,23 @@ export async function runMetriques(opts: MetriquesOptions = {}): Promise<Metriqu
   const arts = await scanArtifacts(root);
   const ids = arts.filter((a) => a.type === 'story' && a.id).map((a) => a.id!);
   const premiers = new Map<string, string>();
+  const terminees = new Map<string, string>();
   if (await isGitRepo(root)) {
     const commits = await gitLogDated(root);
     for (const id of ids) {
       const c = commits.find((x) => mentions(x.subject, id));
       if (c) premiers.set(id, c.date);
     }
+    for (const s of arts) {
+      if (s.type !== 'story' || !s.id) continue;
+      const fin = await dateTerminee(root, s);
+      if (fin) terminees.set(s.id, fin);
+    }
   }
   const m = calculerMetriques(arts, await loadDeploiements(root), premiers, {
     jours,
     devise: config.finops.devise,
+    terminees,
     ...(opts.aujourdhui ? { aujourdhui: opts.aujourdhui } : {}),
   });
   const out = format === 'json' ? JSON.stringify(m, null, 2) + '\n' : renderMetriques(m, config.projet.nom);

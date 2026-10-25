@@ -5,12 +5,15 @@ import { confirm, isCancel } from '@clack/prompts';
 import {
   ORBITH_DIR,
   OrbithError,
+  gitLastStatusChange,
   gitLogDated,
   gitUser,
   isGitRepo,
+  parseDoc,
   readDoc,
   requireProjectRoot,
   scanArtifacts,
+  storyStatus,
   ui,
   writeDoc,
   type Artifact,
@@ -33,6 +36,17 @@ export interface DeploiementOptions {
   env?: string;
   date?: string;
   yes?: boolean;
+}
+
+/**
+ * Date de passage en « Terminée » : `termine_le` s'il est renseigné, sinon le dernier commit qui a changé
+ * le `status` du fichier, à condition qu'il l'ait mis en « Terminée » (déplacement de carte dans Backlog.md compris).
+ */
+export async function dateTerminee(root: string, s: Artifact): Promise<string | undefined> {
+  if (storyStatus(s) !== 'Terminée') return undefined;
+  if (s.data['termine_le'] != null && String(s.data['termine_le']).trim()) return String(s.data['termine_le']).trim();
+  const change = await gitLastStatusChange(root, s.chemin);
+  return change && storyStatus(parseDoc(change.content)) === 'Terminée' ? change.date : undefined;
 }
 
 function registryPath(root: string): string {
@@ -131,6 +145,10 @@ export async function runDeploiement(version: string, opts: DeploiementOptions =
       if (doc.data['debut_dev_le'] == null) {
         const first = commits.find((c) => mentions(c.subject, s.id));
         if (first) doc.data['debut_dev_le'] = first.date;
+      }
+      if (doc.data['termine_le'] == null) {
+        const fin = await dateTerminee(root, s);
+        if (fin) doc.data['termine_le'] = fin;
       }
       await writeDoc(file, doc);
     }

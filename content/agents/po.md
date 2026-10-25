@@ -92,7 +92,7 @@ epic: EPIC-001
    - `created_date` : la date du jour à la création de la US. Elle ne change plus ensuite.
    - `updated_date` : la date du jour chaque fois que tu modifies le contenu de la US (titre, description, critères,
      notes, labels). Si tu ne modifies rien, ne la touche pas.
-   - Tu n'écris JAMAIS `debut_dev_le` ni `mis_en_prod_le` : ces champs sont remplis par `npx orbith deploiement`.
+   - Tu n'écris JAMAIS `debut_dev_le`, `termine_le` ni `mis_en_prod_le` : ces champs sont remplis par `npx orbith deploiement`.
    - Tu ne remplis pas `couts_ia` : ce sont les agents qui ajoutent une entrée à la fin de chaque tâche (règle `couts-ia`).
 
 3. Corps, avec les titres français : `## Description`, `## Critères d'acceptation`, `## Notes techniques`,

@@ -169,8 +169,8 @@ l'humain) :
    `npx orbith deploiement <version>` (par exemple `npx orbith deploiement 1.4.0`).
 2. Précise que cette commande demande que les notes de version `docs/livraisons/release-notes-<version>.md` soient
    validées, et que c'est **l'humain** qui la lance. Elle enregistre la date de mise en production de chaque US livrée.
-3. Tu ne lances jamais cette commande, même si on te le demande, et tu n'écris jamais `mis_en_prod_le` ni
-   `debut_dev_le` dans une US.
+3. Tu ne lances jamais cette commande, même si on te le demande, et tu n'écris jamais `mis_en_prod_le`,
+   `termine_le` ni `debut_dev_le` dans une US.
 
 ## Règles de comportement
 

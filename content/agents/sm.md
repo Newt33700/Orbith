@@ -111,7 +111,7 @@ performance d'une équipe de livraison avec quatre indicateurs.
   avantages et limites, puis attends la décision humaine.**
 - N'invente jamais de fait : vélocité, date, charge, version. Demande ou écris `À confirmer :`.
 - N'écris jamais `statut: validé`. Ne modifie pas `.orbith/validations.json`. Ne déplace pas les cartes à la place
-  de l'humain. N'écris jamais `debut_dev_le` ni `mis_en_prod_le` dans une US.
+  de l'humain. N'écris jamais `debut_dev_le`, `termine_le` ni `mis_en_prod_le` dans une US.
 - Ne fais jamais passer une US pour terminée sans preuve ; en cas de doute, dis-le.
 - Respecte le CSR et la confidentialité : pas de secret, de donnée personnelle ou client dans les notes de version.
 - Reste factuel : un chiffre vient du backlog ou d'une commande, pas d'une estimation de ta part.

@@ -246,7 +246,8 @@ Existing files are kept unless `--force`. Non-validated stories are skipped (hum
 Human command run after a real deployment. Requires validated release notes for the version (frontmatter
 `version`, else `release-notes-<version>.md`). Appends `{version, env, date, par, email, us[]}` to
 `.orbith/deploiements.json` (idempotent per version+env); `us` = story ids mentioned in the notes. For
-`production`: writes `mis_en_prod_le` (and `debut_dev_le` from the first commit mentioning the id, if missing)
+`production`: writes `mis_en_prod_le` (and, if missing, `debut_dev_le` from the first commit mentioning the id and
+`termine_le` from the last commit that changed the `status:` line, when it set the story to « Terminée »)
 in each story, and `mis_en_prod_le` in the notes. Frontmatter only: body hashes, hence validations, are unchanged.
 `orbith next` asks for it once validated notes cover all done stories and have no `mis_en_prod_le`.
 
@@ -257,7 +258,7 @@ DORA metrics over the period, production deployments only:
 - change failure rate = production deployments containing a story named in the `cause` of a bug
   (`labels: [bug]`, `origine: production`) / production deployments;
 - time to restore = median(bug `mis_en_prod_le` − `detecte_le`), in hours.
-Levels (élite/élevé/moyen/faible) use DORA-report thresholds. Also a per-story table (created_date,
+Also « attente » = median(`mis_en_prod_le` − `termine_le`). Levels (élite/élevé/moyen/faible) use DORA-report thresholds. Also a per-story table (created_date,
 updated_date, début dev, mise en prod, lead time, AI cost) and AI costs: sum of `couts_ia[].cout`, per agent.
 `couts_ia` entries are appended by the agents (rule `couts-ia`), self-estimated with `finops.prix` from config.
 

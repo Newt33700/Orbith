@@ -20,6 +20,8 @@ couts_ia: []
      Ne remplis pas `cause` et `detecte_le` sans demander à l'humain : ce sont des faits, pas des suppositions.
      Champs remplis automatiquement, à ne pas écrire à la main :
      - debut_dev_le : premier commit qui mentionne ce bug, écrit par `npx orbith deploiement`.
+     - termine_le : date du commit qui a passé la carte en « Terminée » (déplacement dans Backlog.md compris),
+       écrite par `npx orbith deploiement`.
      - mis_en_prod_le : date de mise en production du correctif, écrite par `npx orbith deploiement <version>`
        (lancé par un humain). Il sert à mesurer le temps de rétablissement.
      - couts_ia : une entrée par tâche, ajoutée par les agents (voir la règle couts-ia). -->

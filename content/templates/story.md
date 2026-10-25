@@ -15,6 +15,8 @@ couts_ia: []
 
 <!-- Champs remplis automatiquement, à ne pas écrire à la main :
      - debut_dev_le : date du premier commit qui mentionne cette US, écrite par `npx orbith deploiement`.
+     - termine_le : date du commit qui a passé la carte en « Terminée » (déplacement dans Backlog.md compris),
+       écrite par `npx orbith deploiement`.
      - mis_en_prod_le : date de mise en production, écrite par `npx orbith deploiement <version>` (lancé par un humain).
      - couts_ia : une entrée par tâche, ajoutée par les agents (estimation du coût IA, voir la règle couts-ia).
      - updated_date : date de la dernière modification du contenu de la US. -->

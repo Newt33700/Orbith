@@ -32,7 +32,7 @@ Cette règle est permanente et s'applique à CHAQUE tâche liée à une user sto
 5. Ne touche jamais au corps de la US (description, critères, notes) pour écrire ton coût. Ajouter une entrée de coût
    ne demande pas de revalidation, car la validation porte sur le corps.
 6. Mets `updated_date` à la date du jour uniquement si tu as modifié le contenu de la US. Ne modifie pas `created_date`.
-7. Ne remplis JAMAIS `mis_en_prod_le` ni `debut_dev_le` : ces champs sont écrits par les commandes
+7. Ne remplis JAMAIS `mis_en_prod_le`, `termine_le` ni `debut_dev_le` : ces champs sont écrits par les commandes
    `npx orbith deploiement`, jamais par un agent.
 8. Si aucune US ni aucun bug n'est concerné (par exemple un brief ou un PRD), ne crée aucun fichier : donne
    l'estimation dans la conversation seulement.

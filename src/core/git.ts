@@ -56,3 +56,16 @@ export async function gitLogDated(root: string): Promise<{ hash: string; date: s
       return { hash, date: date.slice(0, 10), subject: rest.join('\t') };
     });
 }
+
+/**
+ * Dernier commit ayant modifié une ligne `status:` du fichier, avec son contenu à ce commit.
+ * Sert à dater le passage d'une US dans une colonne (par exemple « Terminée »).
+ */
+export async function gitLastStatusChange(root: string, rel: string): Promise<{ date: string; content: string } | null> {
+  const out = await git(root, ['log', '-n1', '--format=%H%x09%cI', '-G', 'status:', '--', rel]);
+  const line = out?.split(/\r?\n/).find(Boolean);
+  if (!line) return null;
+  const [hash = '', date = ''] = line.split('\t');
+  const content = await git(root, ['show', `${hash}:${rel}`]);
+  return content === null ? null : { date: date.slice(0, 10), content };
+}

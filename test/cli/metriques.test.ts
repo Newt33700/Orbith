@@ -1,8 +1,9 @@
+import { execFileSync } from 'node:child_process';
 import { readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runValider } from '../../src/cli/valider.js';
-import { loadDeploiements, runDeploiement } from '../../src/cli/deploiement.js';
+import { dateTerminee, loadDeploiements, runDeploiement } from '../../src/cli/deploiement.js';
 import { runMetriques } from '../../src/cli/metriques.js';
 import { calculerMetriques } from '../../src/cli/metriques-calc.js';
 import { readDoc, scanArtifacts, type Artifact } from '../../src/core/index.js';
@@ -122,5 +123,51 @@ describe('orbith metriques', () => {
     await runMetriques({ cwd: root, format: 'json', sortie: 'out/m.json' });
     expect(JSON.parse(await readFile(path.join(root, 'out/m.json'), 'utf8')).us[0].id).toBe('US-001');
     await expect(runMetriques({ cwd: root, jours: 'abc' })).rejects.toThrow(/Période invalide/);
+  });
+});
+
+function commitAt(root: string, msg: string, date: string): void {
+  const env = { ...process.env, GIT_AUTHOR_DATE: `${date}T10:00:00Z`, GIT_COMMITTER_DATE: `${date}T10:00:00Z` };
+  execFileSync('git', ['add', '-A'], { cwd: root, stdio: 'ignore' });
+  execFileSync('git', ['commit', '-q', '-m', msg], { cwd: root, stdio: 'ignore', env });
+}
+
+describe('termine_le (passage en « Terminée »)', () => {
+  it('daté par le commit qui déplace la carte, puis écrit dans la US à la mise en prod', async () => {
+    const root = await makeProject('evolution', true);
+    roots.push(root);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const us = 'backlog/tasks/us-001 - Connexion.md';
+    const fm = (status: string) => `---\ntype: story\nid: US-001\ntitle: Connexion\nstatut: brouillon\nstatus: ${status}\n---\n# Connexion\n\n${GHERKIN}`;
+    await put(root, us, fm('En cours'));
+    commitAt(root, 'feat(US-001): login', '2026-10-01');
+    let s = (await scanArtifacts(root)).find((a) => a.id === 'US-001')!;
+    expect(await dateTerminee(root, s)).toBeUndefined();
+    // Déplacement de carte (Backlog.md) puis commit : seul le status change.
+    await put(root, us, fm('Terminée'));
+    commitAt(root, 'chore: US-001 terminée', '2026-10-04');
+    await put(root, us, fm('Terminée').replace('# Connexion', '# Connexion par email'));
+    commitAt(root, 'docs: titre', '2026-10-06');
+    s = (await scanArtifacts(root)).find((a) => a.id === 'US-001')!;
+    expect(await dateTerminee(root, s)).toBe('2026-10-04');
+
+    await runValider(us, { cwd: root, yes: true });
+    await put(root, 'docs/livraisons/release-notes-1.0.0.md', '---\ntype: release-notes\nstatut: brouillon\nversion: 1.0.0\n---\n# 1.0.0\n\n- US-001\n');
+    await runValider('docs/livraisons/release-notes-1.0.0.md', { cwd: root, yes: true });
+    await runDeploiement('1.0.0', { cwd: root, yes: true, date: '2026-10-09' });
+    const doc = await readDoc(path.join(root, us));
+    expect(doc.data).toMatchObject({ debut_dev_le: '2026-10-01', termine_le: '2026-10-04', mis_en_prod_le: '2026-10-09' });
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const m = await runMetriques({ cwd: root, aujourdhui: '2026-10-25' });
+    expect(m.attente).toEqual({ medianeJours: 5, us: 1 });
+    expect(m.leadTime.medianeJours).toBe(8);
+  });
+
+  it('calcul de l’attente avec les dates fournies par Git', () => {
+    const arts = [story('US-1', { status: 'Terminée', debut_dev_le: '2026-10-01', mis_en_prod_le: '2026-10-10' })];
+    const deps = [{ version: '1', env: 'production', date: '2026-10-10', par: 'x', email: 'x', us: ['US-1'] }];
+    const m = calculerMetriques(arts, deps, new Map(), { jours: 30, aujourdhui: '2026-10-25', devise: 'EUR', terminees: new Map([['US-1', '2026-10-07']]) });
+    expect(m.attente).toEqual({ medianeJours: 3, us: 1 });
+    expect(m.us[0]?.terminee).toBe('2026-10-07');
   });
 });

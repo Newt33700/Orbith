@@ -40,12 +40,19 @@ Orbith n'invente aucune date. Chaque date vient d'un fait précis et a un auteur
 | `created_date` | Frontmatter de la US | L'agent PO, à la création | Création de la US |
 | `updated_date` | Frontmatter de la US | L'agent qui modifie le contenu | Chaque modification du contenu |
 | `debut_dev_le` | Frontmatter de la US | `npx orbith deploiement` (automatique) | Date du premier commit qui mentionne la US (par exemple `feat(US-012): …`) |
+| `termine_le` | Frontmatter de la US | `npx orbith deploiement` (automatique) | Date du commit qui a passé la carte en « Terminée », y compris un déplacement dans Backlog.md |
 | `mis_en_prod_le` | Frontmatter de la US et des notes de version | `npx orbith deploiement <version>` (lancé par un humain) | Date de la mise en production réelle |
 | `origine`, `cause`, `detecte_le` | Frontmatter d'un bug | L'agent PO, sur réponse de l'humain | Déclaration du bug |
 | `couts_ia` | Frontmatter de la US ou du bug | Les agents, une entrée par tâche | Fin de chaque tâche |
 
-**Règle simple :** un agent n'écrit jamais `mis_en_prod_le` ni `debut_dev_le`. La date de mise en production n'existe
-que lorsqu'un humain confirme qu'un déploiement a eu lieu.
+**Règle simple :** un agent n'écrit jamais `mis_en_prod_le`, `termine_le` ni `debut_dev_le`. La date de mise en
+production n'existe que lorsqu'un humain confirme qu'un déploiement a eu lieu.
+
+> **Passer une carte en « Terminée » ne la met pas en production.** « Terminée » veut dire développée, relue et
+> acceptée ; la mise en production peut venir plus tard. Orbith garde donc deux dates distinctes : `termine_le`
+> (retrouvée dans l'historique Git, dès que le changement de colonne est commité) et `mis_en_prod_le` (enregistrée
+> par `npx orbith deploiement`). L'écart entre les deux est l'**attente avant mise en production**, affichée par
+> `npx orbith metriques` : elle montre si le temps se perd en développement ou en attente de livraison.
 
 ## Enregistrer une mise en production
 
@@ -59,7 +66,7 @@ La commande :
 
 1. vérifie que les notes de version `docs/livraisons/release-notes-1.4.0.md` existent et sont **validées** (`npx orbith valider`) ;
 2. enregistre le déploiement dans `.orbith/deploiements.json`, le **registre des mises en production** ;
-3. écrit `mis_en_prod_le` dans chaque US listée dans les notes, et `debut_dev_le` si ce champ est absent ;
+3. écrit `mis_en_prod_le` dans chaque US listée dans les notes, et `debut_dev_le` et `termine_le` s'ils sont absents ;
 4. écrit `mis_en_prod_le` dans les notes de version.
 
 Options utiles :
@@ -169,6 +176,7 @@ Période : du 2026-07-27 au 2026-10-25 (90 jours).
 |---|---|
 | Fréquence de déploiement | 3 mise(s) en production, 0,23 par semaine (niveau DORA : faible) |
 | Délai de mise en production (médiane) | 5 jour(s) sur 2 US (niveau DORA : élevé) |
+| Attente avant mise en production (médiane) | 2,5 jour(s) sur 2 US |
 | Taux d'échec des changements | 33,3 % (1 déploiement(s) suivi(s) d'un bug de production) (niveau DORA : faible) |
 | Temps de rétablissement (médiane) | 24 heure(s) sur 1 incident(s) (niveau DORA : moyen) |
 
@@ -182,12 +190,12 @@ Total : 3,31 EUR sur 7 estimation(s). Ce sont des ordres de grandeur, pas une fa
 
 ## User stories
 
-| US | Type | Colonne | Créée | Modifiée | Début dev | Mise en prod | Délai (j) | Coût IA |
-|---|---|---|---|---|---|---|---|---|
-| US-012 | US | Terminée | 2026-08-03 | 2026-08-20 | 2026-08-25 | 2026-09-02 | 8 | 1,84 EUR |
-| US-019 | US | Terminée | 2026-09-01 | 2026-09-03 | 2026-09-08 | 2026-09-10 | 2 | 0,72 EUR |
-| US-021 | US | En cours | 2026-10-02 | 2026-10-06 | — | — | — | 0,3 EUR |
-| BUG-003 | bug | Terminée | 2026-09-12 | — | — | 2026-09-13 | — | 0,45 EUR |
+| US | Type | Colonne | Créée | Modifiée | Début dev | Terminée | Mise en prod | Délai (j) | Coût IA |
+|---|---|---|---|---|---|---|---|---|---|
+| US-012 | US | Terminée | 2026-08-03 | 2026-08-20 | 2026-08-25 | 2026-08-29 | 2026-09-02 | 8 | 1,84 EUR |
+| US-019 | US | Terminée | 2026-09-01 | 2026-09-03 | 2026-09-08 | 2026-09-09 | 2026-09-10 | 2 | 0,72 EUR |
+| US-021 | US | En cours | 2026-10-02 | 2026-10-06 | — | — | — | — | 0,3 EUR |
+| BUG-003 | bug | Terminée | 2026-09-12 | — | — | — | 2026-09-13 | — | 0,45 EUR |
 ```
 
 Pour un format exploitable par un outil, utilisez `npx orbith metriques --format json --sortie metriques.json`.
