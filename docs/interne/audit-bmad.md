@@ -1,6 +1,6 @@
 # Audit d'Orbith par rapport à BMAD-METHOD
 
-> Date : 2026-10-25. Document interne (en français, à la demande du porteur du projet).
+> Date : 2026-10-25 (mis à jour le même jour avec l'état de réalisation, voir §7). Document interne (en français, à la demande du porteur du projet).
 > Sources : lecture du dépôt Orbith (README, `SPEC.md`, agents, workflows, règles, templates, CI) et page GitHub
 > de [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD). La documentation officielle de BMAD n'a pas pu
 > être ouverte : les éléments marqués *(à confirmer)* viennent de sources secondaires.
@@ -78,10 +78,12 @@ plateformes, publication npm.
 
 ## 5. Points d'attention dans le code actuel
 
-- `SPEC.md` §2 liste 7 agents alors que le dépôt en a 8 (DevOps).
-- `SPEC.md` contient un chemin local de machine (`/private/tmp/claude-501/...`) à retirer avant publication.
-- Registre des validations non protégé contre une édition manuelle.
-- Les coûts IA sont auto-estimés par les agents (1 jeton ≈ 4 caractères) : ordre de grandeur, pas une mesure.
+Constat initial, avec son état aujourd'hui :
+
+- `SPEC.md` §2 listait 7 agents alors que le dépôt en avait 8 : **corrigé** (la spec décrit maintenant 12 agents et 6 workflows).
+- `SPEC.md` contenait un chemin local de machine : **retiré**.
+- Registre des validations non protégé contre une édition manuelle : **corrigé** par les registres chaînés (§7), y compris la suppression de la dernière entrée, détectée via Git. Un humain qui réécrit tout l'historique Git reste hors de portée d'un outil local.
+- Coûts IA auto-estimés (1 jeton ≈ 4 caractères) : **partiellement corrigé**. L'import des compteurs réels de Claude Code est disponible ; l'estimation reste le repli, et Gemini CLI n'a pas d'import.
 
 ## 6. Priorités
 
@@ -91,3 +93,69 @@ plateformes, publication npm.
 4. DORA enrichi (cibles, tendances, découpage de l'attente).
 5. Journal d'audit chaîné et SBOM.
 6. Le reste : agent Sécurité, Test Architect, rétrospective, plateformes.
+
+## 7. État de réalisation (25 octobre 2026)
+
+Tout ce qui suit est fusionné dans `main` (PR #1 à #9, CI verte sur 3 systèmes × 2 versions de Node). Tout est facultatif et rétrocompatible : sans configuration, un projet existant se comporte comme avant. Le détail technique est dans `docs/interne/SPEC.md`, le détail d'usage dans `docs/guide/`.
+
+### 7.1 Les six priorités
+
+| Priorité | Réalisé | Où |
+|---|---|---|
+| 1. Version et release | `orbith version` (sans numéro : proposition SemVer ; avec numéro : version et brouillon de notes), `orbith release` (CHANGELOG, notes validées, tag local annoté, jamais de push), garde-fous, étiquette `breaking`, tags atteignables uniquement | `versions.md`, SPEC §10.1 |
+| 2. Demande de changement et rôles | Artefact `change`, matrice des rôles, quatre yeux, changement exigé avant `deploiement` | `changements-roles.md`, SPEC §11 |
+| 3. Contexte projet et préparation | `init-context`, `preparation` (PASS / CONCERNS / FAIL) | `contexte-preparation.md`, SPEC §10.2 |
+| 4. DORA enrichi | Cibles, tendances, découpage de l'attente, taille des changements, export CSV, avertissement quand aucun bug n'est déclaré | `metriques.md` |
+| 5. Journal chaîné et SBOM | Registres chaînés, `orbith sbom` (CycloneDX), contrôle des licences interdites | `integrite-sbom.md`, SPEC §12 |
+| 6. Le reste | Agents Sécurité et Test Architect, rétrospective, relecture adverse, changement de cap, plateforme GitHub Copilot (opt-in) | `agents-avances.md`, SPEC §13 |
+
+### 7.2 Les manques du §2
+
+| Manque | État |
+|---|---|
+| Contexte projet persistant | Fait |
+| Projet existant | Fait (`init-context`) |
+| Check de préparation | Fait |
+| Relecture adverse | Fait (workflow) |
+| Rétrospective | Fait (workflow, type `retro`) |
+| Changement de cap | Fait (workflow) |
+| Phase d'analyse | Fait (agent Analyste, type `analyse`) |
+| Rédacteur technique, Mermaid | Fait (agent Rédacteur technique, blocs Mermaid dans les modèles) |
+| Test Architect | Fait (type `strategie-test`) |
+| Mode autonome borné | Fait (`orbith autopilote`, workflow `autopilote`, qui s'arrête à chaque porte humaine) |
+| Création d'agents | Fait (`orbith agent new` / `agent list`, workflow `creer-agent`) |
+| Plus de plateformes | GitHub Copilot ajouté, en option |
+| Documents volumineux | Fait (`orbith decouper`, extraits dérivés, document source jamais modifié) |
+
+### 7.3 Les pratiques ITIL du §3
+
+| Pratique | État |
+|---|---|
+| Change Enablement | Fait |
+| Release Management | Fait |
+| Deployment Management | Fait : changement exigé avant la mise en production, recette enregistrée avant |
+| Incident / Problem | Modèles `incident` et post-mortem |
+| Service Level | Fait (clé `sla` comparée aux incidents et bugs de production : atteint, non atteint, non mesurable) |
+| Risk / Security | Menaces, SBOM, licences, provenance IA |
+| Continual Improvement | Fait (cibles, tendances, artefact `amelioration`, actions AMEL-NNN, `check` signale les retards) |
+| Knowledge Management | Fait (champ `liens`, graphe dans `trace`) |
+| Séparation des rôles | Fait |
+
+### 7.4 Ajouts hors audit
+
+- Règle « toute modification du code s'accompagne de la documentation » et `check` qui la contrôle.
+- Taux de reprise des déploiements (5e indicateur DORA), sans niveau inventé.
+- Registre de provenance IA (`orbith provenance`) et alerte `check` quand du code co-écrit par une IA est livré sans validation ni revue humaine tracée.
+- Types validables supplémentaires : `menaces`, `strategie-test`, `retro`, `analyse`, `amelioration`.
+
+### 7.5 Reste à faire et limites connues
+
+- **Aucun agent ni workflow n'a tourné sur un vrai modèle.** Les fichiers, l'enregistrement des commandes et les commandes déterministes sont testés ; le comportement des prompts ne l'est pas.
+- **`release` n'a pas été essayé sur un vrai poste Windows** (la CI le couvre sur des dépôts temporaires).
+- **Versions à 4 chiffres :** `orbith version 1.1.0.0` accepte quatre chiffres, alors que `release` attend X.Y.Z. Incompatibilité possible, à confirmer et à trancher.
+- **Gemini CLI :** pas d'import des coûts mesurés (format local non confirmé). Les totaux mesurés de Claude Code sont un minimum.
+- **Seuils du taux d'échec** dans `metriques.md` (5 / 10 / 15 %) : ils ne correspondent pas au tableau du rapport DORA 2024. Non modifiés.
+- **Non vérifiés :** rendu réel des blocs Mermaid, Copilot dans VS Code, interface interactive de `agent new`.
+- **Publication npm** : il faut un `NPM_TOKEN` et un tag `v*`.
+- **Ménage du dépôt :** worktrees verrouillés dans `.claude/worktrees/` et branches `worktree-agent-*`.
+- **Source** : la documentation officielle de BMAD n'a jamais pu être ouverte ; les éléments du §2 marqués *(à confirmer)* le restent.
