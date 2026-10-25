@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   defaultConfig, loadConfig, saveConfig, readDoc, writeDoc, hashBody, recordValidation,
-  etatValidation, loadRegistry, scanArtifacts, hasGherkin, findProjectRoot, requireProjectRoot,
+  etatValidation, loadRegistry, scanArtifacts, scanProblems, hasGherkin, findProjectRoot, requireProjectRoot,
   OrbithError, toPosixRelative, packageRoot,
 } from '../../src/core/index.js';
 
@@ -151,7 +151,7 @@ describe('scanArtifacts', () => {
     });
     await put('docs/produit/brief.md', '---\ntype: brief\nstatut: brouillon\n---\n# Brief\n');
     await put('docs/produit/epics/EPIC-001-x.md', '---\ntype: epic\nid: EPIC-001\nstatut: validé\n---\n# Epic\n');
-    await put('backlog/tasks/US-001 - Login.md', '---\ntype: story\nid: US-001\ntitle: Login\nstatut: brouillon\nstatus: À faire\n---\nbody\n');
+    await put('backlog/tasks/us-001 - Login.md', '---\ntype: story\nid: US-001\ntitle: Login\nstatut: brouillon\nstatus: À faire\n---\nbody\n');
     await put('backlog/tasks/notes.md', '# sans frontmatter\n');
     await put('docs/produit/autre.md', '---\ntype: inconnu\n---\nx\n');
 
@@ -162,9 +162,27 @@ describe('scanArtifacts', () => {
     expect(by['docs/produit/brief.md']?.etat).toBe('non-validé');
     expect(by['docs/produit/epics/EPIC-001-x.md']?.etat).toBe('non-tracé');
     expect(by['docs/produit/epics/EPIC-001-x.md']?.id).toBe('EPIC-001');
-    const story = by['backlog/tasks/US-001 - Login.md'];
+    const story = by['backlog/tasks/us-001 - Login.md'];
     expect(story?.type).toBe('story');
     expect(story?.titre).toBe('Login');
     expect(story?.data['status']).toBe('À faire');
+  });
+});
+
+describe('frontmatter invalide', () => {
+  it('est exposé par scanAll / scanProblems sans casser scanArtifacts', async () => {
+    await put('docs/produit/ok.md', '---\ntype: brief\nstatut: brouillon\n---\n# Brief\n');
+    await put('docs/produit/casse.md', '---\ntype: prd\nstatut: [oups\n---\n# PRD\n');
+    expect(await scanArtifacts(root)).toHaveLength(1);
+    const pb = await scanProblems(root);
+    expect(pb).toHaveLength(1);
+    expect(pb[0]?.chemin).toBe('docs/produit/casse.md');
+  });
+
+  it('accepte les fins de ligne CRLF', async () => {
+    await put('docs/produit/crlf.md', '---\r\ntype: brief\r\nstatut: brouillon\r\n---\r\n# Brief\r\n');
+    const arts = await scanArtifacts(root);
+    expect(arts).toHaveLength(1);
+    expect(arts[0]?.statut).toBe('brouillon');
   });
 });

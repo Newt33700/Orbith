@@ -30,7 +30,7 @@ export async function gitLog(root: string, max: number): Promise<{ hash: string;
   const out = await git(root, ['log', `-n${Math.max(1, Math.floor(max))}`, '--pretty=format:%H%x09%s']);
   if (!out) return [];
   return out
-    .split('\n')
+    .split(/\r?\n/)
     .filter(Boolean)
     .map((l) => {
       const i = l.indexOf('\t');

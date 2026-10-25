@@ -10,6 +10,7 @@ import { register as registerTrace } from './trace.js';
 import { register as registerCsr } from './csr.js';
 import { register as registerUpdate } from './update.js';
 import { register as registerPlugin } from './plugin.js';
+import { register as registerAudit } from './audit.js';
 
 function version(): string {
   try {
@@ -56,6 +57,7 @@ for (const register of [
   registerCsr,
   registerUpdate,
   registerPlugin,
+  registerAudit,
 ]) {
   register(program);
 }

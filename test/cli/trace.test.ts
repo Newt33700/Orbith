@@ -14,15 +14,15 @@ afterEach(async () => {
 async function fixture(): Promise<string> {
   const root = await makeProject('evolution', true);
   roots.push(root);
-  await put(root, 'backlog/tasks/US-001 - Connexion.md', `---\ntype: story\nid: US-001\ntitle: Connexion par email\nstatut: brouillon\nstatus: En cours\n---\n# Connexion\n\n${GHERKIN}`);
-  await put(root, 'backlog/tasks/US-002 - Profil.md', '---\ntype: story\nid: US-002\ntitle: Profil\nstatut: brouillon\nstatus: À faire\n---\n# Profil\n');
+  await put(root, 'backlog/tasks/us-001 - Connexion.md', `---\ntype: story\nid: US-001\ntitle: Connexion par email\nstatut: brouillon\nstatus: En cours\n---\n# Connexion\n\n${GHERKIN}`);
+  await put(root, 'backlog/tasks/us-002 - Profil.md', '---\ntype: story\nid: US-002\ntitle: Profil\nstatut: brouillon\nstatus: À faire\n---\n# Profil\n');
   await put(root, 'docs/livraisons/release-notes-1.0.md', '---\ntype: release-notes\nstatut: brouillon\n---\n# 1.0\n\n- US-001 login\n');
   await put(root, 'tests/login.feature', '@US-001\nFonctionnalité: login\n');
   await put(root, 'src/auth.test.ts', "it('US-001 se connecte', () => {})\n");
   await put(root, 'tests/other.test.ts', "it('US-0010 autre', () => {})\n");
   await put(root, 'node_modules/x/a.test.js', '// US-001\n');
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  await runValider('backlog/tasks/US-001 - Connexion.md', { cwd: root, yes: true });
+  await runValider('backlog/tasks/us-001 - Connexion.md', { cwd: root, yes: true });
   commit(root, 'feat(US-001): ajoute le login');
   commit(root, 'chore: sans story');
   return root;

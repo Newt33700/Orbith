@@ -88,7 +88,7 @@ export async function run(ctx: CheckContext): Promise<CheckResult[]> {
       continue;
     }
     if (buf.subarray(0, 8000).includes(0)) continue;
-    const lines = buf.toString('utf8').split('\n');
+    const lines = buf.toString('utf8').split(/\r?\n/);
     for (const p of PATTERNS) {
       for (let i = 0; i < lines.length; i++) {
         const m = p.re.exec(lines[i]!);

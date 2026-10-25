@@ -428,3 +428,19 @@ if `.orbith/custom/agents/<name>.md` exists, the agent must read it and apply it
 - Non-interactive init: `backlog init "Nom" --defaults --task-prefix US --integration-mode none --no-git`
   (the Orbith plugin writes `backlog/config.yml` itself instead). Board: `backlog browser` (port 6420).
 - Orbith code locates stories by frontmatter `type: story` in `backlog/tasks/**/*.md`, never by filename.
+
+## 10. Additions after MVP
+
+- **CSR source** (`src/core/csr-source.ts`): `csr.source` accepts a local path, `git+https://`, `git+ssh://`,
+  `git+file://` (`…repo.git[@ref]#path/CSR.md`, shallow clone via execFile, `GIT_TERMINAL_PROMPT=0`), or an
+  `https://` raw file (`http://` refused). Content must parse to ≥1 CSR entry, otherwise the local file is kept.
+  Used by `orbith csr sync`, `orbith update` (warning on failure) and `orbith install --csr-source`.
+- **Invalid frontmatter**: `scanAll(root) → { artifacts, problems }`; `check` reports "Frontmatter invalide"
+  (erreur); `computeNext(arts, cfg, problems?)` shows them first.
+- **`orbith audit [--sortie f.html] [--format html|json]`** (`src/audit/`): self-contained, print-friendly,
+  accessible French HTML report (synthèse, validations humaines, matrice de traçabilité, contrôles). Default
+  output `docs/livraisons/audit-YYYY-MM-DD.html`. Always exit 0.
+- **Distribution**: `prepare` builds on git install → `npx github:Newt33700/Orbith install`. npm publish via
+  `.github/workflows/release.yml` on `v*` tags (secret `NPM_TOKEN`).
+- **CI**: `.github/workflows/ci.yml` — build + tests on ubuntu/windows/macos × Node 22/24, plus a smoke job.
+- **Plugins**: authoring guide `docs/guide/creer-un-plugin.md`, template `docs/guide/exemples/plugin-modele/`.

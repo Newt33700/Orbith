@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { Command } from 'commander';
 import * as p from '@clack/prompts';
-import { defaultConfig, loadConfig, requireProjectRoot, OrbithError, ui } from '../core/index.js';
+import { defaultConfig, loadConfig, requireProjectRoot, syncCsr, masquer, OrbithError, ui } from '../core/index.js';
 import { runAdapters } from '../adapters/index.js';
 import { copyCore, patchConfig } from './install.js';
 
@@ -29,9 +29,17 @@ export async function runUpdate(opts: UpdateOptions): Promise<void> {
   await patchConfig(root, { orbith_version: version });
   const adapterFiles = await runAdapters(root, { ...cfg, orbith_version: version });
 
+  if (cfg.csr.source) {
+    try {
+      const r = await syncCsr(root, cfg);
+      ui.ok(`CSR ${r.change ? 'mis à jour' : 'déjà à jour'} depuis ${masquer(r.source)} (${r.outils} outils)`);
+    } catch (e) {
+      ui.avert(`Synchronisation du CSR impossible, CSR local conservé : ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
   ui.ok(`${files.length} fichier(s) du cœur Orbith remis à jour, ${adapterFiles.length} fichier(s) de plateforme régénérés.`);
   ui.ok(avant === version ? `Version d'Orbith : ${version}` : `Version d'Orbith : ${avant} → ${version}`);
-  ui.info('Conservés tels quels : .orbith/config.yaml, .orbith/config/, .orbith/csr/, .orbith/custom/, .orbith/validations.json');
+  ui.info('Conservés tels quels : .orbith/config.yaml, .orbith/config/, .orbith/csr/ (hors synchronisation de csr.source), .orbith/custom/, .orbith/validations.json');
   ui.rappelNouvelleSession();
 }
 

@@ -15,6 +15,9 @@ import {
   OrbithError,
   ORBITH_DIR,
   saveConfig,
+  syncCsr,
+  masquer,
+  parseSource,
   ui,
   writeFileSafe,
 } from '../core/index.js';
@@ -39,6 +42,7 @@ export interface InstallOptions {
   plateformes?: string;
   piste?: string;
   nom?: string;
+  csrSource?: string;
   yes?: boolean;
   cwd?: string;
 }
@@ -174,6 +178,7 @@ export async function runInstall(opts: InstallOptions): Promise<void> {
       piste = r as Piste;
     }
   }
+  if (opts.csrSource) parseSource(opts.csrSource);
   const finalPlateformes = plateformes ?? ['gemini', 'claude'];
   const finalPiste: Piste = piste ?? 'evolution';
 
@@ -245,8 +250,21 @@ export async function runInstall(opts: InstallOptions): Promise<void> {
   parse(await fs.readFile(cfgPath, 'utf8'));
 
   ui.etape('Génération des commandes pour tes plateformes');
-  const cfg = await loadConfig(root);
+  let cfg = await loadConfig(root);
   const adapterFiles = await runAdapters(root, cfg);
+
+  if (opts.csrSource) {
+    ui.etape('Synchronisation du CSR');
+    await patchConfig(root, { csr: { ...cfg.csr, source: opts.csrSource } });
+    cfg = await loadConfig(root);
+    try {
+      const r = await syncCsr(root, cfg);
+      ui.ok(`CSR mis à jour depuis ${masquer(r.source)} (${r.outils} outils)`);
+    } catch (e) {
+      ui.avert(`CSR non synchronisé (le CSR d'exemple est conservé) : ${e instanceof Error ? e.message : String(e)}`);
+      ui.info('Corrige la source dans .orbith/config.yaml puis lance `npx orbith csr sync`.');
+    }
+  }
 
   const rel = (f: string): string => path.relative(root, f).split(path.sep).join('/');
   ui.ok(`${written.length} fichier(s) créé(s) dans .orbith/ et dans le projet, ${adapterFiles.length} fichier(s) de plateforme générés.`);
@@ -265,6 +283,7 @@ export function register(program: Command): void {
     .option('--plateformes <liste>', 'plateformes à générer (gemini,claude)')
     .option('--piste <piste>', 'piste par défaut (correctif, evolution, projet)')
     .option('--nom <nom>', 'nom du projet')
+    .option('--csr-source <source>', 'source du CSR (chemin, git+https://…#fichier, URL https)')
     .option('--yes', 'mode non interactif')
     .option('--cwd <dir>', 'dossier de travail')
     .action(async (opts: InstallOptions) => {

@@ -1,0 +1,62 @@
+# Publication de Orbith sur npm.
+#
+# Prérequis : le secret de dépôt NPM_TOKEN doit exister
+# (Settings > Secrets and variables > Actions > New repository secret).
+# C'est un jeton npm de type « Automation » ayant le droit de publier le paquet « orbith ».
+#
+# Déclenchement :
+# - Tag Git `v*` (par exemple `v0.1.0`) : build, tests, puis publication sur npm.
+#   La version du tag doit correspondre à la version de package.json.
+# - Manuel (workflow_dispatch) : build et tests seulement, sans publication.
+
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build, tests et publication npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # requis pour --provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Compiler
+        run: npm run build
+
+      - name: Tester
+        run: npm test
+
+      - name: Vérifier que la version du tag correspond à package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Le tag v$TAG ne correspond pas à package.json ($PKG)." >&2
+            exit 1
+          fi
+
+      - name: Publier sur npm (tags uniquement)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

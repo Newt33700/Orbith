@@ -1,0 +1,5 @@
+{
+  "name": "mon-plugin",
+  "description": "Décris en une phrase ce que fait le plugin.",
+  "install": "install.js"
+}

@@ -1,9 +1,18 @@
-import { scanArtifacts } from '../core/index.js';
+import { scanAll } from '../core/index.js';
 import type { CheckContext, CheckResult } from './types.js';
 
 export async function run(ctx: CheckContext): Promise<CheckResult[]> {
   const res: CheckResult[] = [];
-  for (const a of await scanArtifacts(ctx.root)) {
+  const { artifacts, problems } = await scanAll(ctx.root);
+  for (const pb of problems) {
+    res.push({
+      categorie: 'validations',
+      niveau: 'erreur',
+      message: `Frontmatter invalide : ${pb.message}. Corrige l'en-tête YAML (entre les lignes ---) du fichier.`,
+      fichier: pb.chemin,
+    });
+  }
+  for (const a of artifacts) {
     if (a.etat === 'modifié') {
       res.push({
         categorie: 'validations',

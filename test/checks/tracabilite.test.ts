@@ -21,8 +21,8 @@ describe('check tracabilite', () => {
     await fx.put('a.txt', '2');
     git(fx.root, 'commit', '-q', '-am', 'chore: sans story');
     const story = (id: string) => `---\ntype: story\nid: ${id}\nstatut: brouillon\nstatus: Terminée\n---\n# ${id}\n`;
-    await fx.put('backlog/tasks/US-001.md', story('US-001'));
-    await fx.put('backlog/tasks/US-002.md', story('US-002'));
+    await fx.put('backlog/tasks/us-001.md', story('US-001'));
+    await fx.put('backlog/tasks/us-002.md', story('US-002'));
     const r = await run(ctx());
     expect(r.every((x) => x.niveau === 'avertissement')).toBe(true);
     expect(r.filter((x) => /sans identifiant/.test(x.message))).toHaveLength(1);

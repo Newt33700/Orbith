@@ -31,7 +31,7 @@ export async function detectPython(root: string): Promise<LangDetection> {
     }
     const poetry = /\[tool\.poetry\.dependencies\]([\s\S]*?)(?:\n\[|$)/.exec(py);
     if (poetry) {
-      for (const l of poetry[1]!.split('\n')) {
+      for (const l of poetry[1]!.split(/\r?\n/)) {
         const m = /^\s*([A-Za-z0-9][A-Za-z0-9._-]*)\s*=/.exec(l);
         if (m && m[1]!.toLowerCase() !== 'python') {
           out.dependances.push({ nom: m[1]!.toLowerCase().replace(/_/g, '-'), source: 'pyproject.toml' });
@@ -54,7 +54,7 @@ export async function detectPython(root: string): Promise<LangDetection> {
     const raw = await read(path.join(root, f));
     if (raw === null) continue;
     if (out.runtimes.length === 0) out.runtimes.push({ runtime: 'python', source: f });
-    for (const l of raw.split('\n')) {
+    for (const l of raw.split(/\r?\n/)) {
       const t = l.trim();
       if (!t || t.startsWith('#') || t.startsWith('-')) continue;
       const nom = pipName(t);

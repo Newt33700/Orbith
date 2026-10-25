@@ -113,13 +113,21 @@ describe('computeNext', () => {
   });
 });
 
+describe('frontmatter invalide', () => {
+  it('est le problème prioritaire', () => {
+    const r = computeNext([story('US-001', 'Prête')], cfg('evolution'), [{ chemin: 'docs/produit/prd.md', message: 'x' }]);
+    expect(r.principal.kind).toBe('probleme');
+    expect(r.principal.message).toMatch(/Frontmatter invalide dans docs\/produit\/prd\.md/);
+  });
+});
+
 describe('orbith next (intégration)', () => {
   it('lit le projet, sortie texte compacte avec rappel', async () => {
     const root = await makeProject('evolution');
     roots.push(root);
     const body = `# Ma US\n\n${GHERKIN}`;
-    await put(root, 'backlog/tasks/US-001 - Ma US.md', `---\ntype: story\nid: US-001\nstatut: validé\nstatus: Prête\n---\n${body}`);
-    await recordValidation(root, { fichier: 'backlog/tasks/US-001 - Ma US.md', sha256: hashBody(body.replace(/^/, '\n')), par: 'a', email: 'a@a', le: new Date().toISOString() });
+    await put(root, 'backlog/tasks/us-001 - Ma US.md', `---\ntype: story\nid: US-001\nstatut: validé\nstatus: Prête\n---\n${body}`);
+    await recordValidation(root, { fichier: 'backlog/tasks/us-001 - Ma US.md', sha256: hashBody(body.replace(/^/, '\n')), par: 'a', email: 'a@a', le: new Date().toISOString() });
     const arts = await scanArtifacts(root);
     expect(arts[0]?.etat).toBe('validé');
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});

@@ -1,5 +1,7 @@
 # Orbith
 
+[![CI](https://github.com/Newt33700/Orbith/actions/workflows/ci.yml/badge.svg)](https://github.com/Newt33700/Orbith/actions/workflows/ci.yml)
+
 **Orbith** est une équipe d'agents IA experts qui vous accompagne dans une méthode agile, du besoin
 jusqu'à la livraison du code. Chaque agent joue un rôle précis : Product Owner, Architecte, Développeur,
 UX Designer, QA, Scrum Master. Orbith fonctionne avec **Gemini CLI** et **Claude Code**.
@@ -59,15 +61,17 @@ et indiquent toujours la prochaine action à faire.
 Dans le dossier de votre projet (nouveau ou existant) :
 
 ```bash
-npx orbith install
+npx github:Newt33700/Orbith install
 ```
+
+Une fois Orbith publié sur npm, la même commande s'écrit `npx orbith install`.
 
 La commande copie les agents dans votre projet, génère les commandes pour Gemini CLI et Claude Code, et
 affiche un résumé avec la prochaine étape.
 
 ## Démarrage rapide
 
-1. **Installez Orbith** : `npx orbith install`.
+1. **Installez Orbith** : `npx github:Newt33700/Orbith install` (ou `npx orbith install` une fois publié sur npm).
 2. **Ouvrez votre projet** dans Gemini CLI ou Claude Code.
 3. **Demandez où vous en êtes** : `/orbith:guide` (Gemini) ou `/orbith` (Claude Code).
 4. **Suivez la recommandation** : l'agent indique le prochain agent à solliciter, par exemple le PO.
@@ -150,7 +154,9 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith valider <fichier>` | Marque un document comme validé, après confirmation humaine |
 | `npx orbith check` | Vérifie le projet : CSR, validations, traçabilité, secrets. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
+| `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
+| `npx orbith csr sync` | Récupère le CSR depuis la source interne déclarée dans `.orbith/config.yaml` |
 | `npx orbith update` | Met à jour les agents et les règles, sans toucher à votre configuration |
 | `npx orbith plugin add <nom>` | Installe un plugin, par exemple `backlog-md` |
 
@@ -442,6 +448,8 @@ services) de façon sûre et normalisée.
 | [csr.md](docs/guide/csr.md) | Leads tech, équipes CI | Format du CSR, import Excel, contrôle en CI |
 | [atelier.md](docs/guide/atelier.md) | Tout le monde | Faire travailler plusieurs agents ensemble |
 | [plugins.md](docs/guide/plugins.md) | Tout le monde | Plugin Backlog.md et tableau Kanban |
+| [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
+| [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
 
 ## Feuille de route (V2)
 
@@ -449,8 +457,6 @@ La version 0.1 se concentre sur le parcours de base. Prochaines étapes prévues
 
 - **Connecteurs Jira et Confluence** via le serveur MCP « IT for IT », pour lire et publier sans copier-coller.
 - **D'autres écosystèmes CSR**, au-delà de Node.js, Java et Python.
-- **Rapport d'audit** consolidé, prêt à présenter en comité.
-- **Guide pour créer ses propres plugins.**
 - **Source CSR centralisée** : récupération automatique du référentiel depuis un dépôt privé.
 
 ## Contribuer

@@ -52,4 +52,19 @@ describe('orbith update', () => {
     expect(await read('CLAUDE.md')).toContain('orbith:debut');
     expect(await exists(path.join(root, '.claude/commands/orbith-po.md'))).toBe(true);
   });
+
+  it('synchronise le CSR depuis csr.source ; échec = avertissement, la mise à jour continue', async () => {
+    await writeFile(path.join(root, 'ref.md'), '## Langages\n| Outil | Version min | Statut |\n|---|---|---|\n| Go | 1.22 | autorisé |\n');
+    await runInstall({ cwd: root, yes: true, nom: 'demo', csrSource: 'ref.md' });
+    expect(await read('.orbith/csr/CSR.md')).toContain('| Go |');
+    expect((await loadConfig(root)).csr.source).toBe('ref.md');
+
+    await writeFile(path.join(root, 'ref.md'), '## Langages\n| Outil | Version min | Statut |\n|---|---|---|\n| Rust | 1.80 | autorisé |\n');
+    await runUpdate({ cwd: root, yes: true });
+    expect(await read('.orbith/csr/CSR.md')).toContain('| Rust |');
+
+    await writeFile(path.join(root, 'ref.md'), 'vide');
+    await runUpdate({ cwd: root, yes: true });
+    expect(await read('.orbith/csr/CSR.md')).toContain('| Rust |');
+  });
 });

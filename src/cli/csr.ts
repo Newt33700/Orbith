@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { Command } from 'commander';
 import ExcelJS from 'exceljs';
-import { OrbithError, findProjectRoot, ui } from '../core/index.js';
+import { OrbithError, findProjectRoot, loadConfig, requireProjectRoot, syncCsr, masquer, ui } from '../core/index.js';
 import { normalize } from '../checks/csr-parser.js';
 
 function cellText(cell: ExcelJS.Cell): string {
@@ -93,5 +93,19 @@ export function register(program: Command): void {
       await fs.mkdir(path.dirname(out), { recursive: true });
       await fs.writeFile(out, markdown, 'utf8');
       ui.ok(`${outils} outil(s) importé(s) depuis ${feuilles} feuille(s) vers ${path.relative(root, out) || out}`);
+    });
+  csr
+    .command('sync')
+    .description('Met à jour le CSR local depuis csr.source (dépôt Git privé, URL https ou fichier)')
+    .option('--cwd <dir>', 'dossier de travail')
+    .action(async (opts: { cwd?: string }) => {
+      const root = await requireProjectRoot(path.resolve(opts.cwd ?? process.cwd()));
+      const cfg = await loadConfig(root);
+      const r = await syncCsr(root, cfg);
+      ui.ok(
+        r.change
+          ? `CSR mis à jour depuis ${masquer(r.source)} (${r.outils} outils)`
+          : `CSR déjà à jour depuis ${masquer(r.source)} (${r.outils} outils)`,
+      );
     });
 }

@@ -81,6 +81,33 @@ npx orbith csr import fichier.xlsx --sortie .orbith/csr/CSR.md
 
 La commande affiche le nombre d'outils importés. Si une colonne attendue manque, elle vous l'indique.
 
+## Récupérer le vrai CSR depuis la source de l'entreprise
+
+Le dépôt public d'Orbith ne contient qu'un **exemple** de CSR. Le vrai CSR vit dans le dépôt privé de l'entreprise.
+Déclarez sa source dans `.orbith/config.yaml` :
+
+```yaml
+csr:
+  fichier: .orbith/csr/CSR.md
+  source: git+https://gitlab.entreprise.fr/archi/csr.git#CSR.md
+```
+
+Formes acceptées :
+
+| Forme | Exemple |
+|---|---|
+| Chemin local (absolu ou relatif à la racine du projet) | `../referentiels/CSR.md` |
+| Dépôt git (HTTPS ou SSH, `@ref` optionnel) | `git+https://hote/groupe/depot.git@v2#chemin/CSR.md` |
+| Fichier Markdown brut en HTTPS | `https://intranet.entreprise.fr/csr/CSR.md` |
+
+Commandes :
+
+- `npx orbith csr sync` met à jour `.orbith/csr/CSR.md` depuis la source (vos identifiants git habituels sont utilisés).
+- `npx orbith update` fait la même synchronisation automatiquement.
+- `npx orbith install --csr-source <source>` enregistre la source et synchronise dès l'installation.
+
+Si le fichier récupéré ne contient aucun outil reconnaissable, il est refusé et votre CSR local est conservé.
+
 ## Le contrôle en CI (GitLab)
 
 Le contrôle du CSR se fait automatiquement à chaque modification, grâce à `npx orbith check` dans la pipeline

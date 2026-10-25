@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { Command } from 'commander';
 import pc from 'picocolors';
-import { loadConfig, requireProjectRoot, scanArtifacts, ui } from '../core/index.js';
+import { loadConfig, requireProjectRoot, scanAll, ui } from '../core/index.js';
 import { computeNext, type Action, type NextResult } from './next-rules.js';
 
 export { computeNext } from './next-rules.js';
@@ -28,8 +28,8 @@ export function renderNext(res: NextResult, projet: string, piste: string): stri
 export async function runNext(cwd: string, format: string): Promise<void> {
   const root = await requireProjectRoot(cwd);
   const config = await loadConfig(root);
-  const arts = await scanArtifacts(root);
-  const res = computeNext(arts, config);
+  const { artifacts, problems } = await scanAll(root);
+  const res = computeNext(artifacts, config, problems);
   if (format === 'json') {
     console.log(JSON.stringify({ projet: config.projet.nom, piste: config.piste, ...res }, null, 2));
     return;

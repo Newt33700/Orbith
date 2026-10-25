@@ -28,3 +28,13 @@ describe('check validations', () => {
     expect(r.find((x) => x.fichier?.endsWith('trace.md'))!.message).toMatch(/non tracée/);
   });
 });
+
+describe('check validations : frontmatter invalide', () => {
+  it('signale une erreur « Frontmatter invalide » avec le fichier', async () => {
+    await fx.put('docs/produit/casse.md', '---\ntype: prd\nstatut: [oups\n---\n# PRD\n');
+    const r = await run({ root: fx.root, config: null });
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ niveau: 'erreur', fichier: 'docs/produit/casse.md' });
+    expect(r[0]!.message).toMatch(/^Frontmatter invalide/);
+  });
+});

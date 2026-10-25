@@ -1,5 +1,5 @@
 import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
-import { hasGherkin, storyStatus, type Artifact, type ArtifactType, type OrbithConfig } from '../core/index.js';
+import { hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
 
 export interface Action {
   kind: 'probleme' | 'agent' | 'valider' | 'humain' | 'fini';
@@ -140,8 +140,20 @@ function archiHints(arts: Artifact[]): Action[] {
   return out;
 }
 
-export function computeNext(artifacts: Artifact[], config: OrbithConfig): NextResult {
-  const candidates: Action[] = [...problemes(artifacts)];
+export function computeNext(
+  artifacts: Artifact[],
+  config: OrbithConfig,
+  frontmatterProblems: FrontmatterProblem[] = [],
+): NextResult {
+  const candidates: Action[] = [
+    ...frontmatterProblems.map(
+      (p): Action => ({
+        kind: 'probleme',
+        message: `Frontmatter invalide dans ${p.chemin} (${p.message}) : corrige l'en-tête YAML du fichier.`,
+      }),
+    ),
+    ...problemes(artifacts),
+  ];
   const piste = config.piste;
   let blocked: Action | null = null;
 

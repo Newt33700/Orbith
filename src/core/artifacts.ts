@@ -90,14 +90,30 @@ function firstHeading(body: string): string | undefined {
   return m?.[1]?.trim();
 }
 
-export async function scanArtifacts(root: string): Promise<Artifact[]> {
+/** Fichier Markdown dont le frontmatter YAML est illisible. */
+export interface FrontmatterProblem {
+  chemin: string;
+  message: string;
+}
+
+export interface ScanResult {
+  artifacts: Artifact[];
+  problems: FrontmatterProblem[];
+}
+
+export async function scanAll(root: string): Promise<ScanResult> {
   const result: Artifact[] = [];
+  const problems: FrontmatterProblem[] = [];
   for (const rel of SCAN_DIRS) {
     for (const file of await walkMd(path.join(root, rel))) {
       let doc;
       try {
         doc = await readDoc(file);
-      } catch {
+      } catch (e) {
+        const msg = e instanceof Error ? e.message.split(/\r?\n/)[0] ?? '' : String(e);
+        // Fichier illisible (droits…) : ignoré ; YAML invalide : signalé.
+        const lisible = await fs.access(file).then(() => true, () => false);
+        if (lisible) problems.push({ chemin: toPosixRelative(root, file), message: msg });
         continue;
       }
       const type = doc.data['type'];
@@ -115,7 +131,15 @@ export async function scanArtifacts(root: string): Promise<Artifact[]> {
       });
     }
   }
-  return result;
+  return { artifacts: result, problems };
+}
+
+export async function scanArtifacts(root: string): Promise<Artifact[]> {
+  return (await scanAll(root)).artifacts;
+}
+
+export async function scanProblems(root: string): Promise<FrontmatterProblem[]> {
+  return (await scanAll(root)).problems;
 }
 
 export function hasGherkin(body: string): boolean {
