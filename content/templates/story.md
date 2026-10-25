@@ -13,7 +13,9 @@ epic: EPIC-XXX
 couts_ia: []
 ---
 
-<!-- Champs remplis automatiquement, à ne pas écrire à la main :
+<!-- Étiquettes (`labels`) reconnues par Orbith : `bug` (correction), `impact-archi` (ADR requis),
+     `breaking` (changement incompatible : impose une version majeure, voir `npx orbith version`).
+     Champs remplis automatiquement, à ne pas écrire à la main :
      - debut_dev_le : date du premier commit qui mentionne cette US, écrite par `npx orbith deploiement`.
      - termine_le : date du commit qui a passé la carte en « Terminée » (déplacement dans Backlog.md compris),
        écrite par `npx orbith deploiement`.
