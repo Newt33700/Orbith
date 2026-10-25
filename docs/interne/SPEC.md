@@ -470,3 +470,29 @@ if `.orbith/custom/agents/<name>.md` exists, the agent must read it and apply it
   `.github/workflows/release.yml` on `v*` tags (secret `NPM_TOKEN`).
 - **CI**: `.github/workflows/ci.yml` — build + tests on ubuntu/windows/macos × Node 22/24, plus a smoke job.
 - **Plugins**: authoring guide `docs/guide/creer-un-plugin.md`, template `docs/guide/exemples/plugin-modele/`.
+
+### 10.1 Version management (`orbith version`, `orbith release`) — no AI, never pushes
+
+Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli/version.ts`, `src/cli/release.ts`,
+`src/core/git-release.ts` (tags, commits since a tag, annotated tag, path-limited commit). Guide: `docs/guide/versions.md`.
+
+- **`orbith version [--format texte|json]`**: base = latest `vX.Y.Z` tag (else 0.0.0); inputs = commits since that tag
+  + pending stories (`Terminée`, no `mis_en_prod_le`, or cited by a commit since the tag). Bump = max of:
+  major = `type!:` / `BREAKING CHANGE:` footer / story label `breaking` (case-insensitive, constant `BREAKING_LABEL`);
+  minor = `feat` / done non-bug story; patch = `fix` / done story labelled `bug`. Other types do not bump.
+  Read-only; prints the reasons; nothing proposed when no signal.
+- **`orbith release <version> [--yes] [--sans-tag] [--dry-run] [--date]`** (`vX.Y.Z` accepted):
+  1. refuses a non-SemVer version, an existing tag, or a version ≤ the latest tag;
+  2. no notes (`docs/livraisons/release-notes-<version>.md` or frontmatter `version`) → writes a draft (2 audiences)
+     from the done pending stories, then fails;
+  3. guardrails, all reported together (exit 1): notes not `validé`; a story cited in the notes is not `Terminée`;
+     any `orbith check` error;
+  4. warnings only: notes cite no story, no « exploitation » part, major expected (breaking) but not chosen;
+  5. prints the CHANGELOG section; after confirmation (`--yes` or TTY prompt; non-TTY without `--yes` fails):
+     prepends `## [X.Y.Z] - date` to `CHANGELOG.md` (Changements majeurs / Nouveautés / Corrections, from commits;
+     breaking stories listed too), commits only that file (`chore(release): vX.Y.Z`) and creates the annotated local
+     tag `vX.Y.Z`. `--sans-tag` stops after the changelog; `--dry-run` writes nothing. **Never pushes**.
+- **Release-notes template** (`content/templates/release-notes.md`): parts `Résumé`, `Pour les utilisateurs`
+  (Nouveautés, Corrections, Limites connues), `Pour l'exploitation` (Changements à connaître, Déploiement et retour
+  arrière, Surveillance), `Stories livrées`. `orbith deploiement` still reads story ids from the whole body.
+- **Recognized story labels**: `bug`, `impact-archi`, `breaking`.

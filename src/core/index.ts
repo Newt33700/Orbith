@@ -5,6 +5,7 @@ export * from './frontmatter.js';
 export * from './validations.js';
 export * from './artifacts.js';
 export * from './git.js';
+export * from './git-release.js';
 export * from './csr-source.js';
 export * from './fsutil.js';
 export * from './ui.js';
