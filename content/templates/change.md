@@ -5,7 +5,7 @@ type: change
 statut: brouillon
 changement: normal            # standard (pré-approuvé, routine) | normal (évalué et approuvé) | urgent (correctif pressé)
 risque: moyen                 # faible | moyen | élevé
-version: <X.Y.Z>              # version concernée : doit correspondre aux notes de version (release-notes)
+version: <W.X.Y.Z>              # version concernée : doit correspondre aux notes de version (release-notes)
 fenetre_debut: <AAAA-MM-JJ HH:MM>
 fenetre_fin: <AAAA-MM-JJ HH:MM>
 approbateurs: []              # noms git ou emails des personnes qui doivent approuver, par exemple [alice@societe.fr]

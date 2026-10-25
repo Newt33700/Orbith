@@ -6,26 +6,41 @@ Deux commandes :
 
 | Commande | Rôle |
 |---|---|
-| `npx orbith version` (sans numéro) | Propose le prochain numéro de version (SemVer) et explique pourquoi |
+| `npx orbith version` (sans numéro) | Propose le prochain numéro de version (format W.X.Y.Z) et explique pourquoi |
 | `npx orbith version <numéro>` | Crée la version (`.orbith/versions.json`) et son brouillon de notes : voir le guide PO. `release` reprend ensuite ces notes |
 | `npx orbith release <version>` | Prépare la version : notes, `CHANGELOG.md`, tag Git local |
+
+## Le format du numéro : W.X.Y.Z
+
+Un numéro a **quatre chiffres** : `W.X.Y.Z` (exemple `1.4.2.0`).
+
+| Chiffre | Nom | Quand l'augmenter |
+|---|---|---|
+| W | majeur | changement incompatible |
+| X | mineur | nouveauté |
+| Y | correctif | correction |
+| Z | révision | reconstruction ou republication d'une même version (à la main) |
+
+`orbith release` n'accepte que ce format (`1.3.0.0`, pas `1.3.0`) et crée le tag `v1.3.0.0`. La proposition de
+`orbith version` laisse la révision à 0. D'anciens tags à trois chiffres (`v1.2.0`) restent lus et comptent comme
+`1.2.0.0`, donc un projet existant peut passer au format à quatre chiffres sans rien casser.
 
 ## 1. Choisir le numéro : `orbith version`
 
 La proposition vient de deux sources :
 
-- les **commits** (Conventional Commits) depuis le dernier tag `vX.Y.Z` ;
+- les **commits** (Conventional Commits) depuis le dernier tag `vW.X.Y.Z` ;
 - les **US** terminées et pas encore mises en production. Une US déjà citée dans les notes d'une version publiée
   (tag existant) n'est plus comptée, même avant `orbith deploiement`.
 
 | Signal | Effet |
 |---|---|
-| Commit `feat…` ou US terminée (non étiquetée `bug`) | version **mineure** (1.2.0 → 1.3.0) |
-| Commit `fix…` ou US étiquetée `bug` | version **correctif** (1.2.0 → 1.2.1) |
-| Commit avec `!` (`feat(US-012)!: …`), pied de commit `BREAKING CHANGE:` ou US étiquetée `breaking` | version **majeure** (1.2.0 → 2.0.0) |
+| Commit `feat…` ou US terminée (non étiquetée `bug`) | version **mineure** (1.2.0.0 → 1.3.0.0) |
+| Commit `fix…` ou US étiquetée `bug` | version **correctif** (1.2.0.0 → 1.2.1.0) |
+| Commit avec `!` (`feat(US-012)!: …`), pied de commit `BREAKING CHANGE:` ou US étiquetée `breaking` | version **majeure** (1.2.0.0 → 2.0.0.0) |
 
 Une US terminée étiquetée `bug` ne donne donc pas une mineure mais un correctif. Le plus fort l'emporte. Les autres types (`docs`, `chore`, `refactor`…) ne changent pas le numéro à eux seuls.
-Sans tag existant, le calcul part de 0.0.0. Seuls les tags atteignables depuis la branche courante comptent : sur une branche de maintenance, un tag plus récent d'une autre branche est ignoré pour le calcul, mais il empêche toujours de recréer le même tag.
+Sans tag existant, le calcul part de 0.0.0.0. Seuls les tags atteignables depuis la branche courante comptent : sur une branche de maintenance, un tag plus récent d'une autre branche est ignoré pour le calcul, mais il empêche toujours de recréer le même tag.
 
 Pour marquer une rupture sur une US, ajoute l'étiquette `breaking` dans ses `labels` :
 
@@ -38,13 +53,13 @@ labels: [breaking]
 ## 2. Préparer la version : `orbith release <version>`
 
 ```bash
-npx orbith release 1.3.0
+npx orbith release 1.3.0.0
 ```
 
-1. **Notes de version.** Si `docs/livraisons/release-notes-1.3.0.md` n'existe pas, Orbith crée un brouillon à partir des
+1. **Notes de version.** Si `docs/livraisons/release-notes-1.3.0.0.md` n'existe pas, Orbith crée un brouillon à partir des
    US terminées, avec deux parties : **Pour les utilisateurs** (nouveautés, corrections, limites) et **Pour l'exploitation**
    (changements à connaître, déploiement et retour arrière, surveillance). Relis-le, complète-le, puis valide-le :
-   `npx orbith valider docs/livraisons/release-notes-1.3.0.md`. La commande s'arrête là.
+   `npx orbith valider docs/livraisons/release-notes-1.3.0.0.md`. La commande s'arrête là.
 2. **Garde-fous.** Relancée, la commande **refuse** la version (et liste tous les blocages) si :
    - une US citée dans les notes n'est pas **Terminée** ;
    - `npx orbith check` signale une erreur ;
@@ -53,10 +68,10 @@ npx orbith release 1.3.0
      branche et n'est pas atteignable depuis ta position : le message le précise).
 3. **Confirmation humaine.** Orbith montre la section du changelog et demande confirmation. Après ton accord, il :
    - ajoute la section en tête de `CHANGELOG.md` (créé si besoin, fins de ligne du fichier conservées) ;
-   - enregistre dans un commit `chore(release): v1.3.0` `CHANGELOG.md` et, s'ils ne sont pas encore commités, les notes
+   - enregistre dans un commit `chore(release): v1.3.0.0` `CHANGELOG.md` et, s'ils ne sont pas encore commités, les notes
      de version et `.orbith/validations.json` (le tag contient ainsi les notes et leur validation). Tes autres
      fichiers, modifiés ou indexés, ne sont pas touchés ;
-   - crée le tag annoté `v1.3.0` **en local**.
+   - crée le tag annoté `v1.3.0.0` **en local**.
 
    Si le commit échoue (hook `pre-commit`, par exemple), `CHANGELOG.md` est remis dans son état d'avant et aucun tag
    n'est créé : corrige le problème et relance. Si une US citée dans les notes a des modifications non commitées,
@@ -65,11 +80,11 @@ npx orbith release 1.3.0
    suivi par Git (moins de 3 fichiers hors `.orbith/`), Orbith t'avertit que le tag serait quasi vide : commite d'abord
    ton travail.
 
-Le commit `chore(release): v1.3.0` ne porte pas d'identifiant d'US (`US-NNN`). Il peut donc apparaître comme
+Le commit `chore(release): v1.3.0.0` ne porte pas d'identifiant d'US (`US-NNN`). Il peut donc apparaître comme
 **avertissement** de traçabilité dans `npx orbith check` (« Commit … sans identifiant de story »). C'est attendu : c'est
 un commit technique de version, rien à corriger ni à réécrire.
 
-Orbith **ne pousse jamais**. Il t'indique la commande à lancer toi-même : `git push && git push origin v1.3.0`.
+Orbith **ne pousse jamais**. Il t'indique la commande à lancer toi-même : `git push && git push origin v1.3.0.0`.
 
 ### Options
 
@@ -86,4 +101,4 @@ comme notes de cette version (en-tête `type: release-notes` et `version`), la c
 
 ## Ensuite
 
-Après la vraie mise en production, enregistre-la : `npx orbith deploiement 1.3.0` (voir [métriques](metriques.md)).
+Après la vraie mise en production, enregistre-la : `npx orbith deploiement 1.3.0.0` (voir [métriques](metriques.md)).

@@ -152,10 +152,10 @@ Tout ce qui suit est fusionné dans `main` (PR #1 à #9, CI verte sur 3 système
 
 - **Aucun agent ni workflow n'a tourné sur un vrai modèle.** Les fichiers, l'enregistrement des commandes et les commandes déterministes sont testés ; le comportement des prompts ne l'est pas.
 - **`release` n'a pas été essayé sur un vrai poste Windows** (la CI le couvre sur des dépôts temporaires).
-- **Versions à 4 chiffres :** `orbith version 1.1.0.0` accepte quatre chiffres, alors que `release` attend X.Y.Z. Incompatibilité possible, à confirmer et à trancher.
+- **Versions à 4 chiffres : réglé.** `orbith release` et la proposition de `orbith version` utilisent le format `W.X.Y.Z` (majeur, mineur, correctif, révision) ; les anciens tags à trois chiffres sont lus comme `W.X.Y.0`.
 - **Gemini CLI :** pas d'import des coûts mesurés (format local non confirmé). Les totaux mesurés de Claude Code sont un minimum.
-- **Seuils du taux d'échec** dans `metriques.md` (5 / 10 / 15 %) : ils ne correspondent pas au tableau du rapport DORA 2024. Non modifiés.
+- **Seuils du taux d'échec : réglés.** Alignés sur le rapport DORA 2024 (élite 5 %, élevé 20 %, moyen 10 %, faible 40 %). DORA donne des valeurs de groupes non monotones (le groupe « moyen » échoue moins que le groupe « élevé ») ; Orbith garde l'ordre élite, élevé, moyen, faible avec les limites 5 %, 20 % et 40 %. Chiffres relevés dans des sources secondaires, à recouper avec le rapport officiel.
 - **Non vérifiés :** rendu réel des blocs Mermaid, Copilot dans VS Code, interface interactive de `agent new`.
 - **Publication npm** : il faut un `NPM_TOKEN` et un tag `v*`.
-- **Ménage du dépôt :** worktrees verrouillés dans `.claude/worktrees/` et branches `worktree-agent-*`.
+- **Ménage du dépôt : fait.** Les worktrees d'agents et les branches `worktree-agent-*` (locales, aucune sur GitHub) ont été supprimés.
 - **Source** : la documentation officielle de BMAD n'a jamais pu être ouverte ; les éléments du §2 marqués *(à confirmer)* le restent.

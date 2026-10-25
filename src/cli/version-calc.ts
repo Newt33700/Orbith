@@ -11,25 +11,27 @@ export interface SemVer {
   major: number;
   minor: number;
   patch: number;
+  /** Quatrième chiffre (W.X.Y.Z), 0 pour un ancien numéro à trois chiffres. */
+  revision: number;
 }
 
 export function parseSemVer(v: string): SemVer | null {
-  const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(v.trim());
-  return m ? { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) } : null;
+  const m = /^v?(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?$/.exec(v.trim());
+  return m ? { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]), revision: Number(m[4] ?? 0) } : null;
 }
 
 export function formatSemVer(v: SemVer): string {
-  return `${v.major}.${v.minor}.${v.patch}`;
+  return `${v.major}.${v.minor}.${v.patch}.${v.revision}`;
 }
 
 export function compareSemVer(a: SemVer, b: SemVer): number {
-  return a.major - b.major || a.minor - b.minor || a.patch - b.patch;
+  return a.major - b.major || a.minor - b.minor || a.patch - b.patch || a.revision - b.revision;
 }
 
 export function applyBump(base: SemVer, bump: Bump): SemVer {
-  if (bump === 'majeur') return { major: base.major + 1, minor: 0, patch: 0 };
-  if (bump === 'mineur') return { major: base.major, minor: base.minor + 1, patch: 0 };
-  return { major: base.major, minor: base.minor, patch: base.patch + 1 };
+  if (bump === 'majeur') return { major: base.major + 1, minor: 0, patch: 0, revision: 0 };
+  if (bump === 'mineur') return { major: base.major, minor: base.minor + 1, patch: 0, revision: 0 };
+  return { major: base.major, minor: base.minor, patch: base.patch + 1, revision: 0 };
 }
 
 const RANK: Record<Bump, number> = { correctif: 1, mineur: 2, majeur: 3 };
@@ -38,12 +40,12 @@ export function maxBump(a: Bump | undefined, b: Bump): Bump {
   return a && RANK[a] >= RANK[b] ? a : b;
 }
 
-/** Highest `vX.Y.Z` tag reachable from HEAD (pre-releases, other tags and tags only on other branches are ignored). */
+/** Highest `vW.X.Y.Z` tag reachable from HEAD (pre-releases, other tags and tags only on other branches are ignored). */
 export async function lastReleaseTag(root: string): Promise<{ tag: string; version: SemVer } | null> {
   let best: { tag: string; version: SemVer } | null = null;
   for (const tag of await gitReachableTags(root)) {
     const version = parseSemVer(tag);
-    if (version && /^v?\d+\.\d+\.\d+$/.test(tag) && (!best || compareSemVer(version, best.version) > 0)) best = { tag, version };
+    if (version && /^v?\d+\.\d+\.\d+(\.\d+)?$/.test(tag) && (!best || compareSemVer(version, best.version) > 0)) best = { tag, version };
   }
   return best;
 }
@@ -107,13 +109,13 @@ export interface VersionProposal {
 /** Version a release-notes document is about (frontmatter `version`, else its file name), or null. */
 export function versionDesNotes(n: Artifact): string | null {
   if (n.data['version'] != null) return String(n.data['version']).trim().replace(/^v/, '');
-  const m = /^release-notes-(\d+\.\d+\.\d+)\.md$/.exec(path.posix.basename(n.chemin));
+  const m = /^release-notes-(\d+\.\d+\.\d+(?:\.\d+)?)\.md$/.exec(path.posix.basename(n.chemin));
   return m ? m[1]! : null;
 }
 
 /**
  * Ids of the stories already shipped in a published version: cited by the release notes of a version
- * that has a `vX.Y.Z` (or `X.Y.Z`) tag. They must not be counted again for the next version, even
+ * that has a `vW.X.Y.Z` (or `W.X.Y.Z`) tag. They must not be counted again for the next version, even
  * before `orbith deploiement` writes their `mis_en_prod_le`.
  */
 export function storiesDejaLivrees(arts: Artifact[], tags: string[]): Set<string> {
@@ -161,7 +163,7 @@ export async function proposerVersion(root: string, arts: Artifact[]): Promise<V
       else add('mineur', `${s.id} terminée`);
     }
   }
-  const base = last?.version ?? { major: 0, minor: 0, patch: 0 };
+  const base = last?.version ?? { major: 0, minor: 0, patch: 0, revision: 0 };
   const b = bump as Bump | null;
   return {
     derniere: last?.tag ?? null,

@@ -165,7 +165,7 @@ export function register(program: Command): void {
   program
     .command('version [numero]')
     .description(
-      'Sans numéro : propose le prochain numéro de version (SemVer). Avec un numéro : crée la version (US fusionnées depuis la précédente et brouillon des notes)',
+      'Sans numéro : propose le prochain numéro de version (W.X.Y.Z). Avec un numéro : crée la version (US fusionnées depuis la précédente et brouillon des notes)',
     )
     .option('--depuis <ref>', 'commit ou tag de départ (par défaut : la version précédente, sinon tout l\'historique)')
     .option('--format <format>', 'sans numéro : format de la proposition (texte|json)', 'texte')

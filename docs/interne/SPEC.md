@@ -590,17 +590,17 @@ pipelines (`dev`, `devops`) apply the documentation rule (§14) and report it in
 
 ### 10.1 Version management (`orbith version`, `orbith release`) — no AI, never pushes
 
-Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli/version.ts`, `src/cli/release.ts`,
+Files: `src/cli/version-calc.ts` (W.X.Y.Z version + Conventional Commits logic), `src/cli/version.ts`, `src/cli/release.ts`,
 `src/core/git-release.ts` (tags, commits since a tag, annotated tag, path-limited commit). Guide: `docs/guide/versions.md`.
 
-- **`orbith version` (no argument; with a number it is §4.6b2) `[--format texte|json]`**: base = highest `vX.Y.Z` tag reachable from HEAD (`git tag --merged HEAD`, annotated or lightweight; tags only on other branches are ignored; else 0.0.0); inputs = commits since that tag
+- **`orbith version` (no argument; with a number it is §4.6b2) `[--format texte|json]`**: base = highest `vW.X.Y.Z` tag reachable (legacy 3-part tags read as `W.X.Y.0`) from HEAD (`git tag --merged HEAD`, annotated or lightweight; tags only on other branches are ignored; else 0.0.0.0); inputs = commits since that tag
   + pending stories (`Terminée`, no `mis_en_prod_le`, or cited by a commit since the tag), excluding stories cited by
   the release notes of a version that already has a tag (`storiesDejaLivrees`). Bump = max of:
   major = `type!:` / `BREAKING CHANGE:` footer / story label `breaking` (case-insensitive, constant `BREAKING_LABEL`);
   minor = `feat` / done non-bug story; patch = `fix` / done story labelled `bug`. Other types do not bump.
   Read-only; prints the reasons; nothing proposed when no signal.
-- **`orbith release <version> [--yes] [--sans-tag] [--dry-run] [--date]`** (`vX.Y.Z` accepted):
-  1. refuses a non-SemVer version, an existing tag (checked against all tags, reachable or not; a tag only on another branch gets a dedicated message), or a version ≤ the highest tag reachable from HEAD;
+- **`orbith release <version> [--yes] [--sans-tag] [--dry-run] [--date]`** (`vW.X.Y.Z` accepted; exactly four digits required, `1.2.0` is refused):
+  1. refuses a version that is not `W.X.Y.Z`, an existing tag (checked against all tags, reachable or not; a tag only on another branch gets a dedicated message), or a version ≤ the highest tag reachable from HEAD;
   2. no notes (`docs/livraisons/release-notes-<version>.md` or frontmatter `version`) → writes a draft (2 audiences)
      from the done pending stories, then fails (`--dry-run`: writes nothing; an existing unrecognized file at that
      path is never overwritten);
@@ -609,10 +609,10 @@ Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli
   4. warnings only: notes cite no story, no « exploitation » part, major expected (breaking) but not chosen,
      changelog includes commits of stories not `Terminée`, a story cited in the notes has uncommitted changes;
   5. prints the CHANGELOG section; after confirmation (`--yes` or TTY prompt; non-TTY without `--yes` fails):
-     prepends `## [X.Y.Z] - date` (local date) to `CHANGELOG.md`, keeping its line endings (Changements majeurs /
+     prepends `## [W.X.Y.Z] - date` (local date) to `CHANGELOG.md`, keeping its line endings (Changements majeurs /
      Nouveautés / Corrections, from commits; breaking stories listed too), commits only that file plus the notes file
-     and `.orbith/validations.json` when they have uncommitted changes (`chore(release): vX.Y.Z`, path-limited: other
-     staged files stay staged) and creates the annotated local tag `vX.Y.Z`. A failed commit restores `CHANGELOG.md`
+     and `.orbith/validations.json` when they have uncommitted changes (`chore(release): vW.X.Y.Z`, path-limited: other
+     staged files stay staged) and creates the annotated local tag `vW.X.Y.Z`. A failed commit restores `CHANGELOG.md`
      and the index and reports git's message; a failed tag reports the manual `git tag` command.
      `--sans-tag` stops after the changelog and prints the `git add` / `git commit` / `git tag` commands;
      `--dry-run` writes nothing. **Never pushes**.
