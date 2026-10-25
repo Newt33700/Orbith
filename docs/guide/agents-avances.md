@@ -88,7 +88,7 @@ Cette plateforme n'est pas activée par défaut. Pour l'activer :
 
 Orbith génère alors :
 
-- `.github/prompts/orbith.prompt.md`, `orbith-po.prompt.md`, … (les 16 commandes, mêmes noms que pour
+- `.github/prompts/orbith.prompt.md`, `orbith-po.prompt.md`, … (les 18 commandes, mêmes noms que pour
   Claude Code) : dans le chat Copilot, tapez `/orbith-po` suivi de votre demande. Chaque fichier ne contient
   qu'un lien vers l'agent dans `.orbith/` ;
 - un bloc balisé `<!-- orbith:debut -->` … `<!-- orbith:fin -->` dans `.github/copilot-instructions.md`, qui

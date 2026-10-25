@@ -83,8 +83,8 @@ Pour un premier pas détaillé, lisez [docs/guide/demarrage.md](docs/guide/demar
 
 ## Les agents
 
-Orbith installe 17 commandes : 12 agents et 5 workflows (atelier, rétrospective, relecture adverse, changement de
-cap, création d'agent). Chaque commande existe en deux syntaxes, selon l'outil utilisé. Si vous avez activé GitHub Copilot
+Orbith installe 18 commandes : 12 agents et 6 workflows (atelier, rétrospective, relecture adverse, changement de
+cap, création d'agent, autopilote). Chaque commande existe en deux syntaxes, selon l'outil utilisé. Si vous avez activé GitHub Copilot
 (facultatif, voir [agents avancés](docs/guide/agents-avances.md)), utilisez dans son chat le nom de la colonne
 Claude Code (`/orbith-po`, etc.).
 
@@ -110,6 +110,7 @@ Claude Code (`/orbith-po`, etc.).
 
 Vos agents personnalisés (`.orbith/custom/agents/<nom>.md`) ont aussi leurs commandes, par exemple
 `/orbith:juriste-rgpd` et `/orbith-juriste-rgpd` : voir [creer-un-agent.md](docs/guide/creer-un-agent.md).
+| Autopilote borné | Enchaîne Dev puis QA sur les US éligibles et s'arrête à chaque porte humaine (voir [autopilote.md](docs/guide/autopilote.md)) | `/orbith:autopilote` | `/orbith-autopilote` |
 
 Exemple : pour demander au PO de rédiger le brief, tapez `/orbith:po rédige le brief de mon appli de
 réservation de salles` dans Gemini CLI, ou `/orbith-po rédige le brief de mon appli de réservation de
@@ -184,6 +185,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
 | `npx orbith decouper <fichier>` | Découpe un document Markdown volumineux en extraits par section (`.orbith/extraits/<nom>/`, sans IA, sans toucher au document) ; les agents lisent l'index puis les sections utiles, et `check` signale les extraits périmés (voir [documents-volumineux.md](docs/guide/documents-volumineux.md)) |
 | `npx orbith sbom` | Produit la liste des composants (SBOM CycloneDX JSON) ; `check` contrôle les licences interdites et la chaîne d'audit des registres (voir [integrite-sbom.md](docs/guide/integrite-sbom.md)) |
+| `npx orbith autopilote [EPIC-NNN\|US-NNN…]` | Calcule le plan borné de l'autopilote, sans IA : US éligibles et ordre, plafond de US (`--max-us`, 3 par défaut), budget IA (`--budget`), portes humaines ; refuse si `check` est en erreur, si un document est modifié après validation ou si le budget est épuisé (voir [autopilote.md](docs/guide/autopilote.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
 | `npx orbith csr sync` | Récupère le CSR depuis la source interne déclarée dans `.orbith/config.yaml` |
 | `npx orbith update` | Met à jour les agents, workflows, modèles et règles (et les commandes Gemini et Claude), sans toucher à votre configuration, à votre CSR, à `custom/`, au contexte projet ni aux registres |
@@ -194,7 +196,7 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 
 Options utiles : `--yes` (sans question, pour les scripts ; réservé à un usage humain pour `valider`, `deploiement` et
 `release`), `--cwd <dossier>` (travailler sur un autre dossier, accepté par toutes les commandes), `--format json`
-pour `next`, `check`, `version`, `preparation`, `metriques` (aussi `csv`) et `audit`, `--sortie <fichier>` pour
+pour `next`, `check`, `version`, `preparation`, `autopilote`, `metriques` (aussi `csv`) et `audit`, `--sortie <fichier>` pour
 `trace`, `metriques`, `audit`, `sbom` et `csr import`. `npx orbith <commande> --help` liste toutes les options.
 
 ## Une tâche = une session
@@ -573,6 +575,7 @@ Fichier `.orbith/contexte-projet.md` qui garde les conventions, les patterns et 
 | [contexte-preparation.md](docs/guide/contexte-preparation.md) | Leads tech, POs | Contexte projet, projet existant, check de préparation |
 | [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
 | [documents-volumineux.md](docs/guide/documents-volumineux.md) | Tout le monde | Découper un PRD ou une architecture trop long pour les agents |
+| [autopilote.md](docs/guide/autopilote.md) | Leads tech, PO | Mode autopilote borné : plan sans IA, plafond de US, budget, portes humaines |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
 | [creer-un-agent.md](docs/guide/creer-un-agent.md) | Leads tech, PO | Créer un agent personnalisé du projet, ses commandes, les règles obligatoires |
 

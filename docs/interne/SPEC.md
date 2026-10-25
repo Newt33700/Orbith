@@ -40,7 +40,7 @@ src/audit/               # `orbith audit` (collect + HTML render)
 src/sbom/                # `orbith sbom` (collect, CycloneDX, licence policy) (§12)
 content/                 # THE CORE, copied to <project>/.orbith/ on install
   agents/                # guide po sm ux architecte dev qa devops securite test-architect analyste redacteur-technique (.md)
-  workflows/             # correctif evolution projet atelier retro relecture-adverse changement-de-cap creer-agent (.md)
+  workflows/             # correctif evolution projet atelier retro relecture-adverse changement-de-cap creer-agent autopilote (.md)
   templates/             # brief prd ux architecture adr epic story release-notes environnements bug change incident
                          # menaces strategie-test retro analyse contexte-projet (.md)
   rules/                 # validation-humaine confidentialite tracabilite nouvelle-session couts-ia documentation documents-volumineux (.md)
@@ -113,6 +113,7 @@ dora: { cibles: { frequence_par_semaine: 1, delai_jours: 7, taux_echec_pct: 10, 
 sbom: { licences_interdites: [AGPL-3.0] }         # §12
 documentation: { controle: true, code: [src/] }   # §14 (check on by default; `controle: false` disables it)
 extraits: { seuil_jetons: 4000 }                  # §15 (large-document threshold, estimated tokens)
+autopilote: { max_us: 3, budget: 20 }             # §17 (bounded autopilot; no budget ceiling when absent)
 ```
 
 ### 3.2 Artifacts and the `statut` field
@@ -232,6 +233,8 @@ Rules by track (first matching wins):
   story `Prête` → dev (`/orbith-dev US-xxx`); story `En cours` → dev continue / qa for tests;
   story `En revue` → qa + human review; all `Terminée` → sm (release notes) then "tout est livré 🎉".
 - Also surface problems: artifacts "modifié après validation" (top priority).
+- When at least 2 stories are eligible for the autopilot (§15) and nothing is "modifié après validation", a
+  secondary action suggesting `/orbith-autopilote` / `npx orbith autopilote` is inserted right after the dev action.
 
 ### 4.4 `orbith valider <fichier> [--yes]`
 Shows file summary (type, id, title), asks confirmation ("Je confirme avoir relu et valider ce document"),
@@ -449,8 +452,9 @@ Agent registry (single source, `src/adapters/agents.ts`):
 | relecture-adverse | workflows/relecture-adverse.md | /orbith:relecture-adverse | /orbith-relecture-adverse | Relecture adverse : passe critique avant de valider PRD, architecture ou US |
 | changement-de-cap | workflows/changement-de-cap.md | /orbith:changement-de-cap | /orbith-changement-de-cap | Changement de cap : impact d'un changement de besoin sur les epics et les US |
 | creer-agent | workflows/creer-agent.md | /orbith:creer-agent | /orbith-creer-agent | Créer un agent : concevoir, question par question, un agent personnalisé du projet |
+| autopilote | workflows/autopilote.md | /orbith:autopilote | /orbith-autopilote | Autopilote borné : enchaîne Dev puis QA sur les US éligibles, s'arrête à chaque porte humaine |
 
-17 entries: 12 agents and 5 workflows (atelier, retro, relecture-adverse, changement-de-cap, creer-agent); `orbith install`
+18 entries: 12 agents and 6 workflows (atelier, retro, relecture-adverse, changement-de-cap, creer-agent, autopilote); `orbith install`
 and `orbith update` generate one Gemini and one Claude command per entry, **plus one per custom agent of the project**
 (`.orbith/custom/agents/<key>.md` with a `description` frontmatter, see §16): adapters iterate over
 `agentsDuProjet(root)` (core `AGENTS` followed by the custom ones, `src/adapters/agents-perso.ts`), which throws an
@@ -773,3 +777,46 @@ Deterministic, no AI. Code: `src/core/extraits.ts` (logic), `src/cli/decouper.ts
   validation humaine = `rules/validation-humaine.md` or « jamais … statut: validé » on one line; confidentialité;
   « nouvelle session »; `rules/documentation.md` or « documentation à jour »); marker still present → info. Keyword
   detection only. Guide: `docs/guide/creer-un-agent.md`.
+
+## 17. Bounded autopilot (`orbith autopilote` + `workflows/autopilote.md`)
+
+Principle: the AI proposes, the human decides. The autopilot only chains steps that need **no** human gate
+(Dev, then QA) and stops at **every** gate. It never moves a card to `Terminée`, never writes `statut: validé`,
+never runs `valider`/`deploiement`/`release`/`version`, never pushes.
+
+### 15.1 `orbith autopilote [cibles...] [--max-us N] [--budget <montant>] [--format texte|json]`
+
+Deterministic, no AI (`src/cli/autopilote-plan.ts`, pure `calculerPlan`; I/O in `src/cli/autopilote.ts`).
+- **Scope**: each target is matched (case-insensitive) against the story `epic` field or the story `id`; none =
+  whole project. An unknown target is a refusal.
+- **Eligible story**: `type: story`, has an `id`, `etat === 'validé'`, column `Prête`, a Gherkin block, a
+  `## Definition of Ready` section with ≥1 checkbox and all ticked, every `dependencies` entry exists and is
+  `Terminée`, and (label `impact-archi`) a validated ADR mentions it. Non-eligible open stories of the scope are
+  listed in `ecartees` with a French reason.
+- **Order**: Backlog.md `ordinal`, then `priority` (high/medium/low, also haute/moyenne/basse), then id number.
+- **Bound `max_us`**: `--max-us`, else `autopilote.max_us`, else 3 (integer ≥ 1). It is a WIP limit of stories
+  awaiting human review: stories of the scope already `En cours`/`En revue` use up places
+  (`places = max_us − en_attente`), so successive sessions can never pile up more than `max_us` unreviewed stories.
+- **Budget**: ceiling `--budget` (accepts `2,5`), else `autopilote.budget`, else none (warning). `consomme` = sum of
+  the scope stories' `couts_ia` entries in `finops.devise` (entry without `cout` is priced from `tokens_entree`/
+  `tokens_sortie` with `finops.prix`, key = longest prefix of `modele`, else `defaut`; other currency or no price →
+  ignored and counted). `cout_moyen_us` = mean recorded cost of `Terminée` stories (whole project); when known, the
+  plan is reduced to `floor(restant / cout_moyen_us)` stories.
+- **Refusals** (`ok: false`, exit code 1, empty plan): `orbith check` has errors; any artifact `modifié` (after
+  validation); invalid frontmatter; budget exhausted (`restant ≤ 0`) or insufficient for one story at the average
+  cost; places = 0 (`Plafond atteint`); invalid `--max-us`/`--budget`/config values; unknown target. The config key
+  is read loosely by `loadConfig` (never throws) and validated here, so other commands are unaffected.
+- **Output**: per story, steps `dev` and `qa` (exact slash commands from the agent registry) then
+  `revue-humaine` (`porte: true`); a `portes` list (start confirmation, review after each story's QA, structuring
+  choice, ambiguity/revalidation, failing tests/check, bound or budget reached, push/MR/release always human).
+  JSON: the `PlanAutopilote` object plus `erreurs_check`. Text ends with the new-session reminder.
+
+### 15.2 Workflow `content/workflows/autopilote.md`
+
+Registered in `AGENTS` (`autopilote`), hence one Gemini/Claude command and one Copilot prompt file. It runs
+`npx orbith autopilote <cibles> --format json`, stops on any refusal, shows the plan and asks **one** explicit
+confirmation (local commits, card moves `Prête → En cours → En revue` only). One task = one session: by default it
+handles the first story of the plan only; chaining in the same session requires an explicit human request and a
+fresh `orbith autopilote` run before each story. Per story: Dev (`agents/dev.md`), tests + `orbith check`, cost
+entry (`couts-ia` rule) checked against the remaining budget, QA (`agents/qa.md`), cost entry, then stop for human
+review.

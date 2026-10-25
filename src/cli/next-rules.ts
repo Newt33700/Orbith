@@ -1,5 +1,6 @@
 import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
 import { mentions } from './trace-report.js';
+import { usEligibles } from './autopilote-plan.js';
 import { changesPourVersion, hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
 
 export interface Action {
@@ -199,6 +200,24 @@ function insertPreparationHint(arts: Artifact[], candidates: Action[]): void {
   });
 }
 
+/** At least two eligible stories (and nothing modified after validation): suggest the bounded autopilot after the dev action. */
+function insertAutopiloteHint(arts: Artifact[], candidates: Action[]): void {
+  if (arts.some((a) => a.etat === 'modifié')) return;
+  const eligibles = usEligibles(arts);
+  if (eligibles.length < 2) return;
+  const def = AGENT_DEFS.find((a) => a.key === 'autopilote');
+  let i = candidates.findIndex((a) => a.kind === 'agent' && (a.claude ?? '').startsWith('/orbith-dev'));
+  if (i < 0 || !def) return;
+  if (candidates[i + 1]?.cli === 'npx orbith preparation') i++;
+  candidates.splice(i + 1, 0, {
+    kind: 'agent',
+    message: `${eligibles.length} US sont prêtes (${eligibles.map((s) => s.id).join(', ')}) : tu peux les enchaîner en autopilote borné (Dev puis QA, arrêt à chaque revue). Vois d'abord le plan.`,
+    gemini: `/${def.gemini}`,
+    claude: `/${def.claude}`,
+    cli: 'npx orbith autopilote',
+  });
+}
+
 export function computeNext(
   artifacts: Artifact[],
   config: OrbithConfig,
@@ -242,6 +261,7 @@ export function computeNext(
   } else {
     candidates.push(...storyActions(artifacts, config));
     insertPreparationHint(artifacts, candidates);
+    insertAutopiloteHint(artifacts, candidates);
     if (piste === 'projet') candidates.push(...devopsHints(artifacts));
   }
   if (piste === 'evolution') candidates.push(...archiHints(artifacts));

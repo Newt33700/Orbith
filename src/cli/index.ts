@@ -21,6 +21,7 @@ import { register as registerPreparation } from './preparation.js';
 import { register as registerSbom } from './sbom.js';
 import { register as registerDecouper } from './decouper.js';
 import { register as registerAgent } from './agent.js';
+import { register as registerAutopilote } from './autopilote.js';
 
 function version(): string {
   try {
@@ -78,6 +79,7 @@ for (const register of [
   registerSbom,
   registerDecouper,
   registerAgent,
+  registerAutopilote,
 ]) {
   register(program);
 }

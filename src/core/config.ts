@@ -64,6 +64,8 @@ export interface OrbithConfig {
   documentation?: { controle: boolean; code: string[] };
   /** Facultatif : seuil (jetons estimés) au-delà duquel un document est jugé volumineux (défaut 4000, voir extraits.ts). */
   extraits?: { seuil_jetons: number };
+  /** Facultatif : bornes du mode autopilote (`orbith autopilote`). Valeurs vérifiées par la commande. */
+  autopilote?: { max_us?: unknown; budget?: unknown };
 }
 
 /** Préfixes de chemins considérés comme du code par défaut (contrôle de documentation). */
@@ -185,6 +187,13 @@ export async function loadConfig(root: string): Promise<OrbithConfig> {
       throw new OrbithError('Fichier .orbith/config.yaml invalide : `extraits.seuil_jetons` doit être un nombre strictement positif.');
     }
     cfg.extraits = { seuil_jetons: typeof v === 'number' ? Math.floor(v) : 4000 };
+  }
+  if (r.autopilote && typeof r.autopilote === 'object') {
+    const a = r.autopilote as { max_us?: unknown; budget?: unknown };
+    cfg.autopilote = {
+      ...(a.max_us != null ? { max_us: a.max_us } : {}),
+      ...(a.budget != null ? { budget: a.budget } : {}),
+    };
   }
   return cfg;
 }
