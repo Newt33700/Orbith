@@ -355,8 +355,8 @@ mon-projet/
 │   ├── versions.json             # Registre des versions (US incluses)
 │   └── deploiements.json         # Registre chaîné des mises en production (créé par `orbith deploiement`)
 ├── GEMINI.md  CLAUDE.md          # Générés : pointent vers les règles d'Orbith, le CSR et le contexte projet
-├── .gemini/commands/orbith/      # Commandes Gemini CLI (14)
-├── .claude/commands/orbith*.md   # Commandes Claude Code (14)
+├── .gemini/commands/orbith/      # Commandes Gemini CLI (18)
+├── .claude/commands/orbith*.md   # Commandes Claude Code (18)
 ├── .claude/settings.json  .geminiignore   # Interdisent la lecture des fichiers sensibles
 ├── docs/
 │   ├── produit/                  # brief.md, prd.md, ux.md, epics/EPIC-001-*.md
