@@ -41,6 +41,7 @@ Orbith n'invente aucune date. Chaque date vient d'un fait précis et a un auteur
 | `updated_date` | Frontmatter de la US | L'agent qui modifie le contenu | Chaque modification du contenu |
 | `debut_dev_le` | Frontmatter de la US | `npx orbith deploiement` (automatique) | Date du premier commit qui mentionne la US (par exemple `feat(US-012): …`) |
 | `termine_le` | Frontmatter de la US | `npx orbith deploiement` (automatique) | Date du commit qui a passé la carte en « Terminée », y compris un déplacement dans Backlog.md |
+| `revue_le` | Frontmatter de la US (facultatif) | L'équipe, à la main | Fin de la revue, si vous voulez isoler cette étape de l'attente |
 | `mis_en_prod_le` | Frontmatter de la US et des notes de version | `npx orbith deploiement <version>` (lancé par un humain) | Date de la mise en production réelle |
 | `origine`, `cause`, `detecte_le` | Frontmatter d'un bug | L'agent PO, sur réponse de l'humain | Déclaration du bug |
 | `couts_ia` | Frontmatter de la US ou du bug | Les agents, une entrée par tâche | Fin de chaque tâche |
@@ -198,13 +199,92 @@ Total : 3,31 EUR sur 7 estimation(s). Ce sont des ordres de grandeur, pas une fa
 | BUG-003 | bug | Terminée | 2026-09-12 | — | — | — | 2026-09-13 | — | 0,45 EUR |
 ```
 
-Pour un format exploitable par un outil, utilisez `npx orbith metriques --format json --sortie metriques.json`.
+Le rapport complet contient aussi les sections décrites ci-dessous (cibles, tendances, attente découpée, taille des
+changements) et le rappel « DORA mesure une équipe, pas des personnes ». Extrait, sur le même projet avec des cibles
+configurées :
+
+```markdown
+## Cibles
+
+| Indicateur | Mesuré | Cible |
+|---|---|---|
+| Fréquence de déploiement | 0,23 par semaine | au moins 1 par semaine : non atteinte |
+| Délai de mise en production | 5 jour(s) | au plus 7 jour(s) : atteinte |
+
+## Tendances (période précédente : du 2026-04-27 au 2026-07-26)
+
+| Indicateur | Cette période | Période précédente | Évolution |
+|---|---|---|---|
+| Fréquence de déploiement | 0,23 par semaine | non mesurable | non mesurable |
+```
+
+Pour un format exploitable par un outil, utilisez `npx orbith metriques --format json --sortie metriques.json`, ou
+`--format csv` pour un tableur (voir plus bas).
+
+## Aller plus loin dans la lecture
+
+### Fixer des cibles
+
+Une valeur seule dit peu : comparez-la à ce que l'équipe vise. Ajoutez, si vous le souhaitez, une section `dora` dans
+`.orbith/config.yaml`. Toutes les clés sont facultatives :
+
+```yaml
+dora:
+  cibles:
+    frequence_par_semaine: 1     # au moins
+    delai_jours: 7               # au plus
+    taux_echec_pct: 10           # au plus
+    retablissement_heures: 24    # au plus
+```
+
+Le rapport ajoute une section **Cibles** : pour chaque cible, la valeur mesurée et « atteinte » ou « non atteinte ». Si
+l'indicateur n'est pas mesurable sur la période, la cible n'est ni atteinte ni manquée : le rapport écrit
+« non mesurable ». Sans section `dora`, rien ne change. Une clé inconnue ou une valeur qui n'est pas un nombre est
+refusée avec un message qui nomme la clé. Une cible est un repère choisi par l'équipe, pas un objectif imposé.
+
+### Tendances
+
+Les indicateurs sont aussi calculés sur la **période précédente de même durée** (avec `--jours 90`, le trimestre
+d'avant). Le rapport affiche la flèche (↑ hausse, ↓ baisse, → stable), l'écart, et si l'évolution va dans le bon sens
+(« en amélioration »), dans le mauvais (« à surveiller ») ou si elle est stable. Si l'une des deux périodes n'a pas de
+donnée (par exemple aucun déploiement), la tendance est « non mesurable » : Orbith ne compare jamais à un zéro inventé.
+
+### Où se perd l'attente
+
+L'attente entre « Terminée » et la mise en production est découpée en trois étapes, **seulement quand les dates
+existent** :
+
+| Étape | De | À |
+|---|---|---|
+| Revue | `termine_le` | `revue_le` (facultatif) |
+| Recette | `revue_le`, ou `termine_le` s'il est absent | première mise en recette de la US (`npx orbith deploiement <version> --env recette`) |
+| Production | mise en recette | `mis_en_prod_le` |
+
+Chaque étape est une médiane sur les US qui ont les deux dates. Sans `revue_le`, la revue est comprise dans la recette.
+Sans déploiement en recette, les étapes recette et production sont « non mesurables » ; l'attente globale reste
+affichée.
+
+### Taille des changements
+
+Le rapport indique, pour chaque mise en production de la période, le nombre de **US** livrées et le nombre de
+**commits** qui mentionnent ces US, puis les médianes. Les petits lots sont une pratique clé de DORA : des versions
+plus petites se relisent et se déploient plus facilement. Les commits ne sont comptés que s'ils portent l'identifiant de
+la US ; sans historique Git, ce nombre est « non mesurable ».
+
+### Export CSV
+
+`npx orbith metriques --format csv --sortie metriques.csv` écrit une ligne par indicateur (valeur, unité, effectif,
+niveau, période précédente, écart, cible), plus la taille de chaque version. Le fichier est en UTF-8 avec séparateur
+point-virgule et virgule décimale, pour s'ouvrir directement dans un tableur français. Une donnée absente est écrite
+« non mesurable », jamais 0. La dernière ligne rappelle que DORA mesure une équipe, pas des personnes.
 
 ## Ce qu'il faut savoir
 
-- **Un chiffre manquant n'est pas un zéro.** Si aucun déploiement n'est enregistré, la fréquence est vide. Si aucun bug
-  n'est déclaré, le taux d'échec n'est pas « 0 % » : il faut déclarer les bugs pour que la mesure soit fiable.
-- **Les métriques mesurent l'équipe, pas les personnes.** Les utiliser pour juger un individu va à l'encontre de leur
+- **Un chiffre manquant n'est pas un zéro.** Si aucun déploiement n'est enregistré, la fréquence est vide. Si des
+  déploiements existent mais qu'aucun bug n'est déclaré (`labels: [bug]`, `origine: production`), le rapport affiche
+  « 0 % » suivi de la mention « aucun bug déclaré : à vérifier » (champ `tauxEchec.avertissement` du JSON). Ce 0 % n'est
+  pas une mesure : déclarez les bugs de production pour que le taux soit fiable.
+- **Les métriques mesurent l'équipe, pas les personnes.** Le rapport le rappelle à chaque fois. Les utiliser pour juger un individu va à l'encontre de leur
   objet. Une métrique sert à voir où le processus coince, puis à décider d'une amélioration en équipe.
 - **La qualité des données compte.** Les dates sont fiables si les commits portent l'identifiant de la US
   (`feat(US-012): …`) et si les déploiements sont enregistrés le jour même.

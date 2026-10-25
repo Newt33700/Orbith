@@ -20,6 +20,11 @@ export const AGENTS: AgentDef[] = [
   { key: 'qa', file: 'agents/qa.md', gemini: 'orbith:qa', claude: 'orbith-qa', description: 'QA : tests Gherkin, revue, couverture des critères' },
   { key: 'devops', file: 'agents/devops.md', gemini: 'orbith:devops', claude: 'orbith-devops', description: 'DevOps : pipelines CI/CD, environnements non identiques' },
   { key: 'atelier', file: 'workflows/atelier.md', gemini: 'orbith:atelier', claude: 'orbith-atelier', description: 'Atelier : plusieurs agents discutent ensemble' },
+  { key: 'securite', file: 'agents/securite.md', gemini: 'orbith:securite', claude: 'orbith-securite', description: 'Sécurité : modélisation des menaces, revue des US sensibles' },
+  { key: 'test-architect', file: 'agents/test-architect.md', gemini: 'orbith:test-archi', claude: 'orbith-test-archi', description: 'Test Architect : stratégie de test par risque' },
+  { key: 'retro', file: 'workflows/retro.md', gemini: 'orbith:retro', claude: 'orbith-retro', description: 'Rétrospective après livraison, à partir des métriques et des constats QA' },
+  { key: 'relecture-adverse', file: 'workflows/relecture-adverse.md', gemini: 'orbith:relecture-adverse', claude: 'orbith-relecture-adverse', description: 'Relecture adverse : passe critique avant de valider PRD, architecture ou US' },
+  { key: 'changement-de-cap', file: 'workflows/changement-de-cap.md', gemini: 'orbith:changement-de-cap', claude: 'orbith-changement-de-cap', description: 'Changement de cap : impact d\'un changement de besoin sur les epics et les US' },
 ];
 
 export const RULES = [

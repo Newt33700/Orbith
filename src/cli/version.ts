@@ -18,6 +18,7 @@ import {
 } from '../core/index.js';
 import { estBug } from './metriques-calc.js';
 import { mentions } from './trace-report.js';
+import { runProposition } from './version-proposition.js';
 
 export interface Version {
   numero: string;
@@ -162,11 +163,19 @@ export async function runVersion(numero: string, opts: VersionOptions = {}): Pro
 
 export function register(program: Command): void {
   program
-    .command('version <numero>')
-    .description('Crée une version : US fusionnées depuis la version précédente et brouillon des notes de version')
+    .command('version [numero]')
+    .description(
+      'Sans numéro : propose le prochain numéro de version (SemVer). Avec un numéro : crée la version (US fusionnées depuis la précédente et brouillon des notes)',
+    )
     .option('--depuis <ref>', 'commit ou tag de départ (par défaut : la version précédente, sinon tout l\'historique)')
+    .option('--format <format>', 'sans numéro : format de la proposition (texte|json)', 'texte')
     .option('--cwd <dir>', 'dossier de travail')
-    .action(async (numero: string, opts: VersionOptions) => {
+    .action(async (numero: string | undefined, opts: VersionOptions & { format?: string }) => {
+      if (numero === undefined) {
+        if (opts.depuis) throw new OrbithError('--depuis ne s\'utilise qu\'avec un numéro de version.');
+        await runProposition({ cwd: opts.cwd, format: opts.format });
+        return;
+      }
       const r = await runVersion(numero, opts);
       ui.ok(`Version ${numero} créée avec ${r.version.us.length} US : ${r.version.us.join(', ') || 'aucune'}.`);
       ui.ok(`Brouillon des notes de version : ${r.notes}`);

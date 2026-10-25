@@ -15,6 +15,10 @@ import { register as registerCsr } from './csr.js';
 import { register as registerUpdate } from './update.js';
 import { register as registerPlugin } from './plugin.js';
 import { register as registerAudit } from './audit.js';
+import { register as registerRelease } from './release.js';
+import { register as registerInitContext } from './init-context.js';
+import { register as registerPreparation } from './preparation.js';
+import { register as registerSbom } from './sbom.js';
 
 function version(): string {
   try {
@@ -66,6 +70,10 @@ for (const register of [
   registerUpdate,
   registerPlugin,
   registerAudit,
+  registerRelease,
+  registerInitContext,
+  registerPreparation,
+  registerSbom,
 ]) {
   register(program);
 }

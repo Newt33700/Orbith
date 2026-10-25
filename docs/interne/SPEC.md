@@ -96,6 +96,11 @@ csr:
   fichier: .orbith/csr/CSR.md
   source: null                  # git+https/git+ssh repo, https URL or local file (`orbith csr sync`)
 plugins: []                     # e.g. [backlog-md]
+# Optional keys (absent = feature off, see section 11 "Change requests and role matrix"):
+changements: { exiger_pour_deploiement: false }
+roles:
+  quatre_yeux: false            # validator must not be the author of the file's last commit
+  valideurs: { prd: [alice@corp.fr, "Bob Martin"], change: [ops@corp.fr] }   # type (or "*") -> emails / git names
 ```
 
 ### 3.2 Artifacts and the `statut` field
@@ -103,7 +108,7 @@ plugins: []                     # e.g. [backlog-md]
 Every Orbith document has YAML frontmatter with at least:
 
 ```yaml
-type: brief | prd | ux | architecture | adr | epic | story | release-notes
+type: brief | prd | ux | architecture | adr | epic | story | release-notes | environnements | change | incident | menaces | strategie-test | retro
 statut: brouillon | en-revue | validé
 ```
 
@@ -123,6 +128,11 @@ Canonical locations (used by `next`, `check`, `trace`):
 | adr | docs/architecture/adr/ADR-NNN-*.md |
 | story | backlog/tasks/*.md (frontmatter `type: story`) |
 | release-notes | docs/livraisons/release-notes-*.md |
+| change | docs/livraisons/changes/CHG-NNN-*.md |
+| incident | docs/livraisons/incidents/INC-NNN-*.md |
+| menaces | docs/architecture/menaces.md |
+| strategie-test | docs/architecture/strategie-test.md |
+| retro | docs/livraisons/retro-<version>.md |
 
 Scanning uses the frontmatter `type` (files without it are ignored), the table above is where agents write.
 
@@ -260,16 +270,34 @@ Human command run after a real deployment. Requires validated release notes for 
 in each story, and `mis_en_prod_le` in the notes. Frontmatter only: body hashes, hence validations, are unchanged.
 `orbith next` asks for it once validated notes cover all done stories and have no `mis_en_prod_le`.
 
-### 4.6d `orbith metriques [--jours 90] [--format texte|json] [--sortie f]`
+### 4.6d `orbith metriques [--jours 90] [--format texte|json|csv] [--sortie f]`
 DORA metrics over the period, production deployments only:
 - deployment frequency (per week); lead time = median(`mis_en_prod_le` − `debut_dev_le` or first commit) of
   non-bug stories deployed in the period;
 - change failure rate = production deployments containing a story named in the `cause` of a bug
-  (`labels: [bug]`, `origine: production`) / production deployments;
+  (`labels: [bug]`, `origine: production`) / production deployments.
+  With ≥1 production deployment and no declared production bug, the value stays 0 % (level and target still computed)
+  but is flagged: text report appends « : aucun bug déclaré : à vérifier », and JSON
+  `tauxEchec.avertissement` carries that string (`null` otherwise);
 - time to restore = median(bug `mis_en_prod_le` − `detecte_le`), in hours.
 Also « attente » = median(`mis_en_prod_le` − `termine_le`). Levels (élite/élevé/moyen/faible) use DORA-report thresholds. Also a per-story table (created_date,
 updated_date, début dev, mise en prod, lead time, AI cost) and AI costs: sum of `couts_ia[].cout`, per agent.
 `couts_ia` entries are appended by the agents (rule `couts-ia`), self-estimated with `finops.prix` from config.
+
+Enriched DORA (all additive; absent data is reported « non mesurable », never 0):
+- optional config `dora.cibles` = `{frequence_par_semaine (min), delai_jours, taux_echec_pct, retablissement_heures (max)}`;
+  unknown key or non-numeric value → `OrbithError` at `loadConfig`. Output: `cibles[]` `{cle, cible, valeur, atteinte}`
+  (`atteinte: null` when the value is not measurable); absent when no target is configured.
+- trends: same metrics over the previous window of equal length (ends the day before the current start) →
+  `precedent` + `tendances[]` `{valeur, precedent, ecart, fleche ↑↓→, favorable}`; null if either side is unmeasurable.
+  A period with no production deployment has no frequency value.
+- `decoupageAttente`: `revue` = `revue_le` − `termine_le`; `recette` = first non-production registry deployment listing
+  the story − (`revue_le` ?? `termine_le`); `production` = `mis_en_prod_le` − recette date. Each = median over stories
+  having both dates (`{medianeJours, us}`, null when none). `revue_le` is an optional, human-written frontmatter field.
+- `taille`: per production deployment of the period `{version, date, us, commits}` (commits whose subject mentions one of
+  its stories; null without git) and medians `usParVersion`, `commitsParVersion`.
+- `--format csv`: one row per indicator, UTF-8 BOM, `;` separator, decimal comma. JSON/text/CSV all carry the reminder
+  that DORA measures a team, not individuals (JSON key `rappel`).
 
 ### 4.7 `orbith csr import <fichier.xlsx> [--sortie <fichier>]` (default: `csr.fichier` from config)
 Reads an Excel workbook with exceljs. Each sheet → a `## <sheet name>` section and a markdown table.
@@ -371,6 +399,18 @@ Agent registry (single source, `src/adapters/agents.ts`):
 | dev | agents/dev.md | /orbith:dev | /orbith-dev | Développeur : implémente une US validée |
 | qa | agents/qa.md | /orbith:qa | /orbith-qa | QA : tests Gherkin, revue, couverture des critères |
 | atelier | workflows/atelier.md | /orbith:atelier | /orbith-atelier | Atelier : plusieurs agents discutent ensemble |
+| securite | agents/securite.md | /orbith:securite | /orbith-securite | Sécurité : modélisation des menaces, revue des US sensibles |
+| test-architect | agents/test-architect.md | /orbith:test-archi | /orbith-test-archi | Test Architect : stratégie de test par risque |
+| retro | workflows/retro.md | /orbith:retro | /orbith-retro | Rétrospective après livraison, à partir des métriques et des constats QA |
+| relecture-adverse | workflows/relecture-adverse.md | /orbith:relecture-adverse | /orbith-relecture-adverse | Relecture adverse : passe critique avant de valider PRD, architecture ou US |
+| changement-de-cap | workflows/changement-de-cap.md | /orbith:changement-de-cap | /orbith-changement-de-cap | Changement de cap : impact d'un changement de besoin sur les epics et les US |
+
+Advanced agents/workflows (securite, test-architect, retro, relecture-adverse, changement-de-cap) follow the §8
+conventions. Their output documents (`docs/architecture/menaces.md`, `docs/architecture/strategie-test.md`,
+`docs/livraisons/retro-<version>.md`) carry types unknown to `ARTIFACT_TYPES`, so they are working documents
+ignored by `scanArtifacts` and not validatable via `orbith valider` (always `statut: brouillon`/`en-revue`).
+A third platform is deliberately not implemented: `Plateforme` is a closed union validated in `core/config.ts`
+and `cli/install.ts`, so an adapter is not trivial (see docs/guide/agents-avances.md).
 
 Generated files only **reference** core files, e.g. Gemini `.gemini/commands/orbith/po.toml`:
 
@@ -405,6 +445,7 @@ Ce projet utilise Orbith. Règles permanentes :
 @.orbith/rules/tracabilite.md
 @.orbith/rules/nouvelle-session.md
 Référentiel technique (CSR) : @.orbith/csr/CSR.md
+Contexte projet (conventions, patterns, pièges) : @.orbith/contexte-projet.md
 <!-- orbith:fin -->
 ```
 If the file exists, replace only the marked block (or append it). Same marker approach for `.geminiignore`
@@ -479,3 +520,102 @@ if `.orbith/custom/agents/<name>.md` exists, the agent must read it and apply it
   `.github/workflows/release.yml` on `v*` tags (secret `NPM_TOKEN`).
 - **CI**: `.github/workflows/ci.yml` — build + tests on ubuntu/windows/macos × Node 22/24, plus a smoke job.
 - **Plugins**: authoring guide `docs/guide/creer-un-plugin.md`, template `docs/guide/exemples/plugin-modele/`.
+
+### 10.1 Version management (`orbith version`, `orbith release`) — no AI, never pushes
+
+Files: `src/cli/version-calc.ts` (SemVer + Conventional Commits logic), `src/cli/version.ts`, `src/cli/release.ts`,
+`src/core/git-release.ts` (tags, commits since a tag, annotated tag, path-limited commit). Guide: `docs/guide/versions.md`.
+
+- **`orbith version` (no argument; with a number it is §4.6b2) `[--format texte|json]`**: base = latest `vX.Y.Z` tag (else 0.0.0); inputs = commits since that tag
+  + pending stories (`Terminée`, no `mis_en_prod_le`, or cited by a commit since the tag), excluding stories cited by
+  the release notes of a version that already has a tag (`storiesDejaLivrees`). Bump = max of:
+  major = `type!:` / `BREAKING CHANGE:` footer / story label `breaking` (case-insensitive, constant `BREAKING_LABEL`);
+  minor = `feat` / done non-bug story; patch = `fix` / done story labelled `bug`. Other types do not bump.
+  Read-only; prints the reasons; nothing proposed when no signal.
+- **`orbith release <version> [--yes] [--sans-tag] [--dry-run] [--date]`** (`vX.Y.Z` accepted):
+  1. refuses a non-SemVer version, an existing tag, or a version ≤ the latest tag;
+  2. no notes (`docs/livraisons/release-notes-<version>.md` or frontmatter `version`) → writes a draft (2 audiences)
+     from the done pending stories, then fails (`--dry-run`: writes nothing; an existing unrecognized file at that
+     path is never overwritten);
+  3. guardrails, all reported together (exit 1): notes not `validé`; a story cited in the notes is not `Terminée`;
+     any `orbith check` error;
+  4. warnings only: notes cite no story, no « exploitation » part, major expected (breaking) but not chosen,
+     changelog includes commits of stories not `Terminée`, a story cited in the notes has uncommitted changes;
+  5. prints the CHANGELOG section; after confirmation (`--yes` or TTY prompt; non-TTY without `--yes` fails):
+     prepends `## [X.Y.Z] - date` (local date) to `CHANGELOG.md`, keeping its line endings (Changements majeurs /
+     Nouveautés / Corrections, from commits; breaking stories listed too), commits only that file plus the notes file
+     and `.orbith/validations.json` when they have uncommitted changes (`chore(release): vX.Y.Z`, path-limited: other
+     staged files stay staged) and creates the annotated local tag `vX.Y.Z`. A failed commit restores `CHANGELOG.md`
+     and the index and reports git's message; a failed tag reports the manual `git tag` command.
+     `--sans-tag` stops after the changelog and prints the `git add` / `git commit` / `git tag` commands;
+     `--dry-run` writes nothing. **Never pushes**.
+- **Release-notes template** (`content/templates/release-notes.md`): parts `Résumé`, `Pour les utilisateurs`
+  (Nouveautés, Corrections, Limites connues), `Pour l'exploitation` (Changements à connaître, Déploiement et retour
+  arrière, Surveillance), `Stories livrées`. `orbith deploiement` still reads story ids from the whole body.
+- **Recognized story labels**: `bug`, `impact-archi`, `breaking`.
+
+### 10.2 Project context and readiness check (`docs/guide/contexte-preparation.md`)
+- **Project context**: template `content/templates/contexte-projet.md`; adapters (`src/adapters/contexte.ts`,
+  `ensureContexteProjet`) create `.orbith/contexte-projet.md` from it when missing (never overwritten, not in
+  `CORE_DIRS`, so untouched by `update`). The generated GEMINI.md/CLAUDE.md block references it. The marker
+  `<!-- orbith:a-completer -->` stays until a human/agent has filled the file. Agents (`po sm ux architecte dev qa
+  devops`) read it and may *propose* additions.
+- **`orbith init-context`** (`src/cli/init-context.ts`): deterministic detection (manifests, lockfiles, scripts,
+  test/quality tools, CI/Docker, 2-level tree) written between `<!-- orbith:auto-debut/fin -->` in the context
+  file (created from the template if absent); hand-written text outside the block is preserved; idempotent.
+- **`orbith preparation [--format texte|json]`** (`src/cli/preparation.ts`, pure `evaluerPreparation`): no AI.
+  FAIL (exit 1): missing/unvalidated brief, prd, architecture, epic (track `projet` only), modified/untraced docs,
+  invalid frontmatter, no story, story → unknown epic, open story without Gherkin, unknown or circular
+  dependency, `impact-archi` story without a validated ADR citing it. CONCERNS: ux missing/unvalidated, epic
+  without story, story without epic (`projet`), open story not validated, in-progress story with unfinished
+  dependency, context file absent or still marked `a-completer`. Otherwise PASS.
+- `orbith next` inserts a secondary action `npx orbith preparation` right after the `dev` action while no story
+  is `En cours`/`En revue`/`Terminée`.
+
+## 11. Change requests and role matrix (all optional, off by default)
+
+- **Artifact `change`** (`content/templates/change.md`, `docs/livraisons/changes/CHG-NNN-*.md`, id `CHG-NNN`).
+  Frontmatter: `changement: standard|normal|urgent`, `risque: faible|moyen|élevé`, `version` (release version
+  concerned), `fenetre_debut`/`fenetre_fin`, `approbateurs` (emails or git names), `demandeur`. Body section
+  « Plan de retour arrière » is mandatory. Helpers in `src/core/changes.ts` (`changeType`, `changeRisque`,
+  `planRetourArriere`, `changesPourVersion`, `refusChangement`).
+- **Artifact `incident`** (`content/templates/incident.md`, `docs/livraisons/incidents/INC-NNN-*.md`): blameless
+  post-mortem template; scanned and validated like any other artifact, no other behaviour.
+- **Config `changements.exiger_pour_deploiement: true`**: `orbith deploiement <version>` (env `production` only)
+  fails unless a `change` with that `version` is `validé`; the id is stored as `change` in `deploiements.json`.
+  `orbith next` suggests creating/validating the change once release notes are validated.
+- **Config `roles.valideurs`** (map type or `*` -> list of emails / git names, case-insensitive): `orbith valider`
+  refuses anyone else. For a `change`, a non-empty `approbateurs` list is an additional restriction.
+- **Config `roles.quatre_yeux: true`**: `orbith valider` refuses when the validator is the author (name or email)
+  of the last commit touching the file (`gitLastAuthor`); unknown author (untracked file) = allowed. The author is
+  recorded in the registry (`auteur`, `auteur_email`, optional fields) so that `check` can report violations later.
+- **`orbith check`** (category `validations`, `src/checks/gouvernance.ts`): warnings for incomplete change requests
+  (type, risk, version, rollback plan, window and approvers unless `standard`); errors for a validation recorded by
+  someone outside the role matrix / approvers, or breaking the four-eyes principle.
+- **`orbith trace`** appends a « Demandes de changement » table; `orbith audit` lists changes with other artifacts.
+- Logic: `src/core/roles.ts` (`valideursDuType`, `refusRole`, `refusQuatreYeux`).
+
+- **Chained audit journal** (`src/core/chaine.ts`): every entry of `.orbith/validations.json` and
+  `.orbith/deploiements.json` carries `precedent` = SHA-256 of the previous entry's canonical JSON (sorted keys,
+  `precedent` included); the first one uses `GENESE` (64 zeros). `recordValidation` replaces the file's entry, then
+  rechains the whole registry; it throws on a broken chain (never launders a manual edit) and chains legacy
+  registries (no `precedent` anywhere) on the fly. `runDeploiement` behaves the same. `check` (category
+  `validations`, `src/checks/chaine.ts`): broken chain → erreur, legacy registry → avertissement.
+  Known limit: dropping only the last entry is undetectable without git history.
+- **`orbith sbom [--sortie f] [--cwd d]`** (`src/sbom/`): deterministic component inventory (package-lock v1–v3 else
+  package.json; pom.xml; requirements*.txt, pyproject.toml), sorted by purl, rendered as minimal CycloneDX 1.5 JSON
+  (no timestamp, content-derived `serialNumber`). stdout by default; summary on stderr in that case. Exit 0.
+- **License policy**: forbidden/deprecated licenses from the CSR category "Licences" (statut interdit / déprécié) and
+  `sbom.licences_interdites` in config.yaml. `check` category `sbom` (`src/checks/sbom.ts`): forbidden → erreur,
+  deprecated → avertissement, unknown license → info. SPDX `OR` is lenient, `AND`/`WITH` strict. No policy → no results.
+  Guide: `docs/guide/integrite-sbom.md`.
+
+## 12. Advanced-agent documents (`menaces`, `strategie-test`, `retro`)
+
+- Artifact types written by the Security agent (`docs/architecture/menaces.md`), the Test Architect
+  (`docs/architecture/strategie-test.md`) and the `retro` workflow (`docs/livraisons/retro-<version>.md`).
+  Templates: `content/templates/{menaces,strategie-test,retro}.md` (frontmatter `type` + `statut: brouillon`).
+- They are validated like any other artifact (`orbith valider <file>`, hash recorded in the registry, `check`
+  detects later edits). Agents never write `statut: validé`.
+- `orbith next` appends a low-priority `valider` suggestion for each of these documents still not validated.
+  `trace` and `audit` need no specific handling (no US link); `audit` lists them with the other artifacts.

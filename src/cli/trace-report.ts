@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { gitLog, isGitRepo, storyStatus, type Artifact } from '../core/index.js';
+import { changeRisque, changeType, gitLog, isGitRepo, storyStatus, type Artifact } from '../core/index.js';
 
 export interface StoryTrace {
   id: string;
@@ -148,4 +148,28 @@ export function renderDetail(t: StoryTrace): string {
       ...list(t.notes),
     ].join('\n') + '\n'
   );
+}
+
+/** Section « Demandes de changement » de la matrice (vide s'il n'y en a pas). */
+export function renderChanges(arts: Artifact[]): string {
+  const changes = arts.filter((a) => a.type === 'change');
+  if (changes.length === 0) return '';
+  const lines = [
+    '',
+    '## Demandes de changement',
+    '',
+    '| Demande | Type | Risque | Version | Fenêtre | Validée par | US concernées |',
+    '|---|---|---|---|---|---|---|',
+  ];
+  const ids = arts.filter((a) => a.type === 'story' && a.id).map((a) => a.id!);
+  for (const c of changes) {
+    const version = c.data['version'] != null ? String(c.data['version']) : '—';
+    const fenetre = c.data['fenetre_debut'] != null ? `${dateStr(c.data['fenetre_debut'])} → ${dateStr(c.data['fenetre_fin'] ?? '—')}` : '—';
+    const par = c.etat === 'validé' && c.data['valide_par'] != null ? String(c.data['valide_par']) : `— (${c.etat})`;
+    const us = ids.filter((id) => mentions(c.body, id));
+    lines.push(
+      `| ${cell(c.id ?? c.chemin)} | ${cell(changeType(c) ?? '—')} | ${cell(changeRisque(c) ?? '—')} | ${cell(version)} | ${cell(fenetre)} | ${cell(par)} | ${cell(us.join(', ') || '—')} |`,
+    );
+  }
+  return lines.join('\n') + '\n';
 }

@@ -2,6 +2,7 @@ import type { Adapter } from '../index.js';
 import type { OrbithConfig } from '../../core/index.js';
 import { AGENTS, GEMINI_IGNORE, RULES } from '../agents.js';
 import { upsertBlockFile, writeIfChanged } from '../blocks.js';
+import { ensureContexteProjet } from '../contexte.js';
 
 const tomlEscape = (s: string): string => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
@@ -20,6 +21,7 @@ export function geminiMdBlock(cfg: OrbithConfig): string {
     'Ce projet utilise Orbith. Règles permanentes :',
     ...RULES.map((r) => `@.orbith/rules/${r}.md`),
     `Référentiel technique (CSR) : @${cfg.csr.fichier}`,
+    'Contexte projet (conventions, patterns, pièges) : @.orbith/contexte-projet.md',
   ].join('\n');
 }
 
@@ -28,6 +30,7 @@ export const gemini: Adapter = {
   nom: 'Gemini CLI',
   async generate(root, cfg) {
     const written: string[] = [];
+    await ensureContexteProjet(root);
     for (const agent of AGENTS) {
       const name = agent.gemini.split(':')[1] as string;
       written.push(await writeIfChanged(root, `.gemini/commands/orbith/${name}.toml`, commandToml(agent)));

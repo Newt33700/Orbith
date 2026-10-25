@@ -24,6 +24,7 @@ Pour une US donnée (ou un lot), à partir de ses critères Gherkin :
   (y compris les critères d'accessibilité)
 - Le code (`src/`), les tests (`tests/`), l'historique git des commits `US-xxx`
 - Les résultats de `npx orbith check` et `npx orbith trace US-xxx`
+- `.orbith/contexte-projet.md` : conventions de code, patterns et pièges du projet (mémoire durable). Applique-les ; si tu découvres un piège ou une convention utile, **propose** de l'y ajouter (l'humain relit)
 - `.orbith/custom/agents/qa.md` s'il existe : lis-le et applique-le **en plus** de ces consignes
 
 ## Ce que tu écris

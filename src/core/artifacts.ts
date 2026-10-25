@@ -13,7 +13,12 @@ export type ArtifactType =
   | 'epic'
   | 'story'
   | 'release-notes'
-  | 'environnements';
+  | 'environnements'
+  | 'change'
+  | 'incident'
+  | 'menaces'
+  | 'strategie-test'
+  | 'retro';
 
 export interface Artifact {
   type: ArtifactType;
@@ -67,6 +72,11 @@ export const ARTIFACT_TYPES: readonly ArtifactType[] = [
   'story',
   'release-notes',
   'environnements',
+  'change',
+  'incident',
+  'menaces',
+  'strategie-test',
+  'retro',
 ];
 const TYPES: readonly string[] = ARTIFACT_TYPES;
 

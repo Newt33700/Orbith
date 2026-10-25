@@ -175,3 +175,19 @@ describe('agent DevOps (piste projet)', () => {
     expect(all.some((x) => x.claude === '/orbith-devops' || x.message.includes('environnements'))).toBe(false);
   });
 });
+
+describe('documents des agents avancés (menaces, stratégie de test, rétrospective)', () => {
+  const base = (): Artifact[] => [art('brief'), art('prd'), art('ux'), art('architecture'), art('epic'), story('US-001', 'Prête')];
+  const tous = (a: Artifact[]) => {
+    const r = computeNext(a, cfg('projet'));
+    return [r.principal, ...r.secondaires];
+  };
+  for (const type of ['menaces', 'strategie-test', 'retro'] as const) {
+    it(`${type} non validé : suggère la validation, puis plus rien une fois validé`, () => {
+      const a = [...base(), art(type, { etat: 'non-validé', chemin: `docs/x/${type}.md` })];
+      expect(tous(a).some((x) => x.cli === `npx orbith valider docs/x/${type}.md`)).toBe(true);
+      a[a.length - 1] = art(type, { chemin: `docs/x/${type}.md` });
+      expect(tous(a).some((x) => x.cli === `npx orbith valider docs/x/${type}.md`)).toBe(false);
+    });
+  }
+});

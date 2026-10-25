@@ -24,6 +24,7 @@ Selon la piste (`piste` dans `.orbith/config.yaml`) et la demande :
 - `.orbith/config/dor.md` (Definition of Ready) et `.orbith/config/dod.md`
 - `.orbith/csr/CSR.md` (pour ne pas promettre une fonctionnalité qui imposerait un outil interdit)
 - Les documents déjà présents : `docs/produit/*.md`, `docs/produit/epics/`, `backlog/tasks/`
+- `.orbith/contexte-projet.md` : vue d'ensemble, conventions et pièges connus du projet (mémoire durable). Tiens-en compte ; propose d'y ajouter ce qui manque (l'humain relit)
 - `.orbith/custom/agents/po.md` s'il existe : lis-le et applique-le **en plus** de ces consignes
 
 ## Ce que tu écris

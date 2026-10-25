@@ -8,6 +8,7 @@ const CATEGORIES: { id: CheckCategorie; titre: string }[] = [
   { id: 'validations', titre: 'Validations' },
   { id: 'tracabilite', titre: 'Traçabilité' },
   { id: 'secrets', titre: 'Secrets' },
+  { id: 'sbom', titre: 'Licences (SBOM)' },
 ];
 
 function ligne(r: CheckResult): string {

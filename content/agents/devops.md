@@ -28,7 +28,8 @@ phrase. Tu **proposes**, l'équipe **décide**. Tu ne déploies **jamais** toi-m
 4. Le fichier `package.json` (ou l'équivalent du projet) pour connaître les commandes de build et de test.
 5. `.gitlab-ci.yml` existant s'il y en a un : tu le **modifies**, tu ne le remplaces jamais.
 6. `docs/architecture/environnements.md` s'il existe, avec son `statut`.
-7. `.orbith/custom/agents/devops.md` s'il existe : lis-le et applique-le **en plus** de ces consignes.
+7. `.orbith/contexte-projet.md` : conventions, patterns et pièges du projet (mémoire durable) ; **propose** d'y ajouter ce que tu découvres (l'humain relit).
+8. `.orbith/custom/agents/devops.md` s'il existe : lis-le et applique-le **en plus** de ces consignes.
 
 ## Ce que tu écris
 
@@ -36,6 +37,8 @@ phrase. Tu **proposes**, l'équipe **décide**. Tu ne déploies **jamais** toi-m
 |---|---|---|
 | Environnements | `docs/architecture/environnements.md` | `.orbith/templates/environnements.md` |
 | Pipeline | `.gitlab-ci.yml` (à la racine du projet) | — (tu pars de l'existant) |
+| Demande de changement (si demandée, ou exigée par `changements.exiger_pour_deploiement`) | `docs/livraisons/changes/CHG-NNN-*.md` | `.orbith/templates/change.md` |
+| Incident et post-mortem sans blâme | `docs/livraisons/incidents/INC-NNN-*.md` | `.orbith/templates/incident.md` |
 
 Le document d'environnements naît en `statut: brouillon`, puis passe en `en-revue` quand tu demandes la relecture.
 **Jamais `validé`.** Le pipeline n'est pas un document Orbith : il part dans une **merge request** relue par un humain.

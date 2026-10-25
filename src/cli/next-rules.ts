@@ -1,6 +1,6 @@
 import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
 import { mentions } from './trace-report.js';
-import { hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
+import { changesPourVersion, hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
 
 export interface Action {
   kind: 'probleme' | 'agent' | 'valider' | 'humain' | 'fini';
@@ -77,7 +77,7 @@ function gate(
   return null;
 }
 
-function storyActions(arts: Artifact[]): Action[] {
+function storyActions(arts: Artifact[], config?: OrbithConfig): Action[] {
   const stories = ofType(arts, 'story');
   const actions: Action[] = [];
   const open = stories.filter((s) => status(s) !== 'Terminée');
@@ -125,6 +125,15 @@ function storyActions(arts: Artifact[]): Action[] {
       actions.push(valider(aValider, `Relis les notes de version (${aValider.chemin}) puis valide-les avant de livrer.`));
     } else if (aDeployer) {
       const version = aDeployer.data['version'] != null ? String(aDeployer.data['version']) : '<version>';
+      const changes = changesPourVersion(arts, version);
+      if (config?.changements?.exiger_pour_deploiement === true && !changes.some((c) => c.etat === 'validé')) {
+        const enAttente = changes[0];
+        actions.push(
+          enAttente
+            ? valider(enAttente, `Relis la demande de changement (${enAttente.chemin}) puis valide-la : elle est exigée avant la mise en production.`)
+            : agent('devops', `Prépare la demande de changement de la version ${version} (modèle change.md) : elle est exigée avant la mise en production.`),
+        );
+      }
       actions.push({
         kind: 'humain',
         message: 'Notes de version validées : après la mise en production réelle, enregistre-la (dates des US, indicateurs DORA).',
@@ -149,6 +158,18 @@ function devopsHints(arts: Artifact[]): Action[] {
   return pending ? [valider(pending, `Relis les environnements (${pending.chemin}) puis valide-les.`)] : [];
 }
 
+/** Documents des agents avancés (menaces, stratégie de test, rétrospective) : rappelle de les valider une fois relus. */
+function documentsAvancesHints(arts: Artifact[]): Action[] {
+  const noms: Partial<Record<ArtifactType, string>> = {
+    menaces: 'la modélisation des menaces',
+    'strategie-test': 'la stratégie de test',
+    retro: 'la rétrospective',
+  };
+  return arts
+    .filter((a) => a.type in noms && a.etat !== 'validé')
+    .map((a) => valider(a, `Relis ${noms[a.type]} (${a.chemin}) puis valide-la.`));
+}
+
 function archiHints(arts: Artifact[]): Action[] {
   const adrs = ofType(arts, 'adr').filter((a) => a.etat === 'validé');
   const out: Action[] = [];
@@ -160,6 +181,19 @@ function archiHints(arts: Artifact[]): Action[] {
     out.push(agent('architecte', `${label(s)} a un impact d'architecture : pense à un ADR.`));
   }
   return out;
+}
+
+/** Avant le premier développement du projet : suggère le check de préparation (juste après l'action dev). */
+function insertPreparationHint(arts: Artifact[], candidates: Action[]): void {
+  const stories = ofType(arts, 'story');
+  if (stories.some((s) => ['En cours', 'En revue', 'Terminée'].includes(status(s)))) return;
+  const i = candidates.findIndex((a) => a.kind === 'agent' && (a.claude ?? '').startsWith('/orbith-dev'));
+  if (i < 0) return;
+  candidates.splice(i + 1, 0, {
+    kind: 'humain',
+    message: "Avant le premier développement, vérifie la préparation (cohérence brief, PRD, architecture, epics, US).",
+    cli: 'npx orbith preparation',
+  });
 }
 
 export function computeNext(
@@ -203,10 +237,12 @@ export function computeNext(
   if (blocked) {
     candidates.push(blocked);
   } else {
-    candidates.push(...storyActions(artifacts));
+    candidates.push(...storyActions(artifacts, config));
+    insertPreparationHint(artifacts, candidates);
     if (piste === 'projet') candidates.push(...devopsHints(artifacts));
   }
   if (piste === 'evolution') candidates.push(...archiHints(artifacts));
+  candidates.push(...documentsAvancesHints(artifacts));
 
   if (candidates.length === 0) {
     candidates.push(agent('guide', 'Rien de bloquant : demande conseil au guide.'));

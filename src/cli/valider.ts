@@ -6,7 +6,11 @@ import {
   OrbithError,
   estValide,
   exists,
+  gitLastAuthor,
   gitUser,
+  loadConfig,
+  refusQuatreYeux,
+  refusRole,
   hashBody,
   loadRegistry,
   readDoc,
@@ -64,6 +68,14 @@ export async function runValider(fichier: string, opts: ValiderOptions = {}): Pr
     );
   }
 
+  // Matrice des rôles et quatre yeux (facultatifs : sans configuration, rien ne change).
+  const config = await loadConfig(root).catch(() => null);
+  const refus = refusRole(config, type, doc.data, user);
+  if (refus) throw new OrbithError(refus);
+  const auteur = await gitLastAuthor(root, rel);
+  const refus4 = refusQuatreYeux(config, auteur, user);
+  if (refus4) throw new OrbithError(refus4);
+
   const id = doc.data['id'] != null ? String(doc.data['id']) : '—';
   const titreRaw = doc.data['title'] ?? doc.data['titre'];
   const titre = titreRaw != null ? String(titreRaw) : (/^#\s+(.+)$/m.exec(doc.body)?.[1]?.trim() ?? '—');
@@ -96,6 +108,7 @@ export async function runValider(fichier: string, opts: ValiderOptions = {}): Pr
     par: user.name,
     email: user.email,
     le: now,
+    ...(auteur ? { auteur: auteur.name, auteur_email: auteur.email } : {}),
   });
   ui.ok(`${rel} est validé par ${user.name}.`);
   ui.info('Lance `npx orbith next` pour connaître la suite.');

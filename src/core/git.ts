@@ -57,6 +57,15 @@ export async function gitLogDated(root: string): Promise<{ hash: string; date: s
     });
 }
 
+/** Auteur du dernier commit ayant touché le fichier, ou null (fichier non suivi, pas de dépôt). */
+export async function gitLastAuthor(root: string, rel: string): Promise<{ name: string; email: string } | null> {
+  const out = await git(root, ['log', '-n1', '--format=%an%x09%ae', '--', rel]);
+  const line = out?.split(/\r?\n/).find(Boolean);
+  if (!line) return null;
+  const [name = '', email = ''] = line.split('\t');
+  return name || email ? { name, email } : null;
+}
+
 /**
  * Dernier commit ayant modifié une ligne `status:` du fichier, avec son contenu à ce commit.
  * Sert à dater le passage d'une US dans une colonne (par exemple « Terminée »).
