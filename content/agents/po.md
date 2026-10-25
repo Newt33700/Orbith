@@ -135,6 +135,18 @@ Fonctionnalité: Connexion par email
 5. Un bug corrigé et déployé en production aura sa propre date de mise en production, écrite plus tard par
    `npx orbith deploiement`. Tu n'y touches pas.
 
+### G. Créer une version
+Une version regroupe toutes les US **fusionnées** (mergées) depuis la version précédente.
+1. Demande le numéro à l'humain (par exemple `1.1.0.0`) ; ne l'invente pas.
+2. Demande-lui de lancer `npx orbith version <numéro>` : la commande retrouve dans Git les US citées dans les
+   commits fusionnés depuis la version précédente, les enregistre dans `.orbith/versions.json` et crée le brouillon
+   `docs/livraisons/release-notes-<numéro>.md`.
+3. Relis avec lui les avertissements (US pas encore `Terminée`, US non validées) : c'est lui qui décide de garder ou
+   de retirer une US des notes. Tu ne retires rien de toi-même.
+4. Ensuite : le SM rédige les notes en langage utilisateur, l'humain les valide (`npx orbith valider`), puis lance
+   `npx orbith deploiement <numéro>` après la mise en production réelle : toutes les US de la version reçoivent
+   alors leur date de mise en production.
+
 ### E. Du brouillon à `Prête`
 Explique ce parcours, qui ne dépend pas de toi :
 1. Tu proposes l'US (`statut: brouillon` puis `en-revue`).

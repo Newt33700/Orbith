@@ -3,7 +3,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runValider } from '../../src/cli/valider.js';
-import { runVersion } from '../../src/cli/version.js';
+import { runProposition as runVersion } from '../../src/cli/version-proposition.js';
 import { runRelease, insererSection, dateLocale } from '../../src/cli/release.js';
 import { applyBump, parseCommit, parseSemVer } from '../../src/cli/version-calc.js';
 import { gitDirtyPaths } from '../../src/core/index.js';

@@ -34,6 +34,7 @@ On valide avec `npx orbith valider <fichier>`.
 | 9 | Tests puis développement (une US par session) | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | code, tests `@US-NNN`, commits | US validée |
 | 10 | Tests exécutables, couverture, revue de code | QA | `/orbith:qa US-NNN` · `/orbith-qa US-NNN` | rapport de QA | |
 | 10 🔒 | **Revue humaine** ; US → `Terminée` | Toi | colonne du tableau → `Terminée` | | |
+| 11 | **Créer la version** (US fusionnées depuis la précédente ajoutées automatiquement) | Toi (PO humain) | `npx orbith version <numéro>` | `docs/livraisons/release-notes-<numéro>.md` (brouillon) | US fusionnées |
 | 11 | Notes de version, traçabilité | SM | `/orbith:sm` · `/orbith-sm` | `docs/livraisons/release-notes-<version>.md` | US `Terminée` |
 | 11 🔒 | Valider les **notes de version** et décider de **livrer** | Toi | `npx orbith valider docs/livraisons/release-notes-<version>.md` | | |
 | 12 🔒 | Après la mise en production réelle : enregistrer la date de mise en production | Toi | `npx orbith deploiement <version>` | | |

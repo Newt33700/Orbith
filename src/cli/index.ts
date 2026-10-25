@@ -8,13 +8,13 @@ import { register as registerValider } from './valider.js';
 import { register as registerCheck } from './check.js';
 import { register as registerTrace } from './trace.js';
 import { register as registerTests } from './tests.js';
+import { register as registerVersion } from './version.js';
 import { register as registerDeploiement } from './deploiement.js';
 import { register as registerMetriques } from './metriques.js';
 import { register as registerCsr } from './csr.js';
 import { register as registerUpdate } from './update.js';
 import { register as registerPlugin } from './plugin.js';
 import { register as registerAudit } from './audit.js';
-import { register as registerVersion } from './version.js';
 import { register as registerRelease } from './release.js';
 import { register as registerInitContext } from './init-context.js';
 import { register as registerPreparation } from './preparation.js';
@@ -63,13 +63,13 @@ for (const register of [
   registerCheck,
   registerTrace,
   registerTests,
+  registerVersion,
   registerDeploiement,
   registerMetriques,
   registerCsr,
   registerUpdate,
   registerPlugin,
   registerAudit,
-  registerVersion,
   registerRelease,
   registerInitContext,
   registerPreparation,

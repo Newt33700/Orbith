@@ -6,7 +6,8 @@ Deux commandes :
 
 | Commande | Rôle |
 |---|---|
-| `npx orbith version` | Propose le prochain numéro de version (SemVer) et explique pourquoi |
+| `npx orbith version` (sans numéro) | Propose le prochain numéro de version (SemVer) et explique pourquoi |
+| `npx orbith version <numéro>` | Crée la version (`.orbith/versions.json`) et son brouillon de notes : voir le guide PO. `release` reprend ensuite ces notes |
 | `npx orbith release <version>` | Prépare la version : notes, `CHANGELOG.md`, tag Git local |
 
 ## 1. Choisir le numéro : `orbith version`

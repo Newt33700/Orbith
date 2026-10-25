@@ -20,6 +20,7 @@ Légende : 🔒 = **point de validation humaine** : rien n'avance tant qu'une pe
 | 3 | Écrire les tests puis corriger le code | Dev | `/orbith:dev US-NNN` · `/orbith-dev US-NNN` | Tests `@US-NNN`, code, commits `fix(US-NNN): …` |
 | 4 | Vérifier les tests et la conformité | Dev + QA | `/orbith:qa US-NNN` · `/orbith-qa US-NNN` ; `npx orbith check` | Rapport de QA |
 | 5 🔒 | **Revue humaine** du correctif ; si c'est bon, la US passe en `Terminée` | Toi | colonne du tableau → `Terminée` | US terminée |
+| 6 | Créer la version du correctif (exemple : `1.1.0.1`), puis faire valider ses notes | Toi (PO humain) | `npx orbith version <numéro>` puis `npx orbith valider docs/livraisons/release-notes-<numéro>.md` | Notes de version validées |
 | 6 🔒 | Après la mise en production réelle du correctif : enregistrer la date de mise en production | Toi | `npx orbith deploiement <version>` | Date de mise en production (mesure du temps de rétablissement) |
 
 Pour livrer, si besoin : `/orbith:sm` · `/orbith-sm` (notes de version).
