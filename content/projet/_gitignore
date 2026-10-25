@@ -1,0 +1,21 @@
+# Dépendances et builds
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# Secrets : ne jamais versionner
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Réglages locaux de l'IDE et des agents
+.DS_Store
+.idea/
+.vscode/
+.claude/settings.local.json
+.gemini/settings.local.json

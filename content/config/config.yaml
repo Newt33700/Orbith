@@ -1,0 +1,35 @@
+# Configuration Orbith du projet.
+# Ce fichier est créé à l'installation (npx orbith install). Tu peux le modifier ;
+# lance ensuite `npx orbith update` si tu changes une plateforme.
+
+version: 1
+orbith_version: 0.1.0
+
+projet:
+  # Nom du projet, utilisé dans les documents générés.
+  nom: mon-projet
+
+# Plateformes d'IA pour lesquelles Orbith génère les commandes.
+#   gemini : Gemini CLI (commandes /orbith:po, etc.)
+#   claude : Claude Code (commandes /orbith-po, etc.)
+plateformes: [gemini, claude]
+
+# Piste par défaut, selon le type de travail :
+#   correctif  : corriger un bug (story courte)
+#   evolution  : ajouter ou modifier une fonctionnalité
+#   projet     : démarrer un projet complet (brief, PRD, UX, architecture, epics)
+piste: evolution
+
+backlog:
+  # Préfixe des identifiants de stories : US-001, US-002, etc.
+  prefixe: US
+
+csr:
+  # Fichier du Cadre de Référence (référentiel technique de l'entreprise).
+  fichier: .orbith/csr/CSR.md
+  # Source du CSR : V2 uniquement (dépôt Git privé ou paquet npm interne).
+  source: null
+
+# Plugins optionnels, ajoutés avec `npx orbith plugin add <nom>`.
+# Exemple : [backlog-md]
+plugins: []

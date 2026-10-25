@@ -1,0 +1,5 @@
+{
+  "name": "backlog-md",
+  "description": "Tableau Kanban des stories avec Backlog.md : installe backlog.md et configure les colonnes en français (À faire, Prête, En cours, En revue, Terminée).",
+  "install": "install.js"
+}
