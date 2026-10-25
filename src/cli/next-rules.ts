@@ -158,6 +158,18 @@ function devopsHints(arts: Artifact[]): Action[] {
   return pending ? [valider(pending, `Relis les environnements (${pending.chemin}) puis valide-les.`)] : [];
 }
 
+/** Documents des agents avancés (menaces, stratégie de test, rétrospective) : rappelle de les valider une fois relus. */
+function documentsAvancesHints(arts: Artifact[]): Action[] {
+  const noms: Partial<Record<ArtifactType, string>> = {
+    menaces: 'la modélisation des menaces',
+    'strategie-test': 'la stratégie de test',
+    retro: 'la rétrospective',
+  };
+  return arts
+    .filter((a) => a.type in noms && a.etat !== 'validé')
+    .map((a) => valider(a, `Relis ${noms[a.type]} (${a.chemin}) puis valide-la.`));
+}
+
 function archiHints(arts: Artifact[]): Action[] {
   const adrs = ofType(arts, 'adr').filter((a) => a.etat === 'validé');
   const out: Action[] = [];
@@ -230,6 +242,7 @@ export function computeNext(
     if (piste === 'projet') candidates.push(...devopsHints(artifacts));
   }
   if (piste === 'evolution') candidates.push(...archiHints(artifacts));
+  candidates.push(...documentsAvancesHints(artifacts));
 
   if (candidates.length === 0) {
     candidates.push(agent('guide', 'Rien de bloquant : demande conseil au guide.'));

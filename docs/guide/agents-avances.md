@@ -15,7 +15,7 @@ elles ne décident jamais : une personne relit et tranche.
 ## Sécurité : repérer les menaces tôt
 
 Salomé étudie l'architecture validée : qui pourrait attaquer quoi, par où, avec quel impact. Elle écrit
-`docs/architecture/menaces.md` (brouillon) avec un tableau de menaces et des parades proposées. Pour une US
+`docs/architecture/menaces.md` (brouillon, à valider ensuite) avec un tableau de menaces et des parades proposées. Pour une US
 sensible (connexion, droits, données personnelles…), elle suggère des scénarios Gherkin de sécurité à soumettre
 au PO. Elle ne dit jamais qu'un système est « sûr ».
 
@@ -51,8 +51,10 @@ chargent ensuite, dans de nouvelles sessions, et vous re-validez.
 
 ## À savoir
 
-- Les documents de travail produits (menaces, stratégie de test, rétrospective) sont des **brouillons relus par
-  une personne**. La commande `npx orbith valider` ne les gère pas encore.
+- Les documents produits (menaces, stratégie de test, rétrospective) sont d'abord des **brouillons** : relisez-les,
+  puis validez-les vous-même avec `npx orbith valider <fichier>` (par exemple
+  `npx orbith valider docs/architecture/menaces.md`). Les agents n'écrivent jamais « validé ». `npx orbith next`
+  vous le rappelle tant qu'un de ces documents n'est pas validé.
 - Comme toujours : ouvrez une **nouvelle session** entre deux tâches.
 
 ## Piste : une troisième plateforme

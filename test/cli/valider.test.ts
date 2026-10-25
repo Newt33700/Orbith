@@ -90,3 +90,27 @@ describe('orbith valider : environnements (agent DevOps)', () => {
     expect(env?.etat).toBe('validé');
   });
 });
+
+describe('orbith valider : menaces, strategie-test et retro (agents avancés)', () => {
+  const cas: [string, string][] = [
+    ['menaces', 'docs/architecture/menaces.md'],
+    ['strategie-test', 'docs/architecture/strategie-test.md'],
+    ['retro', 'docs/livraisons/retro-1.0.0.md'],
+  ];
+  for (const [type, rel] of cas) {
+    it(`accepte le type ${type} à partir du modèle, vu ensuite par le scan`, async () => {
+      const root = await makeProject('projet', true);
+      roots.push(root);
+      const tpl = await readFile(path.join(__dirname, `../../content/templates/${type}.md`), 'utf8');
+      expect(tpl).toContain(`type: ${type}`);
+      expect(tpl).toContain('statut: brouillon');
+      await put(root, rel, tpl);
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      expect(await runValider(rel, { cwd: root, yes: true })).toBe(true);
+      const { scanArtifacts } = await import('../../src/core/index.js');
+      const doc = (await scanArtifacts(root)).find((a) => a.type === type);
+      expect(doc?.chemin).toBe(rel);
+      expect(doc?.etat).toBe('validé');
+    });
+  }
+});

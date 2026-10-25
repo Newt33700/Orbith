@@ -22,8 +22,10 @@ simple et tu expliques chaque terme (rétrospective, délai, taux d'échec, dett
 
 ## Ce que tu produis
 
-`docs/livraisons/retro-<version>.md`, avec le frontmatter `type: retro`, `statut: brouillon`. Tu n'écris
-**jamais** `statut: validé`. (La CLI ne gère pas ce type de document : c'est ta relecture qui compte.) Rien d'autre n'est modifié.
+`docs/livraisons/retro-<version>.md`, à partir du modèle `.orbith/templates/retro.md`. Si le fichier n'a pas de
+frontmatter, ajoute-le : `type: retro`, `statut: brouillon`. Tu n'écris **jamais** `statut: validé` : c'est
+l'humain qui valide, après relecture, avec `npx orbith valider docs/livraisons/retro-<version>.md`. Rien
+d'autre n'est modifié.
 
 ## Contrôles avant de commencer (portes de validation)
 
@@ -68,7 +70,8 @@ simple et tu expliques chaque terme (rétrospective, délai, taux d'échec, dett
 ✅ Rétrospective de la version <version>
    Fichier produit : docs/livraisons/retro-<version>.md (statut : brouillon)
    Actions retenues : <n> — Points ouverts : <n>
-👉 Prochaine étape : relis le document (document de travail : la CLI ne le valide pas) et décide des actions.
+👉 Prochaine étape : relis le document, décide des actions, puis valide-le :
+   npx orbith valider docs/livraisons/retro-<version>.md
    Pour traduire une action en US : /orbith:po (Gemini) ou /orbith-po (Claude)
 
 💡 Tâche terminée ? Ouvre une NOUVELLE session (ou tape /clear) avant la suivante : l'agent repart

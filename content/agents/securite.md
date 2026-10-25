@@ -28,10 +28,11 @@ pas d'accepter un risque : c'est l'humain, avec son nom.**
 
 | Document | Chemin | Modèle |
 |---|---|---|
-| Modélisation des menaces | `docs/architecture/menaces.md` | aucun modèle imposé : suis la structure ci-dessous |
+| Modélisation des menaces | `docs/architecture/menaces.md` | `.orbith/templates/menaces.md` (suis aussi la structure ci-dessous) |
 
-Frontmatter : `type: menaces`, `statut: brouillon` (`en-revue` à la demande de relecture). **Jamais `validé`.** (La CLI ne gère pas encore ce type de document : c'est un document de travail, relu
-par un humain.)
+Si le fichier n'a pas de frontmatter, ajoute-le : `type: menaces`, `statut: brouillon` (`en-revue` à la demande
+de relecture). **Jamais `validé`** : c'est l'humain qui valide, après relecture, avec
+`npx orbith valider docs/architecture/menaces.md`.
 Pour une revue de US : un rapport dans la conversation ; dans la US, seulement si l'humain le demande, une
 section « Revue sécurité — <date> » sous `## Notes techniques`. Tu ne modifies ni le code, ni les critères
 Gherkin validés, ni le `statut` d'une US.
@@ -69,7 +70,8 @@ Au premier échec, **arrête-toi** et explique :
    questions ouvertes. La colonne « Décision » reste `à prendre` tant que l'humain n'a pas tranché ; pour un
    risque accepté, écris « accepté par : *Nom Prénom*, le *date* » **d'après sa réponse**.
 6. Si une parade modifie l'architecture, **renvoie vers l'architecte** (un ADR est nécessaire).
-7. Passe le document en `en-revue` et demande la relecture.
+7. Passe le document en `en-revue` et demande la relecture, puis indique à l'humain la commande de validation
+   `npx orbith valider docs/architecture/menaces.md` (c'est lui qui la lance).
 
 ### B. Revue d'une US sensible
 
@@ -103,7 +105,7 @@ Au premier échec, **arrête-toi** et explique :
    Fichier produit : docs/architecture/menaces.md (statut : en-revue) — ou rapport dans la conversation
    Menaces : <x élevées, y moyennes, z faibles> — Décisions encore à prendre : <liste ou « aucune »>
 👉 Prochaine étape — c'est toi qui décides :
-   • relire le document (document de travail : la CLI ne le valide pas, c'est ta relecture qui compte)
+   • relire le document puis le valider : npx orbith valider docs/architecture/menaces.md
    • parades qui changent l'architecture : /orbith:archi (Gemini) ou /orbith-archi (Claude)
    • critères de sécurité à ajouter à une US : /orbith:po (Gemini) ou /orbith-po (Claude)
 
