@@ -18,14 +18,20 @@ simple et tu expliques chaque terme (rétrospective, délai, taux d'échec, dett
 - Les constats de QA : sections « Revue QA » des US (`backlog/tasks/`), `npx orbith trace` si utile
 - Les bugs liés (origine, cause, date de détection) dans `backlog/`
 - Les rétrospectives précédentes `docs/livraisons/retro-*.md` (pour suivre les actions décidées)
+- Les actions d'amélioration `docs/amelioration/AMEL-*.md` (avancement, échéance) et les post-mortems
+  `docs/livraisons/incidents/INC-*.md` de la période
 - `.orbith/custom/workflows/retro.md` s'il existe : lis-le et applique-le **en plus** de ces consignes
 
 ## Ce que tu produis
 
 `docs/livraisons/retro-<version>.md`, à partir du modèle `.orbith/templates/retro.md`. Si le fichier n'a pas de
 frontmatter, ajoute-le : `type: retro`, `statut: brouillon`. Tu n'écris **jamais** `statut: validé` : c'est
-l'humain qui valide, après relecture, avec `npx orbith valider docs/livraisons/retro-<version>.md`. Rien
-d'autre n'est modifié.
+l'humain qui valide, après relecture, avec `npx orbith valider docs/livraisons/retro-<version>.md`.
+
+Pour chaque action **retenue par l'humain**, tu proposes aussi une action suivie
+`docs/amelioration/AMEL-NNN-<titre-court>.md` (modèle `.orbith/templates/amelioration.md`, numéro suivant le plus
+grand AMEL existant) : `source: retro`, `source_ref: retro-<version>`, `responsable` et `echeance` donnés par
+l'humain, `avancement: ouvert`, `statut: brouillon`. Rien d'autre n'est modifié.
 
 ## Contrôles avant de commencer (portes de validation)
 
@@ -48,9 +54,13 @@ d'autre n'est modifié.
 5. **Actions** : propose **2 ou 3 options** d'amélioration par problème important, avec avantages et limites, et
    **attends le choix de l'humain**. Pour chaque action retenue : quoi, qui la porte (nom donné par l'humain),
    pour quand (date donnée par l'humain). Ne devine ni le responsable ni l'échéance.
-6. **Suivi** : reprends les actions de la rétrospective précédente et demande à l'humain si elles sont faites.
+6. **Suivi** : reprends les actions de la rétrospective précédente et les fichiers `docs/amelioration/AMEL-*.md`
+   encore `ouvert` ou `en cours` (`npx orbith check` signale celles en retard). Demande à l'humain où elles en sont ;
+   tu ne changes `avancement` qu'avec sa réponse. Propose aussi, sans l'imposer, l'auto-évaluation de la fiabilité
+   (« tenons-nous nos objectifs de fiabilité ? ») : sa réponse, si elle existe, va dans `fiabilite_auto_evaluation`.
 7. **Écris** `docs/livraisons/retro-<version>.md` : contexte, faits (avec sources), ce qui a bien marché, ce qui
-   a coincé, causes, actions décidées, actions précédentes, questions ouvertes.
+   a coincé, causes, actions décidées (avec leur AMEL), actions précédentes, questions ouvertes. Puis écris un
+   fichier AMEL par action retenue (voir « Ce que tu produis »).
 8. Propose, sans l'imposer, de transformer une action en US (PO), en ADR (architecte) ou en changement de la
    DoD/DoR (SM) dans une **nouvelle session**.
 
@@ -69,7 +79,7 @@ d'autre n'est modifié.
 ```
 ✅ Rétrospective de la version <version>
    Fichier produit : docs/livraisons/retro-<version>.md (statut : brouillon)
-   Actions retenues : <n> — Points ouverts : <n>
+   Actions retenues : <n> (AMEL-… dans docs/amelioration/) — Points ouverts : <n>
 👉 Prochaine étape : relis le document, décide des actions, puis valide-le :
    npx orbith valider docs/livraisons/retro-<version>.md
    Pour traduire une action en US : /orbith:po (Gemini) ou /orbith-po (Claude)

@@ -3,6 +3,7 @@ type: retro
 statut: brouillon
 version: <version>
 title: Rétrospective de la version <version>
+# fiabilite_auto_evaluation: <réponse de l'équipe, facultative>   # « tenons-nous nos objectifs de fiabilité ? »
 ---
 
 # Rétrospective : version <version>
@@ -37,9 +38,18 @@ title: Rétrospective de la version <version>
 
 ## Actions décidées
 
-| Action | Porteur | Échéance |
-|---|---|---|
-|  |  |  |
+<!-- Chaque action retenue devient une action suivie docs/amelioration/AMEL-NNN-*.md
+     (modèle .orbith/templates/amelioration.md, `source: retro`, `source_ref: retro-<version>`). -->
+
+| Action | Porteur | Échéance | AMEL |
+|---|---|---|---|
+|  |  |  |  |
+
+## Fiabilité (facultatif)
+
+<!-- Auto-évaluation de l'équipe : « dans quelle mesure tenons-nous nos objectifs de fiabilité ? ».
+     C'est un avis, pas une mesure : il n'existe pas de niveau DORA pour cette réponse. Si l'équipe répond,
+     recopie sa réponse dans `fiabilite_auto_evaluation` (en-tête) : `npx orbith metriques` l'affiche telle quelle. -->
 
 ## Actions de la rétrospective précédente
 

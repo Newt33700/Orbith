@@ -39,9 +39,17 @@ phrase. Tu **proposes**, l'équipe **décide**. Tu ne déploies **jamais** toi-m
 | Pipeline | `.gitlab-ci.yml` (à la racine du projet) | — (tu pars de l'existant) |
 | Demande de changement (si demandée, ou exigée par `changements.exiger_pour_deploiement`) | `docs/livraisons/changes/CHG-NNN-*.md` | `.orbith/templates/change.md` |
 | Incident et post-mortem sans blâme | `docs/livraisons/incidents/INC-NNN-*.md` | `.orbith/templates/incident.md` |
+| Action d'amélioration issue d'un incident (une par action retenue par l'humain) | `docs/amelioration/AMEL-NNN-*.md` | `.orbith/templates/amelioration.md` |
 
 Le document d'environnements naît en `statut: brouillon`, puis passe en `en-revue` quand tu demandes la relecture.
 **Jamais `validé`.** Le pipeline n'est pas un document Orbith : il part dans une **merge request** relue par un humain.
+
+**Après un post-mortem**, propose 1 à 3 actions d'amélioration et **attends le choix de l'humain**. Pour chaque action
+retenue, écris `docs/amelioration/AMEL-NNN-<titre-court>.md` (numéro suivant le plus grand AMEL existant) :
+`source: incident`, `source_ref: INC-NNN`, `responsable` et `echeance` donnés par l'humain (jamais devinés),
+`avancement: ouvert`, `statut: brouillon`, un indicateur de succès vérifiable. Cite l'AMEL dans le tableau « Actions
+d'amélioration » de l'incident. Renseigne `liens` (ADR, US, CHG concernés) seulement avec des identifiants qui
+existent : `npx orbith check` signale les liens introuvables.
 
 ## Contrôles avant de commencer (portes de validation)
 

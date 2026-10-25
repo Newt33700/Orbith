@@ -20,6 +20,32 @@ statut: brouillon
 [Utilisateur] -> [Interface web] -> [API] -> [Base de données]
 ```
 
+<!-- Diagrammes Mermaid, facultatifs : GitHub et GitLab les affichent directement (pas tous les éditeurs).
+     Pour en utiliser un, sors-le de ce commentaire et remplace les noms par ceux de tes vrais composants.
+     (Ici les liens utilisent « ==> » : la flèche à deux tirets fermerait ce commentaire HTML.)
+
+     Flux :
+```mermaid
+flowchart LR
+    U[Utilisateur] ==> W[Interface web]
+    W ==> A[API]
+    A ==> D[(Base de données)]
+    A ==> S[Service externe]
+```
+
+     Séquence d'un cas d'usage clé :
+```mermaid
+sequenceDiagram
+    actor U as Utilisateur
+    participant W as Interface web
+    participant A as API
+    U->>W: action
+    W->>A: requête
+    A->>W: réponse
+    W->>U: résultat affiché
+```
+-->
+
 ## Composants
 
 | Composant | Rôle | Technologie (conforme au CSR) |

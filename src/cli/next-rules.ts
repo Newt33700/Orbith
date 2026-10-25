@@ -1,5 +1,7 @@
 import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
 import { mentions } from './trace-report.js';
+import { usEligibles } from './autopilote-plan.js';
+import { ameliorationHints } from './next-amelioration.js';
 import { changesPourVersion, hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
 
 export interface Action {
@@ -9,6 +11,8 @@ export interface Action {
   /** Slash commands (agents). */
   gemini?: string;
   claude?: string;
+  /** Copilot prompt files are named after the Claude command (`.github/prompts/orbith-po.prompt.md` -> `/orbith-po`). */
+  copilot?: string;
   /** Commande CLI à lancer. */
   cli?: string;
 }
@@ -18,14 +22,14 @@ export interface NextResult {
   secondaires: Action[];
 }
 
-export type AgentKey = 'guide' | 'po' | 'sm' | 'ux' | 'architecte' | 'dev' | 'qa' | 'devops';
+export type AgentKey = 'guide' | 'po' | 'sm' | 'ux' | 'architecte' | 'dev' | 'qa' | 'devops' | 'analyste';
 
 export function agent(key: AgentKey, message: string, arg?: string): Action {
   // Source unique des noms de commandes : src/adapters/agents.ts (ce que les adaptateurs génèrent vraiment).
   const def = AGENT_DEFS.find((a) => a.key === key);
   if (!def) throw new Error(`Agent inconnu : ${key}`);
   const suffix = arg ? ` ${arg}` : '';
-  return { kind: 'agent', message, gemini: `/${def.gemini}${suffix}`, claude: `/${def.claude}${suffix}` };
+  return { kind: 'agent', message, gemini: `/${def.gemini}${suffix}`, claude: `/${def.claude}${suffix}`, copilot: `/${def.claude}${suffix}` };
 }
 
 function valider(a: Artifact, message: string): Action {
@@ -158,12 +162,13 @@ function devopsHints(arts: Artifact[]): Action[] {
   return pending ? [valider(pending, `Relis les environnements (${pending.chemin}) puis valide-les.`)] : [];
 }
 
-/** Documents des agents avancés (menaces, stratégie de test, rétrospective) : rappelle de les valider une fois relus. */
+/** Documents des agents avancés (menaces, stratégie de test, rétrospective, analyse) : rappelle de les valider une fois relus. */
 function documentsAvancesHints(arts: Artifact[]): Action[] {
   const noms: Partial<Record<ArtifactType, string>> = {
     menaces: 'la modélisation des menaces',
     'strategie-test': 'la stratégie de test',
     retro: 'la rétrospective',
+    analyse: "l'analyse",
   };
   return arts
     .filter((a) => a.type in noms && a.etat !== 'validé')
@@ -193,6 +198,24 @@ function insertPreparationHint(arts: Artifact[], candidates: Action[]): void {
     kind: 'humain',
     message: "Avant le premier développement, vérifie la préparation (cohérence brief, PRD, architecture, epics, US).",
     cli: 'npx orbith preparation',
+  });
+}
+
+/** At least two eligible stories (and nothing modified after validation): suggest the bounded autopilot after the dev action. */
+function insertAutopiloteHint(arts: Artifact[], candidates: Action[]): void {
+  if (arts.some((a) => a.etat === 'modifié')) return;
+  const eligibles = usEligibles(arts);
+  if (eligibles.length < 2) return;
+  const def = AGENT_DEFS.find((a) => a.key === 'autopilote');
+  let i = candidates.findIndex((a) => a.kind === 'agent' && (a.claude ?? '').startsWith('/orbith-dev'));
+  if (i < 0 || !def) return;
+  if (candidates[i + 1]?.cli === 'npx orbith preparation') i++;
+  candidates.splice(i + 1, 0, {
+    kind: 'agent',
+    message: `${eligibles.length} US sont prêtes (${eligibles.map((s) => s.id).join(', ')}) : tu peux les enchaîner en autopilote borné (Dev puis QA, arrêt à chaque revue). Vois d'abord le plan.`,
+    gemini: `/${def.gemini}`,
+    claude: `/${def.claude}`,
+    cli: 'npx orbith autopilote',
   });
 }
 
@@ -239,10 +262,16 @@ export function computeNext(
   } else {
     candidates.push(...storyActions(artifacts, config));
     insertPreparationHint(artifacts, candidates);
+    insertAutopiloteHint(artifacts, candidates);
     if (piste === 'projet') candidates.push(...devopsHints(artifacts));
   }
   if (piste === 'evolution') candidates.push(...archiHints(artifacts));
   candidates.push(...documentsAvancesHints(artifacts));
+  // Piste projet, avant le brief : l'analyse est facultative, donc seulement une suggestion secondaire.
+  if (piste === 'projet' && ofType(artifacts, 'brief').length === 0 && ofType(artifacts, 'analyse').length === 0) {
+    candidates.push(agent('analyste', "Facultatif : explore l'idée avec l'analyste (hypothèses, parties prenantes, risques) avant le brief."));
+  }
+  candidates.push(...ameliorationHints(artifacts));
 
   if (candidates.length === 0) {
     candidates.push(agent('guide', 'Rien de bloquant : demande conseil au guide.'));

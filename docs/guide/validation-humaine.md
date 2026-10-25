@@ -122,7 +122,10 @@ Il ne le demande pas : il prend le nom configuré dans Git. Si vous n'en avez pa
 Dans `.orbith/validations.json`. Ce fichier est versionné avec le projet, pour garder une trace partageable. C'est un
 journal **chaîné** : chaque entrée porte l'empreinte de la précédente (champ `precedent`). Ne le modifiez jamais à la
 main : `npx orbith check` signalerait une « chaîne d'audit rompue » et `npx orbith valider` refuserait d'écrire (voir
-[integrite-sbom.md](integrite-sbom.md)).
+[integrite-sbom.md](integrite-sbom.md)). Quand le projet est un dépôt Git, `npx orbith check` compare aussi le registre à
+sa version commitée : retirer une entrée (même la dernière) donne l'erreur « Entrée supprimée ou modifiée ». Seule limite
+restante : une réécriture à la main qui garde chaque fichier validé (hash changé, chaîne recalculée) ressemble à une
+revalidation et n'est repérable que dans l'historique Git.
 
 **Puis-je annuler une validation ?**
 Repassez simplement le statut à `brouillon` ou `en-revue` dans l'en-tête, puis informez l'équipe. Le document n'est

@@ -197,6 +197,38 @@ describe('orbith release : cas réels', () => {
     expect(git(root, 'status', '--porcelain').trim()).toBe('A  src/en-cours.ts');
   });
 
+  it('refuse un tag déjà existant sur une autre branche (non atteignable depuis HEAD)', async () => {
+    const root = await pret();
+    await notesValidees(root, '1.0.0', ['US-001']);
+    commit(root, 'docs: notes');
+    git(root, 'checkout', '-q', '-b', 'autre');
+    await put(root, 'autre.txt', 'x');
+    commit(root, 'chore: autre');
+    git(root, 'tag', '-a', 'v1.0.0', '-m', 'ailleurs');
+    git(root, 'checkout', '-q', '-');
+    await expect(runRelease('1.0.0', { cwd: root, yes: true })).rejects.toThrow(
+      /v1\.0\.0 existe déjà mais n'est pas atteignable depuis le commit actuel/,
+    );
+    expect(git(root, 'log', '-1', '--format=%s').trim()).toBe('docs: notes');
+    expect(git(root, 'tag').trim()).toBe('v1.0.0');
+  });
+
+  it('avertit quand presque rien d’autre que les fichiers de version est commité', async () => {
+    const root = await pret();
+    await notesValidees(root, '1.0.0', ['US-001']);
+    await runRelease('1.0.0', { cwd: root, yes: true });
+    expect(sortie()).toMatch(/Presque rien n'est commité[\s\S]*quasi vide/);
+  });
+
+  it('pas d’avertissement de tag vide quand le travail est commité', async () => {
+    const root = await pret();
+    for (const f of ['a', 'b', 'c']) await put(root, `src/${f}.ts`, f);
+    commit(root, 'feat: code');
+    await notesValidees(root, '1.0.0', ['US-001']);
+    await runRelease('1.0.0', { cwd: root, yes: true });
+    expect(sortie()).not.toMatch(/quasi vide/);
+  });
+
   it('après une version publiée, ses US ne sont plus recomptées ni remises dans le brouillon suivant', async () => {
     const root = await pret();
     await notesValidees(root, '1.0.0', ['US-001']);

@@ -83,8 +83,8 @@ Pour un premier pas détaillé, lisez [docs/guide/demarrage.md](docs/guide/demar
 
 ## Les agents
 
-Orbith installe 14 commandes : 10 agents et 4 workflows (atelier, rétrospective, relecture adverse, changement de
-cap). Chaque commande existe en deux syntaxes, selon l'outil utilisé. Si vous avez activé GitHub Copilot
+Orbith installe 18 commandes : 12 agents et 6 workflows (atelier, rétrospective, relecture adverse, changement de
+cap, création d'agent, autopilote). Chaque commande existe en deux syntaxes, selon l'outil utilisé. Si vous avez activé GitHub Copilot
 (facultatif, voir [agents avancés](docs/guide/agents-avances.md)), utilisez dans son chat le nom de la colonne
 Claude Code (`/orbith-po`, etc.).
 
@@ -98,12 +98,19 @@ Claude Code (`/orbith-po`, etc.).
 | Dani (Développeur) | Implémente une user story validée | `/orbith:dev` | `/orbith-dev` |
 | Quentin (QA) | Tests à partir des critères Gherkin, revue, couverture | `/orbith:qa` | `/orbith-qa` |
 | Dora (DevOps) | Environnements non identiques (dev, recette, prod…) et pipelines CI/CD | `/orbith:devops` | `/orbith-devops` |
+| Alix (Analyste) | Explore l'idée avant le brief : hypothèses, risques, alternatives | `/orbith:analyste` | `/orbith-analyste` |
+| Rémi (Rédacteur technique) | README, guides, schémas Mermaid, exactitude vérifiée dans le code | `/orbith:redacteur` | `/orbith-redacteur` |
 | Atelier | Plusieurs agents discutent ensemble sur un sujet | `/orbith:atelier` | `/orbith-atelier` |
 | Salomé (Sécurité) | Modélisation des menaces, revue des US sensibles | `/orbith:securite` | `/orbith-securite` |
 | Tania (Test Architect) | Stratégie de test par risque | `/orbith:test-archi` | `/orbith-test-archi` |
 | Rétrospective | Bilan après une livraison, à partir des métriques et des constats QA | `/orbith:retro` | `/orbith-retro` |
 | Relecture adverse | Passe critique avant de valider un PRD, une architecture ou une US | `/orbith:relecture-adverse` | `/orbith-relecture-adverse` |
 | Changement de cap | Impact d'un changement de besoin sur les epics et les US | `/orbith:changement-de-cap` | `/orbith-changement-de-cap` |
+| Clara (création d'agent) | Concevoir, question par question, un agent propre au projet | `/orbith:creer-agent` | `/orbith-creer-agent` |
+
+Vos agents personnalisés (`.orbith/custom/agents/<nom>.md`) ont aussi leurs commandes, par exemple
+`/orbith:juriste-rgpd` et `/orbith-juriste-rgpd` : voir [creer-un-agent.md](docs/guide/creer-un-agent.md).
+| Autopilote borné | Enchaîne Dev puis QA sur les US éligibles et s'arrête à chaque porte humaine (voir [autopilote.md](docs/guide/autopilote.md)) | `/orbith:autopilote` | `/orbith-autopilote` |
 
 Exemple : pour demander au PO de rédiger le brief, tapez `/orbith:po rédige le brief de mon appli de
 réservation de salles` dans Gemini CLI, ou `/orbith-po rédige le brief de mon appli de réservation de
@@ -154,7 +161,7 @@ Pour démarrer un nouveau produit de zéro.
 10. Dev, QA, puis livraison, comme dans l'évolution.
 
 Pour savoir quelle est la prochaine étape, lancez `npx orbith next`. La commande lit l'état du projet et
-indique l'action recommandée.
+indique l'action recommandée, avec les commandes des seules plateformes configurées (Gemini, Claude, Copilot).
 
 ## Commandes de la CLI
 
@@ -165,27 +172,35 @@ Toutes les commandes se lancent avec `npx orbith <commande>`, depuis n'importe q
 | `npx orbith install` | Installe Orbith dans le projet (agents, commandes Gemini et Claude, configuration) |
 | `npx orbith next` | Indique la prochaine action recommandée (sans IA) |
 | `npx orbith valider <fichier>` | Marque un document comme validé, après confirmation humaine |
-| `npx orbith check` | Vérifie le projet : CSR, validations (et chaîne d'audit des registres, rôles), traçabilité, documentation, secrets, licences. Échoue en cas d'erreur |
+| `npx orbith check` | Vérifie le projet : CSR, validations (et chaîne d'audit des registres, rôles), traçabilité, documentation, secrets, licences, agents personnalisés, provenance IA. Échoue en cas d'erreur |
 | `npx orbith trace [ID]` | Produit la matrice de traçabilité (une user story ou toutes) |
 | `npx orbith version <numéro>` | Crée une version (exemple : `1.1.0.0`) : y ajoute les user stories fusionnées depuis la version précédente et prépare le brouillon des notes de version |
 | `npx orbith deploiement <version>` | Enregistre une mise en production réelle (lancée par un humain, après un vrai déploiement) : dates des US livrées, registre `.orbith/deploiements.json` |
 | `npx orbith version` (sans numéro) / `npx orbith release <version>` | Propose le prochain numéro SemVer (commits, US, étiquette `breaking`), puis prépare la version : `CHANGELOG.md`, notes validées, tag Git local après confirmation, sans jamais pousser (voir [versions.md](docs/guide/versions.md)) |
 | `npx orbith metriques` | Calcule les métriques DORA (fréquence, délai, taux d'échec, rétablissement) et les coûts IA estimés, avec cibles, tendances, découpage de l'attente, taille des changements et export `--format csv` (voir [metriques.md](docs/guide/metriques.md)) |
+| `npx orbith metriques` (fiabilité) | Taux de reprise des déploiements (5e indicateur DORA) et, avec `sla` dans `.orbith/config.yaml` (facultatif), objectifs de service comparés aux incidents et bugs de production : atteint, non atteint ou non mesurable (voir [metriques.md](docs/guide/metriques.md)) |
+| `npx orbith trace` (connaissance) | Actions d'amélioration `AMEL-NNN` et liens (`liens`, `cause`) entre incidents, bugs, ADR, actions et US ; `check` signale les actions en retard et les liens introuvables (voir [amelioration-continue.md](docs/guide/amelioration-continue.md)) |
 | `npx orbith valider <fichier>` (rôles) | Avec `roles` et `changements` dans `.orbith/config.yaml` (facultatifs) : matrice des rôles, quatre yeux et demande de changement exigée avant `deploiement` (voir [changements-roles.md](docs/guide/changements-roles.md)) |
 | `npx orbith tests [ID]` | Crée les squelettes de tests (`tests/features/*.feature`) à partir des critères Gherkin des user stories validées, sans IA |
 | `npx orbith init-context` | Crée le contexte projet d'un projet existant (stack, arborescence, scripts, tests), à compléter par un agent (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
 | `npx orbith preparation` | Vérifie la préparation à l'implémentation (brief, PRD, architecture, epics, US) : PASS, CONCERNS ou FAIL (voir [contexte-preparation.md](docs/guide/contexte-preparation.md)) |
+| `npx orbith couts importer` | Importe les compteurs de jetons réels de Claude Code dans `couts_ia` d'une US (`source: mesuré`, `--us US-NNN`), sans toucher aux estimations (voir [provenance-couts.md](docs/guide/provenance-couts.md)) |
+| `npx orbith provenance` | Liste, par US et document, les commits co-écrits par une IA (`Co-Authored-By:`), le modèle et la validation ou revue humaine ; `--enregistrer` tient le registre chaîné `.orbith/provenance.json` (voir [provenance-couts.md](docs/guide/provenance-couts.md)) |
 | `npx orbith audit` | Produit un rapport d'audit HTML, prêt à présenter en comité (voir [audit.md](docs/guide/audit.md)) |
+| `npx orbith decouper <fichier>` | Découpe un document Markdown volumineux en extraits par section (`.orbith/extraits/<nom>/`, sans IA, sans toucher au document) ; les agents lisent l'index puis les sections utiles, et `check` signale les extraits périmés (voir [documents-volumineux.md](docs/guide/documents-volumineux.md)) |
 | `npx orbith sbom` | Produit la liste des composants (SBOM CycloneDX JSON) ; `check` contrôle les licences interdites et la chaîne d'audit des registres (voir [integrite-sbom.md](docs/guide/integrite-sbom.md)) |
+| `npx orbith autopilote [EPIC-NNN\|US-NNN…]` | Calcule le plan borné de l'autopilote, sans IA : US éligibles et ordre, plafond de US (`--max-us`, 3 par défaut), budget IA (`--budget`), portes humaines ; refuse si `check` est en erreur, si un document est modifié après validation ou si le budget est épuisé (voir [autopilote.md](docs/guide/autopilote.md)) |
 | `npx orbith csr import <fichier.xlsx>` | Importe le référentiel CSR depuis un fichier Excel |
 | `npx orbith csr sync` | Récupère le CSR depuis la source interne déclarée dans `.orbith/config.yaml` |
 | `npx orbith update` | Met à jour les agents, workflows, modèles et règles (et les commandes Gemini et Claude), sans toucher à votre configuration, à votre CSR, à `custom/`, au contexte projet ni aux registres |
 | `npx orbith plugin add <nom>` | Installe un plugin, par exemple `backlog-md` |
 | `npx orbith plugin list` | Liste les plugins disponibles et ceux déjà activés |
+| `npx orbith agent new <cle>` | Crée le squelette d'un agent personnalisé dans `.orbith/custom/agents/` et génère ses commandes, sans jamais écraser un agent du cœur (voir [creer-un-agent.md](docs/guide/creer-un-agent.md)) |
+| `npx orbith agent list` | Liste les agents du cœur et les agents personnalisés du projet, avec leurs commandes |
 
 Options utiles : `--yes` (sans question, pour les scripts ; réservé à un usage humain pour `valider`, `deploiement` et
 `release`), `--cwd <dossier>` (travailler sur un autre dossier, accepté par toutes les commandes), `--format json`
-pour `next`, `check`, `version`, `preparation`, `metriques` (aussi `csv`) et `audit`, `--sortie <fichier>` pour
+pour `next`, `check`, `version`, `preparation`, `autopilote`, `metriques` (aussi `csv`), `provenance` et `audit`, `--sortie <fichier>` pour
 `trace`, `metriques`, `audit`, `sbom` et `csr import`. `npx orbith <commande> --help` liste toutes les options.
 
 ## Une tâche = une session
@@ -340,14 +355,15 @@ mon-projet/
 │   ├── versions.json             # Registre des versions (US incluses)
 │   └── deploiements.json         # Registre chaîné des mises en production (créé par `orbith deploiement`)
 ├── GEMINI.md  CLAUDE.md          # Générés : pointent vers les règles d'Orbith, le CSR et le contexte projet
-├── .gemini/commands/orbith/      # Commandes Gemini CLI (14)
-├── .claude/commands/orbith*.md   # Commandes Claude Code (14)
+├── .gemini/commands/orbith/      # Commandes Gemini CLI (18)
+├── .claude/commands/orbith*.md   # Commandes Claude Code (18)
 ├── .claude/settings.json  .geminiignore   # Interdisent la lecture des fichiers sensibles
 ├── docs/
 │   ├── produit/                  # brief.md, prd.md, ux.md, epics/EPIC-001-*.md
 │   ├── architecture/             # architecture.md, environnements.md, menaces.md, strategie-test.md, adr/ADR-001-*.md
-│   └── livraisons/               # release-notes-<version>.md, retro-<version>.md, changes/CHG-001-*.md,
-│                                 # incidents/INC-001-*.md, audit-AAAA-MM-JJ.html
+│   ├── livraisons/               # release-notes-<version>.md, retro-<version>.md, changes/CHG-001-*.md,
+│   │                             # incidents/INC-001-*.md, audit-AAAA-MM-JJ.html
+│   └── amelioration/             # Actions d'amélioration suivies AMEL-001-*.md (facultatif)
 ├── backlog/tasks/                # Les user stories (us-001 - Titre.md, une par fichier)
 ├── src/  tests/                  # Votre code et vos tests (tests/features/ : squelettes de `orbith tests`)
 ├── .gitlab-ci.yml                # Lance `npx orbith check` ; complété par l'agent DevOps (environnements)
@@ -561,9 +577,14 @@ Fichier `.orbith/contexte-projet.md` qui garde les conventions, les patterns et 
 | [audit.md](docs/guide/audit.md) | Chefs de projet, comités | Rapport d'audit HTML |
 | [integrite-sbom.md](docs/guide/integrite-sbom.md) | Sécurité, conformité | Journal d'audit chaîné, SBOM, licences |
 | [metriques.md](docs/guide/metriques.md) | Chefs de projet, leads tech | Métriques DORA, enregistrer une mise en production, coûts IA |
+| [provenance-couts.md](docs/guide/provenance-couts.md) | Chefs de projet, FinOps, auditeurs | Coûts IA réels (Claude Code), provenance IA du code et contrôle humain |
+| [amelioration-continue.md](docs/guide/amelioration-continue.md) | Scrum Masters, chefs de projet, DevOps | Actions d'amélioration suivies, liens de connaissance |
 | [contexte-preparation.md](docs/guide/contexte-preparation.md) | Leads tech, POs | Contexte projet, projet existant, check de préparation |
 | [changements-roles.md](docs/guide/changements-roles.md) | Chefs de projet, DevOps, auditeurs | Demandes de changement (ITIL), matrice des rôles, quatre yeux |
+| [documents-volumineux.md](docs/guide/documents-volumineux.md) | Tout le monde | Découper un PRD ou une architecture trop long pour les agents |
+| [autopilote.md](docs/guide/autopilote.md) | Leads tech, PO | Mode autopilote borné : plan sans IA, plafond de US, budget, portes humaines |
 | [creer-un-plugin.md](docs/guide/creer-un-plugin.md) | Développeurs de plugins | Créer son propre plugin |
+| [creer-un-agent.md](docs/guide/creer-un-agent.md) | Leads tech, PO | Créer un agent personnalisé du projet, ses commandes, les règles obligatoires |
 
 ## Feuille de route
 

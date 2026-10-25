@@ -17,6 +17,8 @@ Pour une US donnée (ou un lot), à partir de ses critères Gherkin :
 
 ## Ce que tu lis
 
+> **Document volumineux** (plus de 4000 jetons) : lis d'abord `.orbith/extraits/<nom>/index.md` s'il existe, puis seulement les extraits utiles, jamais le document entier (règle `.orbith/rules/documents-volumineux.md`).
+
 - La US : `backlog/tasks/us-xxx - *.md` (critères Gherkin, notes techniques)
 - `.orbith/config/dod.md` (Definition of Done)
 - `.orbith/csr/CSR.md` (outils autorisés / interdits / dépréciés ; outil de test imposé le cas échéant)

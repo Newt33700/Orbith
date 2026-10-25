@@ -9,9 +9,15 @@ import {
   scanArtifacts,
   type Artifact,
   type EtatValidation,
+  type NoeudConnaissance,
+  avancement,
+  dateJour,
+  enRetard,
+  grapheConnaissance,
 } from '../core/index.js';
 import { buildContext, runAll, type CheckResult } from '../checks/index.js';
 import { buildTraces, type StoryTrace } from '../cli/trace-report.js';
+import { collecterProvenance, type RapportProvenance } from '../cli/provenance.js';
 
 export interface AuditArtifact {
   type: string;
@@ -52,6 +58,13 @@ export interface AuditData {
   validations: AuditArtifact[];
   tracabilite: StoryTrace[];
   controles: CheckResult[];
+  /** Commits co-écrits par une IA, par US et document (facultatif). */
+  provenance?: RapportProvenance;
+  /** Present only when the project has improvement actions or knowledge links. */
+  connaissance?: {
+    ameliorations: { id: string; titre: string; chemin: string; avancement: string; echeance: string; enRetard: boolean; etat: EtatValidation }[];
+    liens: NoeudConnaissance[];
+  };
 }
 
 export const ETAT_LIBELLES: Record<EtatValidation, string> = {
@@ -106,12 +119,29 @@ function toAuditArtifact(a: Artifact): AuditArtifact {
   };
 }
 
+function connaissance(arts: Artifact[], aujourdhui: string): Pick<AuditData, 'connaissance'> {
+  const ameliorations = arts
+    .filter((a) => a.type === 'amelioration')
+    .map((a) => ({
+      id: a.id ?? '',
+      titre: a.titre ?? '',
+      chemin: a.chemin,
+      avancement: avancement(a) ?? String(a.data['avancement'] ?? ''),
+      echeance: dateJour(a.data['echeance']) ?? '',
+      enRetard: enRetard(a, aujourdhui),
+      etat: a.etat,
+    }));
+  const liens = grapheConnaissance(arts);
+  return ameliorations.length || liens.length ? { connaissance: { ameliorations, liens } } : {};
+}
+
 export async function collectAudit(root: string, now: Date = new Date()): Promise<AuditData> {
   const config = await loadConfig(root).catch(() => null);
   const arts = await scanArtifacts(root);
   const traces = await buildTraces(root, arts);
   const controles = await runAll(await buildContext(root));
   const repo = await isGitRepo(root);
+  const provenance = await collecterProvenance(root).catch(() => undefined);
   let branche = '';
   let commit = '';
   let auteur = '';
@@ -155,5 +185,7 @@ export async function collectAudit(root: string, now: Date = new Date()): Promis
     validations,
     tracabilite: traces,
     controles,
+    ...(provenance ? { provenance } : {}),
+    ...connaissance(arts, formatDate(now)),
   };
 }

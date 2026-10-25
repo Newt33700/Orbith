@@ -13,9 +13,12 @@ Vous travaillez surtout avec les commandes `npx orbith metriques` et `npx orbith
 qui livrent bien des logiciels. Son livre, ***Accelerate***, explique ses résultats : les équipes performantes ne
 sacrifient pas la vitesse à la qualité, elles mesurent leur livraison et s'améliorent par petites étapes.
 
-DORA retient **quatre indicateurs**. Ils mesurent la vitesse de livraison (deux indicateurs) et la stabilité (deux
+DORA a longtemps retenu **quatre indicateurs** : la vitesse de livraison (deux indicateurs) et la stabilité (deux
 indicateurs). Orbith les calcule à partir des données déjà présentes dans votre projet : les user stories, les
-commits et le registre des mises en production.
+commits et le registre des mises en production. Depuis son rapport 2024, DORA ajoute un **cinquième indicateur de
+livraison**, le taux de reprise des déploiements, qu'Orbith calcule aussi (voir
+[Taux de reprise des déploiements](#taux-de-reprise-des-déploiements)). Si vous fixez des objectifs de service, Orbith
+les compare enfin aux incidents et aux bugs de production (voir [Objectifs de service](#objectifs-de-service-sla-et-slo)).
 
 ## Les quatre métriques
 
@@ -143,6 +146,28 @@ couts_ia:
 - ils donnent un **ordre de grandeur** pour comparer des tâches, des US et des agents entre eux ;
 - ce ne sont **pas une facture**. La facture de votre fournisseur d'IA fait foi ;
 - `source: estimé` indique qu'il s'agit d'une estimation.
+
+### Coûts mesurés (Claude Code)
+
+Avec Claude Code, vous pouvez aussi importer les **compteurs de jetons réels** enregistrés sur votre poste :
+`npx orbith couts importer --us US-012`. Les entrées importées s'ajoutent à la fin de `couts_ia` avec
+`source: mesuré`, sans toucher aux estimations existantes. Le détail (options, calcul du cache, confidentialité,
+limites, Gemini CLI non pris en charge) est dans [provenance-couts.md](provenance-couts.md).
+
+Dès qu'une entrée mesurée existe, `npx orbith metriques` sépare les deux sources :
+
+```markdown
+## Coûts IA (estimations des agents et compteurs mesurés)
+
+Total : 4,12 EUR sur 9 entrée(s). Ce sont des ordres de grandeur, pas une facture.
+
+- estimé (auto-estimation des agents) : 3,31 EUR sur 7 entrée(s)
+- mesuré (compteurs réels importés, `orbith couts importer`) : 0,81 EUR sur 2 entrée(s)
+```
+
+En JSON, la répartition est dans `couts.parSource.estime` et `couts.parSource.mesure` (`total`, `entrees`) ; en CSV,
+dans les lignes de famille `couts`. Une entrée sans `source`, ou avec une autre valeur que `mesuré`, compte comme
+une estimation.
 
 ### Régler les prix
 
@@ -278,6 +303,87 @@ niveau, période précédente, écart, cible), plus la taille de chaque version.
 point-virgule et virgule décimale, pour s'ouvrir directement dans un tableur français. Une donnée absente est écrite
 « non mesurable », jamais 0. La dernière ligne rappelle que DORA mesure une équipe, pas des personnes.
 
+### Taux de reprise des déploiements
+
+DORA mesure aujourd'hui la livraison avec **cinq indicateurs** : délai, fréquence, temps de rétablissement après un
+déploiement en échec, taux d'échec et **taux de reprise des déploiements** (*deployment rework rate*), ajouté dans le
+rapport 2024. DORA le définit comme la part des déploiements des six derniers mois **non planifiés, faits pour corriger
+un bug visible des utilisateurs**.
+
+Orbith le calcule sur la période : une mise en production est une « reprise » quand elle livre une US qui porte le label
+`bug` et `origine: production`. Le rapport affiche le pourcentage et le nombre de mises en production concernées.
+
+- **Pas de niveau** (élite, élevé…) : DORA n'en publie pas pour cet indicateur, Orbith n'en invente pas.
+- Sans mise en production, la valeur est « non mesurable ». Avec des mises en production mais aucun bug de production
+  déclaré, 0 % est affiché avec la mention « aucun bug de production déclaré : à vérifier ».
+- Limite : une version qui livre à la fois un correctif et des nouveautés compte comme une reprise.
+
+### Objectifs de service (SLA et SLO)
+
+Un **objectif de service** (SLO, *Service Level Objective*) est un engagement chiffré sur la qualité du service rendu,
+par exemple « un incident critique est résolu en moins de 4 heures ». Un **SLA** (*Service Level Agreement*) est
+l'accord, souvent contractuel, qui reprend ces objectifs. Ajoutez, si vous le souhaitez, une section `sla` dans
+`.orbith/config.yaml`. Toutes les clés sont facultatives :
+
+```yaml
+sla:
+  disponibilite_pct: 99.5        # au moins
+  retablissement_heures:         # au plus, par gravité d'incident
+    1: 4                         # critique (on peut aussi écrire « critique: 4 »)
+    2: 24                        # majeure
+    3: 72                        # mineure
+  correction_bug_prod_jours: 5   # au plus
+```
+
+`npx orbith metriques` ajoute alors une section **Fiabilité et objectifs de service** : pour chaque objectif, la cible, la
+mesure et le résultat « atteint », « non atteint » ou « non mesurable ».
+
+| Objectif | Ce qu'Orbith mesure | Données utilisées |
+|---|---|---|
+| `disponibilite_pct` | 100 % moins la part de la période passée en incident | Incidents `docs/livraisons/incidents/INC-NNN-*.md` : `detecte_le`, `retabli_le` |
+| `retablissement_heures` | Pour chaque incident rétabli dans la période : durée entre `detecte_le` et `retabli_le` ; l'objectif est atteint si **tous** respectent le délai | Incidents : `gravite` (1, 2 ou 3), `detecte_le`, `retabli_le` |
+| `correction_bug_prod_jours` | Pour chaque bug de production corrigé dans la période : durée entre `detecte_le` et `mis_en_prod_le` | Bugs : `labels: [bug]`, `origine: production`, `detecte_le`, `mis_en_prod_le` |
+
+Orbith n'invente rien :
+
+- un incident ou un bug **sans date de fin** rend l'objectif « non mesurable », sauf s'il est déjà ouvert depuis plus
+  longtemps que le délai visé à la fin de la période : l'objectif est alors « non atteint », c'est un fait ;
+- sans aucun incident ni bug concerné, l'objectif est « non mesurable » ;
+- la **disponibilité est une estimation** : chaque incident déclaré compte comme une indisponibilité totale entre
+  `detecte_le` et `retabli_le`, quelle que soit sa gravité. Sans incident déclaré, elle vaut 100 % avec la mention
+  « aucun incident déclaré : à vérifier ». Elle ne remplace pas une supervision de production ;
+- un incident sans gravité reconnue ou sans date de détection est signalé, sans être compté.
+
+Les dates d'incident s'écrivent `AAAA-MM-JJ HH:MM` (modèle `incident.md`). Une clé inconnue ou une valeur qui n'est pas
+un nombre est refusée avec un message qui nomme la clé. Le JSON contient `sla.objectifs[]` (`cible`, `valeur`,
+`atteint`, `remarque`) ; le CSV ajoute une ligne `sla` par objectif.
+
+### La fiabilité, cinquième métrique ?
+
+Beaucoup d'articles présentent la « fiabilité » comme la cinquième métrique DORA. Ce que disent les sources officielles :
+
+- le rapport DORA 2021 a présenté la fiabilité (*reliability*) comme « la cinquième métrique », celle de la performance
+  **opérationnelle** : la capacité d'une équipe à tenir ses promesses sur le logiciel qu'elle exploite (disponibilité,
+  latence, performance, capacité à monter en charge). Elle était mesurée par **auto-évaluation** : les répondants
+  notaient leur capacité à atteindre ou dépasser leurs objectifs de fiabilité ;
+- DORA a depuis corrigé ce point : appeler la fiabilité « cinquième métrique » était inexact, c'est une mesure de
+  performance opérationnelle, pas de performance de livraison. Le rapport 2024 la relie aux objectifs de service (SLO) ;
+- aucun niveau (élite, élevé…) n'est publié pour la fiabilité.
+
+Orbith en tire deux choses : vos objectifs de service, quand vous les fixez (section précédente), et une
+**auto-évaluation facultative** de l'équipe. Pendant la rétrospective, l'équipe peut répondre à la question « tenons-nous
+nos objectifs de fiabilité ? » ; sa réponse, notée dans l'en-tête de la rétrospective (`fiabilite_auto_evaluation`), est
+affichée telle quelle par `npx orbith metriques`, sans note ni niveau.
+
+Sources : [DORA, *DORA's software delivery performance metrics*](https://dora.dev/guides/dora-metrics/) (mis à jour le
+5 janvier 2026) ; [DORA, *A history of DORA's software delivery metrics*](https://dora.dev/insights/dora-metrics-history/)
+(2 janvier 2026) ; [*Accelerate State of DevOps Report 2024*](https://dora.dev/research/2024/dora-report/), pages 10 à 12
+et 79 à 80 ; [*Accelerate State of DevOps Report 2021*](https://dora.dev/research/2021/dora-report/), « The fifth metric: from
+availability to reliability ».
+
+Pour transformer un objectif non atteint en action suivie, voir le guide
+[Amélioration continue et liens de connaissance](amelioration-continue.md).
+
 ## Ce qu'il faut savoir
 
 - **Un chiffre manquant n'est pas un zéro.** Si aucun déploiement n'est enregistré, la fréquence est vide. Si des
@@ -293,6 +399,7 @@ point-virgule et virgule décimale, pour s'ouvrir directement dans un tableur fr
 
 ## Voir aussi
 
+- [Amélioration continue et liens de connaissance](amelioration-continue.md) : transformer un incident, une rétrospective ou un indicateur en action suivie ;
 - [Guide du lead tech et du développeur](guide-dev.md) : la traçabilité par commit ;
 - [Validation humaine](validation-humaine.md) : pourquoi les notes de version doivent être validées avant un déploiement ;
 - [Produire un rapport d'audit](audit.md) : la trace complète pour les comités.

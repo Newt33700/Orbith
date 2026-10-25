@@ -3,6 +3,7 @@ import type { OrbithConfig } from '../../core/index.js';
 import { AGENTS, RULES } from '../agents.js';
 import { upsertBlockFile, writeIfChanged } from '../blocks.js';
 import { ensureContexteProjet } from '../contexte.js';
+import { agentsDuProjet } from '../agents-perso.js';
 
 /**
  * GitHub Copilot (VS Code) — opt-in (SPEC §6). Workspace prompt files in `.github/prompts/*.prompt.md`
@@ -43,7 +44,7 @@ export const copilot: Adapter = {
   async generate(root, cfg) {
     const written: string[] = [];
     await ensureContexteProjet(root);
-    for (const agent of AGENTS) {
+    for (const agent of await agentsDuProjet(root)) {
       written.push(await writeIfChanged(root, `.github/prompts/${agent.claude}.prompt.md`, promptMd(agent)));
     }
     written.push(

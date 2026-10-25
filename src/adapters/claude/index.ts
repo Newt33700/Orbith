@@ -6,6 +6,7 @@ import { upsertBlockFile, writeIfChanged } from '../blocks.js';
 import { exists, OrbithError } from '../../core/index.js';
 import { geminiMdBlock } from '../gemini/index.js';
 import { ensureContexteProjet } from '../contexte.js';
+import { agentsDuProjet } from '../agents-perso.js';
 
 export function commandMd(agent: (typeof AGENTS)[number]): string {
   // Valeurs entre guillemets : les descriptions contiennent « : » (typographie française).
@@ -35,7 +36,7 @@ export const claude: Adapter = {
   async generate(root, cfg) {
     const written: string[] = [];
     await ensureContexteProjet(root);
-    for (const agent of AGENTS) {
+    for (const agent of await agentsDuProjet(root)) {
       written.push(await writeIfChanged(root, `.claude/commands/${agent.claude}.md`, commandMd(agent)));
     }
     written.push(await upsertBlockFile(root, 'CLAUDE.md', '<!-- orbith:debut -->', '<!-- orbith:fin -->', geminiMdBlock(cfg)));

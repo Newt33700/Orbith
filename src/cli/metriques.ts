@@ -5,6 +5,7 @@ import { OrbithError, gitLogDated, isGitRepo, loadConfig, requireProjectRoot, sc
 import { dateTerminee, loadDeploiements } from './deploiement.js';
 import { calculerMetriques, type CibleMesuree, type Metriques, type Niveau, type Tendance } from './metriques-calc.js';
 import { mentions } from './trace-report.js';
+import { lignesCsvFiabilite, renderReprise, renderSla } from './fiabilite-render.js';
 
 export interface MetriquesOptions {
   cwd?: string;
@@ -72,6 +73,7 @@ export function renderMetriquesCsv(m: Metriques): string {
   const att = (famille: string, nom: string, e: { medianeJours: number | null; us: number }): void => {
     rows.push([famille, nom, e.medianeJours ?? NM, 'jour(s)', e.us, ...vide]);
   };
+  rows.push(...lignesCsvFiabilite(m.reprise, m.sla));
   att('attente', 'Attente avant mise en production (médiane)', m.attente);
   att('attente', 'dont revue (médiane)', m.decoupageAttente.revue);
   att('attente', 'dont recette (médiane)', m.decoupageAttente.recette);
@@ -82,6 +84,8 @@ export function renderMetriquesCsv(m: Metriques): string {
     rows.push(['version', `${v.version} (${v.date}) : US`, v.us, 'US', '', ...vide]);
     rows.push(['version', `${v.version} (${v.date}) : commits`, v.commits ?? NM, 'commit(s)', '', ...vide]);
   }
+  rows.push(['couts', 'Coûts IA estimés', m.couts.parSource.estime.total, m.devise, m.couts.parSource.estime.entrees, ...vide]);
+  rows.push(['couts', 'Coûts IA mesurés', m.couts.parSource.mesure.total, m.devise, m.couts.parSource.mesure.entrees, ...vide]);
   rows.push(['periode', `${m.periode.debut} au ${m.periode.fin} (${m.periode.jours} jours)`, '', '', '', ...vide]);
   rows.push(['rappel', RAPPEL_METHODO, '', '', '', ...vide]);
   return '\uFEFF' + rows.map((r) => r.map(csvCell).join(';')).join('\r\n') + '\r\n';
@@ -103,6 +107,7 @@ export function renderMetriques(m: Metriques, projet: string): string {
     for (const c of m.cibles) L.push(`| ${c.libelle} | ${nm(c.valeur, c.unite)} | ${cibleTexte(c)} |`);
     L.push('');
   }
+  L.push(...renderReprise(m.reprise), ...renderSla(m.sla, m.fiabilite ?? []));
   L.push(`## Tendances (période précédente : du ${m.precedent.debut} au ${m.precedent.fin})`, '');
   L.push('| Indicateur | Cette période | Période précédente | Évolution |', '|---|---|---|---|');
   for (const t of m.tendances) L.push(`| ${t.libelle} | ${nm(t.valeur, t.unite)} | ${nm(t.precedent, t.unite)} | ${tendanceTexte(t)} |`);
@@ -122,8 +127,12 @@ export function renderMetriques(m: Metriques, projet: string): string {
     for (const v of m.taille.versions) L.push(`| ${v.version} | ${v.date} | ${v.us} | ${v.commits ?? NM} |`);
   }
   L.push('');
-  L.push(`## Coûts IA (estimations des agents)`, '');
-  L.push(`Total : ${fr(m.couts.total)} ${m.devise} sur ${m.couts.estimations} estimation(s). Ce sont des ordres de grandeur, pas une facture.`);
+  const ps = m.couts.parSource;
+  L.push(`## Coûts IA (estimations des agents${ps.mesure.entrees ? ' et compteurs mesurés' : ''})`, '');
+  L.push(`Total : ${fr(m.couts.total)} ${m.devise} sur ${m.couts.estimations} ${ps.mesure.entrees ? 'entrée(s)' : 'estimation(s)'}. Ce sont des ordres de grandeur, pas une facture.`);
+  if (ps.mesure.entrees) {
+    L.push('', `- estimé (auto-estimation des agents) : ${fr(ps.estime.total)} ${m.devise} sur ${ps.estime.entrees} entrée(s)`, `- mesuré (compteurs réels importés, \`orbith couts importer\`) : ${fr(ps.mesure.total)} ${m.devise} sur ${ps.mesure.entrees} entrée(s)`);
+  }
   const agents = Object.entries(m.couts.parAgent).sort((a, b) => b[1] - a[1]);
   if (agents.length) L.push('', ...agents.map(([a, c]) => `- ${a} : ${fr(c)} ${m.devise}`));
   L.push('', '## User stories', '');
@@ -169,6 +178,7 @@ export async function runMetriques(opts: MetriquesOptions = {}): Promise<Metriqu
     terminees,
     ...(commits ? { commits } : {}),
     ...(config.dora?.cibles ? { cibles: config.dora.cibles } : {}),
+    ...(config.sla ? { sla: config.sla } : {}),
     ...(opts.aujourdhui ? { aujourdhui: opts.aujourdhui } : {}),
   });
   const out =

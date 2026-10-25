@@ -30,6 +30,18 @@ titre: <titre de l'épic>
 
 - 
 
+<!-- Flux ou séquence de l'epic en Mermaid, facultatif : GitHub et GitLab l'affichent directement (pas tous
+     les éditeurs). Sors-le de ce commentaire et adapte-le. Ici les messages utilisent « ->> » : la flèche
+     à deux tirets fermerait ce commentaire HTML.
+```mermaid
+sequenceDiagram
+    actor U as Utilisateur
+    participant S as Système
+    U->>S: demande
+    S->>U: résultat
+```
+-->
+
 ## User stories
 
 <!-- Liste des stories de l'épic. Les identifiants viennent du backlog (backlog/tasks/). -->

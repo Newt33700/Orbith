@@ -1,4 +1,5 @@
-import type { AuditData } from './collect.js';
+import { ETAT_LIBELLES, type AuditData } from './collect.js';
+import { sansControleHumain } from '../cli/provenance.js';
 
 export function escapeHtml(value: unknown): string {
   return String(value ?? '')
@@ -47,6 +48,9 @@ const CATEGORIES: [string, string][] = [
   ['documentation', 'Documentation'],
   ['secrets', 'Secrets'],
   ['sbom', 'Licences (SBOM)'],
+  ['agents', 'Agents personnalisés'],
+  ['provenance', 'Provenance IA'],
+  ['amelioration', 'Amélioration continue'],
 ];
 
 function badge(kind: 'ok' | 'warn' | 'err' | 'info', text: string): string {
@@ -59,6 +63,28 @@ function etatBadge(etat: string, libelle: string): string {
 
 function list(items: string[]): string {
   return items.length ? `<ul class="plain">${items.map((i) => `<li>${i}</li>`).join('')}</ul>` : '—';
+}
+
+function provenanceSection(d: AuditData): string {
+  const p = d.provenance;
+  if (!p) return '';
+  const rows = p.lignes
+    .map((l) => {
+      const alerte = sansControleHumain(l);
+      const val = l.validation ? `${e(l.validation.par)} (${e(l.validation.le)})` : e(ETAT_LIBELLES[l.etat]);
+      const revue = l.revueHumaine.length ? e(l.revueHumaine.join(', ')) : l.revueQa ? 'aucune (revue QA par agent seulement)' : 'aucune';
+      return `<tr${alerte ? ' class="pb"' : ''}><th scope="row">${e(l.cle)}<br><small>${e(l.titre)}</small></th><td>${e(l.colonne ?? l.type)}</td><td>${list(l.commits.map((c) => `<code>${e(c.commit.slice(0, 7))}</code> ${e(c.ia.join(', '))}`))}</td><td>${e(l.modeles.join(', ') || 'inconnu')}</td><td>${val}</td><td>${alerte ? badge('warn', revue) : revue}</td></tr>`;
+    })
+    .join('');
+  return `
+<section id="provenance" aria-labelledby="h-provenance">
+<h2 id="h-provenance">Provenance IA</h2>
+<p>${e(p.commitsIa)} commit(s) portent un pied <code>Co-Authored-By:</code> désignant une IA${p.sansLien ? ` (dont ${e(p.sansLien)} sans US ni document lié)` : ''}. Les lignes en rouge signalent une US terminée sans validation humaine ni revue humaine du code tracées.</p>
+<table><caption>Code et documents co-écrits par une IA, et contrôle humain associé</caption>
+<thead><tr><th scope="col">US / document</th><th scope="col">Colonne</th><th scope="col">Commits IA</th><th scope="col">Modèle(s)</th><th scope="col">Validation humaine</th><th scope="col">Revue humaine du code</th></tr></thead>
+<tbody>${rows || '<tr><td colspan="6">Aucune US ni aucun document lié à un commit co-écrit par une IA.</td></tr>'}</tbody></table>
+</section>
+`;
 }
 
 export function renderHtml(d: AuditData): string {
@@ -84,6 +110,7 @@ export function renderHtml(d: AuditData): string {
 
   const controles = CATEGORIES.map(([id, titre]) => {
     const rs = d.controles.filter((c) => c.categorie === id);
+    if (id === 'amelioration' && rs.length === 0) return '';
     const rows = rs.length
       ? rs
           .map(
@@ -94,6 +121,21 @@ export function renderHtml(d: AuditData): string {
       : `<tr><td>${badge('ok', 'ok')}</td><td>Rien à signaler</td><td>—</td></tr>`;
     return `<table><caption>${e(titre)}</caption><thead><tr><th scope="col">Niveau</th><th scope="col">Constat</th><th scope="col">Fichier</th></tr></thead><tbody>${rows}</tbody></table>`;
   }).join('\n');
+
+  const k = d.connaissance;
+  const sectionConnaissance = k
+    ? `
+<section id="amelioration" aria-labelledby="h-amelioration">
+<h2 id="h-amelioration">Amélioration continue et liens de connaissance</h2>
+<table><caption>Actions d'amélioration</caption>
+<thead><tr><th scope="col">Action</th><th scope="col">Titre</th><th scope="col">Avancement</th><th scope="col">Échéance</th><th scope="col">Validation</th></tr></thead>
+<tbody>${k.ameliorations.map((a) => `<tr${a.enRetard ? ' class="pb"' : ''}><td>${e(a.id || '—')}</td><td>${e(a.titre || '—')}<br><code>${e(a.chemin)}</code></td><td>${e(a.avancement || '—')}</td><td>${e(a.echeance || '—')}${a.enRetard ? ` ${badge('warn', 'en retard')}` : ''}</td><td>${etatBadge(a.etat, a.etat)}</td></tr>`).join('') || '<tr><td colspan="5">Aucune action.</td></tr>'}</tbody></table>
+<table><caption>Liens entre incidents, bugs, ADR, actions et US</caption>
+<thead><tr><th scope="col">Élément</th><th scope="col">Type</th><th scope="col">Mène à</th><th scope="col">Cité par</th></tr></thead>
+<tbody>${k.liens.map((n) => `<tr><th scope="row">${e(n.cle)}<br><small>${e(n.libelle)}</small></th><td>${e(n.type)}</td><td>${list(n.sortants.map((l) => `${e(l.cible)}${l.existe ? '' : ` ${badge('warn', 'introuvable')}`}`))}</td><td>${list(n.entrants.map((l) => e(l.source)))}</td></tr>`).join('') || '<tr><td colspan="4">Aucun lien.</td></tr>'}</tbody></table>
+</section>
+`
+    : '';
 
   const couverture = s.couvertureTracabilite === null ? 'n/a' : `${s.couvertureTracabilite} %`;
 
@@ -148,8 +190,8 @@ ${kpi(couverture, `couverture de traçabilité (${s.usTraceesTerminees}/${s.usTe
 <thead><tr><th scope="col">US</th><th scope="col">Statut</th><th scope="col">Colonne</th><th scope="col">Commits</th><th scope="col">Tests</th><th scope="col">Notes de livraison</th></tr></thead>
 <tbody>${traceRows || '<tr><td colspan="6">Aucune user story.</td></tr>'}</tbody></table>
 </section>
-
-<section id="conformite" aria-labelledby="h-conformite">
+${provenanceSection(d)}
+${sectionConnaissance}<section id="conformite" aria-labelledby="h-conformite">
 <h2 id="h-conformite">Conformité CSR et contrôles</h2>
 ${controles}
 </section>
