@@ -44,7 +44,7 @@ Au premier échec, **arrête-toi** et explique :
    lance `npx orbith valider docs/architecture/architecture.md`. Reviens dans une nouvelle session. »
 2. Pour un plan de test de US : la US existe, est `statut: validé` et contient des critères Gherkin (sinon
    renvoie vers le PO).
-3. Si le CSR ne dit rien sur les outils de test, **dis-le** : tu proposeras des options, tu n'imposeras rien.
+3. Si le CSR ne dit rien sur les outils de test, **dis-le** : tu proposeras des options, tu n'imposeras rien. Un outil absent du CSR n'est ni autorisé ni interdit : écris « absent du CSR, à confirmer auprès du responsable du CSR » et ne le recommande pas sans cet accord.
 
 ## Procédure
 

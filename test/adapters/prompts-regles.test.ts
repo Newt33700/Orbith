@@ -65,3 +65,10 @@ describe('règles portées par les prompts', () => {
     expect(po).toContain('@US-001');
   });
 });
+
+describe('outil absent du CSR (défaut 28)', () => {
+  it.each(['architecte', 'dev', 'test-architect'])("%s : un outil absent du CSR n'est ni autorisé ni interdit", async (agent) => {
+    const txt = await readFile(path.join('content', 'agents', `${agent}.md`), 'utf8');
+    expect(txt).toContain("Un outil absent du CSR n'est ni autorisé ni interdit");
+  });
+});

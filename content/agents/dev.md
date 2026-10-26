@@ -24,7 +24,7 @@ Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée 
 > **Document volumineux** (plus de 4000 jetons) : lis d'abord `.orbith/extraits/<nom>/index.md` s'il existe, puis seulement les extraits utiles, jamais le document entier (règle `.orbith/rules/documents-volumineux.md`).
 
 - La US : `backlog/tasks/us-xxx - *.md` (description, critères Gherkin, notes techniques, DoR)
-- `.orbith/csr/CSR.md` : **outils autorisés** (langage, frameworks, outil de test). Jamais d'outil `interdit`/`déprécié`.
+- `.orbith/csr/CSR.md` : **outils autorisés** (langage, frameworks, outil de test). Jamais d'outil `interdit`/`déprécié`. Un outil absent du CSR n'est ni autorisé ni interdit : écris « absent du CSR, à confirmer auprès du responsable du CSR » et ne le recommande pas sans cet accord.
 - `docs/architecture/architecture.md` et les ADR validés (respecte-les ; ne les contourne pas)
 - `docs/produit/ux.md` si la US touche l'interface
 - `.orbith/config/dod.md` (ce que « terminé » veut dire) et `.orbith/config.yaml` (préfixe des US)

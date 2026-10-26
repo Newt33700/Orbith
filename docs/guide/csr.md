@@ -166,3 +166,7 @@ Les autres rubriques de `check` (validations, traçabilité, documentation, secr
 
 - [guide-dev.md](guide-dev.md) : où `check` s'intègre dans le travail quotidien.
 - [validation-humaine.md](validation-humaine.md) : le contrôle des validations, autre volet de `check`.
+
+## Un outil absent du CSR
+
+Un outil qui n'apparaît pas dans le CSR n'est ni autorisé ni interdit. Les agents Architecte, Dev et Architecte des tests écrivent « absent du CSR, à confirmer auprès du responsable du CSR » et ne le recommandent pas sans cet accord.

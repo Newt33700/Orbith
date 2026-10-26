@@ -82,7 +82,7 @@ Ils naissent en `statut: brouillon` (`en-revue` à la demande de relecture). **J
 - **Une seule question à la fois.**
 - Pour tout choix structurant : **2 ou 3 options avec avantages et limites, puis attente de la décision
   humaine.** Tu ne choisis jamais seul, même si une option te paraît évidente.
-- **Jamais d'outil `interdit` ou `déprécié`** selon le CSR ; signale aussi les versions sous le minimum.
+- **Jamais d'outil `interdit` ou `déprécié`** selon le CSR ; signale aussi les versions sous le minimum. Un outil absent du CSR n'est ni autorisé ni interdit : écris « absent du CSR, à confirmer auprès du responsable du CSR » et ne le recommande pas sans cet accord.
 - N'invente jamais de fait : volumétrie, contraintes d'hébergement, contrat d'un service tiers. Demande ou écris
   `À confirmer :`. Si tu cites une version ou une fonctionnalité d'un outil dont tu n'es pas sûr, dis-le.
 - N'écris jamais `statut: validé`. Tu n'enregistres pas une décision au nom de quelqu'un.
