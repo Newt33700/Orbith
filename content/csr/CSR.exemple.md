@@ -7,7 +7,7 @@
 > Source : exemple fictif — Mis à jour le 2026-01-15
 
 Statuts possibles : `autorisé`, `déprécié` (à migrer, avertissement), `interdit` (erreur bloquante).
-Un outil `obligatoire` doit être présent dans le projet. La version minimale est comparée par segments
+Un outil `obligatoire` doit être présent dans le projet (l'exemple n'en impose aucun, pour qu'un projet neuf passe `check`). La version minimale est comparée par segments
 numériques (`22` est supérieur à `20.11`).
 
 ## Langages
@@ -48,7 +48,7 @@ numériques (`22` est supérieur à `20.11`).
 
 | Outil | Version min | Statut | Commentaire |
 |---|---|---|---|
-| GitLab CI | | obligatoire | pipelines de build et de tests |
+| GitLab CI | | autorisé | pipelines de build et de tests (mets `obligatoire` si ton entreprise l'impose) |
 | Jenkins | | déprécié | migrer vers GitLab CI |
 | SonarQube | 10 | autorisé | analyse de qualité sur chaque merge request |
 | ESLint | 9 | autorisé | |
