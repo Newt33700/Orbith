@@ -49,8 +49,8 @@ L'ordre suit le champ `ordinal` (tableau Backlog.md), puis la priorité (`priori
 ### Le plafond de US
 
 Par défaut, l'autopilote ne laisse jamais plus de **3 US** en attente de ta revue. Les US déjà `En cours` ou
-`En revue` du périmètre comptent dans ce plafond : si deux US attendent ta revue, il ne reste qu'une place. Ainsi,
-même en relançant l'autopilote plusieurs fois, le travail non relu ne s'accumule pas.
+`En revue` de **tout le projet** (pas seulement des cibles que tu donnes) comptent dans ce plafond : si deux US attendent ta revue, il ne reste qu'une place. Ainsi,
+même en relançant l'autopilote plusieurs fois, ou en réduisant le périmètre, le travail non relu ne s'accumule pas.
 
 Change la valeur avec `--max-us`, ou dans `.orbith/config.yaml` :
 
@@ -67,6 +67,9 @@ Le consommé est la somme des entrées `couts_ia` déjà enregistrées par les a
 couts-ia). Une entrée sans montant est calculée avec les prix `finops.prix`. Si le projet a déjà des US terminées
 avec des coûts, la commande calcule le **coût moyen constaté par US** et réduit le plan au nombre de US que le
 budget restant peut couvrir.
+
+Le plafond de budget reste calculé sur le périmètre visé ; le plan affiche aussi le **total du projet** (`consomme_projet`
+dans le JSON) quand il diffère. Les montants des messages utilisent tous la virgule décimale.
 
 Ce sont des **estimations, pas une facture**. Sans budget (ni `--budget`, ni `autopilote.budget`), seul le plafond
 de US arrête l'autopilote ; la commande le signale.
@@ -86,7 +89,7 @@ La commande s'arrête avec le code 1 et un message clair, sans proposer de plan,
 L'agent :
 
 1. lance `npx orbith autopilote --format json` et s'arrête si la commande refuse ;
-2. te montre le plan et te demande **une seule confirmation** (commits locaux, carte `Prête` → `En cours` →
+2. te montre le plan et te demande **une seule confirmation**, que tu donnes **après** l'avoir vu (un « oui » donné d'avance ne compte pas ; l'agent reprend aussi tes options `--max-us` et `--budget`) (commits locaux, carte `Prête` → `En cours` →
    `En revue`) ;
 3. pour la **première US** du plan : applique l'agent Dev (tests d'abord, code, documentation, commits locaux), lance
    les tests et `npx orbith check`, estime le coût, puis applique l'agent QA et estime le coût ;

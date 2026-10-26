@@ -123,6 +123,28 @@ function parseList<T extends string>(raw: string, allowed: readonly T[], what: s
   return [...new Set(values)] as T[];
 }
 
+/** Secret files that must never be versioned (same list as the new-project `.gitignore`). */
+export const GITIGNORE_SECRETS = ['.env', '.env.*', '!.env.example', '*.pem', '*.key', 'secrets/'];
+
+/**
+ * Makes sure the project `.gitignore` ignores `.env` and the other sensitive files (SPEC §9). Never overwrites
+ * the user's lines: patterns already present are left alone, the missing ones are appended in an
+ * `# orbith:debut` / `# orbith:fin` block. A second run changes nothing. Returns the file path when it was written.
+ */
+export async function assurerGitignoreSecrets(root: string): Promise<string | null> {
+  const file = path.join(root, '.gitignore');
+  const previous = (await exists(file)) ? await fs.readFile(file, 'utf8') : '';
+  if (previous.includes('# orbith:debut')) return null;
+  const lignes = new Set(previous.split(/\r?\n/).map((l) => l.trim()));
+  const manquantes = GITIGNORE_SECRETS.filter((l) => !lignes.has(l));
+  // Only `!.env.example` left over means the ignore patterns are all there already.
+  if (manquantes.every((l) => l.startsWith('!'))) return null;
+  const bloc = ['# orbith:debut', '# Secrets : ne jamais versionner', ...manquantes, '# orbith:fin'].join('\n');
+  const sep = previous === '' ? '' : previous.endsWith('\n') ? '\n' : '\n\n';
+  await fs.writeFile(file, `${previous}${sep}${bloc}\n`, 'utf8');
+  return file;
+}
+
 function cancelled(): never {
   throw new OrbithError('Installation annulée. Rien n\'a été modifié.');
 }
@@ -266,6 +288,12 @@ export async function runInstall(opts: InstallOptions): Promise<void> {
       ui.avert(`CSR non synchronisé (le CSR d'exemple est conservé) : ${e instanceof Error ? e.message : String(e)}`);
       ui.info('Corrige la source dans .orbith/config.yaml puis lance `npx orbith csr sync`.');
     }
+  }
+
+  const gitignore = await assurerGitignoreSecrets(root);
+  if (gitignore) {
+    written.push(gitignore);
+    ui.info('`.env` et les fichiers sensibles ont été ajoutés à .gitignore (aucune de tes lignes n\'a été modifiée).');
   }
 
   const rel = (f: string): string => path.relative(root, f).split(path.sep).join('/');

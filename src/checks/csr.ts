@@ -59,6 +59,15 @@ export async function run(ctx: CheckContext): Promise<CheckResult[]> {
       },
     ];
   }
+  // Right after `orbith install` the CSR is still the public example: say so, without weakening any control.
+  if (/EXEMPLE\s*:\s*ce fichier n'est pas le vrai r[ée]f[ée]rentiel/i.test(md)) {
+    res.push({
+      categorie: 'csr',
+      niveau: 'info',
+      message: `Le CSR (${rel}) est encore l'exemple fourni avec Orbith, pas le référentiel de ton entreprise : ses règles s'appliquent quand même. Remplace-le par le vrai (\`npx orbith csr sync\` ou \`npx orbith csr import\`).`,
+      fichier: rel,
+    });
+  }
   const stack = await detectStack(ctx.root);
   const manifesteConnu = stack.runtimes.length > 0 || stack.dependances.length > 0;
   const seen = new Set<string>();

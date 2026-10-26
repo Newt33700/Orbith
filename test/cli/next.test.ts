@@ -52,6 +52,11 @@ describe('computeNext', () => {
     expect(r.claude).toBe('/orbith-archi');
     expect(r.gemini).toBe('/orbith:archi');
     a.push(art('architecture'));
+    // Étape 5 du workflow projet : les environnements avant les epics (étape 7).
+    expect(computeNext(a, cfg('projet')).principal.claude).toBe('/orbith-devops');
+    a.push(art('environnements', { etat: 'non-validé', chemin: 'docs/architecture/environnements.md' }));
+    expect(computeNext(a, cfg('projet')).principal.cli).toBe('npx orbith valider docs/architecture/environnements.md');
+    a[a.length - 1] = art('environnements');
     expect(computeNext(a, cfg('projet')).principal.claude).toBe('/orbith-po');
     a.push(art('epic', { etat: 'non-validé' }));
     expect(computeNext(a, cfg('projet')).principal.cli).toContain('valider');

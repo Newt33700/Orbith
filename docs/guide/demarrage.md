@@ -56,7 +56,9 @@ npx orbith install --plateformes gemini,claude --piste evolution --nom mon-proje
 
 L'installation copie les agents dans `.orbith/`, crée les commandes Gemini et Claude (16 de chaque), et ajoute un bloc
 Orbith à `GEMINI.md` ou `CLAUDE.md`. Votre contenu existant est conservé. Pour un projet existant, Orbith ne remplace
-jamais un fichier : il le laisse en place et vous prévient.
+jamais un fichier : il le laisse en place et vous prévient. Seule exception, additive : si votre `.gitignore` n'ignore pas
+encore `.env`, `*.pem`, `*.key` et `secrets/`, l'installation les ajoute dans un bloc `# orbith:debut` / `# orbith:fin`
+(vos lignes ne sont pas modifiées ; relancer l'installation ne change plus rien).
 
 **Projet existant** : lancez ensuite `npx orbith init-context`. La commande décrit votre projet (stack, scripts,
 tests, arborescence) dans `.orbith/contexte-projet.md`, que les agents lisent avant d'écrire du code. Voir

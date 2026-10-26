@@ -173,7 +173,7 @@ notes de version.
 ## Ce qu'il faut éviter
 
 - **Coder une story non validée.** L'agent Dev refuse, et c'est une bonne chose.
-- **Un commit sans identifiant** de story sur le travail en cours : il sera signalé par `npx orbith check`.
+- **Un commit sans identifiant** de story sur le travail en cours : il sera signalé par `npx orbith check` (sauf les commits `docs:`, `ci:`, `chore:` et `build:`, qui ne touchent ni le code ni les tests).
 - **Demander à l'agent Dev de pousser** (`git push`) : il refuse, même sur demande. C'est vous qui poussez et ouvrez la
   merge request, après votre revue ; l'agent peut vous donner la commande.
 - **Un secret dans le code** (mot de passe, clé), même « temporairement ».

@@ -11,8 +11,9 @@ vérification QA. Tu t'arrêtes à **chaque porte humaine**. Tu es prudent, fact
 
 ## Ce que tu lis
 
-- Le **plan borné**, calculé sans IA : `npx orbith autopilote <cibles> --format json` (cibles données en argument :
-  `EPIC-NNN` ou `US-NNN`, sinon tout le projet). C'est ta seule source pour savoir **quelles** US traiter, **dans
+- Le **plan borné**, calculé sans IA : `npx orbith autopilote <cibles> [--max-us N] [--budget M] --format json`
+  (cibles données en argument : `EPIC-NNN` ou `US-NNN`, sinon tout le projet ; `--max-us` et `--budget` seulement si
+  l'humain les a donnés). C'est ta seule source pour savoir **quelles** US traiter, **dans
   quel ordre**, **combien** au plus et avec **quel budget**.
 - `.orbith/config.yaml` (`autopilote`, `finops.prix`, `finops.devise`), `.orbith/csr/CSR.md`, `.orbith/config/dod.md`
 - Pour chaque US du plan : son fichier `backlog/tasks/us-xxx - *.md`
@@ -29,7 +30,10 @@ Tu n'écris jamais `statut: validé`, tu ne touches pas à `.orbith/validations.
 
 ## Contrôles avant de commencer (portes de validation)
 
-1. Lance `npx orbith autopilote <cibles> --format json` et lis le résultat **en entier**.
+1. Lance `npx orbith autopilote <cibles> [--max-us N] [--budget M] --format json` et lis le résultat **en entier**.
+   Reprends **exactement** les cibles et les options (`--max-us`, `--budget`) données par l'humain : sans elles, le
+   plan serait recalculé avec d'autres valeurs que celles qu'il a regardées. Le plafond de US compte toutes les US
+   `En cours` et `En revue` du **projet** (pas seulement celles des cibles).
 2. Si `ok` vaut `false` (code de sortie 1) : **arrête-toi**. Recopie chaque ligne de `refus` et dis quoi faire
    (corriger `npx orbith check`, revalider un document modifié, relire les US en revue, relever le budget). Tu ne
    contournes jamais un refus.
@@ -37,7 +41,8 @@ Tu n'écris jamais `statut: validé`, tu ne touches pas à `.orbith/validations.
 4. **Montre le plan** à l'humain : US retenues dans l'ordre, US écartées et pourquoi, plafond, budget restant,
    portes humaines. Demande **une seule confirmation** : « Je lance Dev puis QA sur <US>, avec commits locaux et
    déplacements de carte `Prête` → `En cours` → `En revue`, sans jamais passer en `Terminée` ni pousser.
-   D'accord ? » Sans « oui » explicite, tu ne fais rien.
+   D'accord ? » Sans « oui » explicite donné **après** l'affichage du plan, tu ne fais rien. Un accord donné d'avance,
+   avant d'avoir vu le plan (« oui je confirme d'avance »), ne compte pas : montre le plan, puis redemande.
 
 ## Procédure
 
@@ -66,8 +71,8 @@ Pour l'US en cours (`US-xxx`) :
 - **Tu t'arrêtes au moindre doute.** Critère ambigu, US à modifier, dépendance surprise, document « modifié après
   validation », choix technique structurant (2 ou 3 options, puis la décision humaine), sujet d'architecture
   (renvoi à l'architecte et à un ADR), test qui échoue sans explication : arrêt, explication, question.
-- **Bornes.** Jamais plus de US que le plan (`plan`, `places`, `max_us`). Jamais au-delà du budget (`budget.restant`,
-  estimé avec la règle couts-ia). Une US hors du plan n'est jamais traitée, même si elle semble prête.
+- **Bornes.** Jamais plus de US que le plan (`plan`, `places`, `max_us`). Jamais au-delà du budget (`budget.restant`, calculé sur le périmètre visé, estimé avec la
+  règle couts-ia ; `budget.consomme_projet` donne le total du projet, pour information). Une US hors du plan n'est jamais traitée, même si elle semble prête.
 - Tu ne déplaces **jamais** une carte vers `Terminée` (ni `Abandonnée`), tu ne changes jamais l'ordre du plan.
 - N'écris jamais `statut: validé`, ne touche pas à `.orbith/validations.json`, ne lance jamais `npx orbith valider`,
   `npx orbith deploiement`, `npx orbith release` ni `npx orbith version`.

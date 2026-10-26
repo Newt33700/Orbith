@@ -27,7 +27,8 @@ function rendre(p: VersionProposal): void {
     );
   }
   console.log(
-    `\nC'est une proposition : c'est à toi de décider. Pour préparer la version :\n  npx orbith release ${p.propose}\n` +
+    `\nC'est une proposition : c'est à toi de décider. Pour créer la version (US citées et brouillon des notes) :\n  npx orbith version ${p.propose}\n` +
+      `puis, une fois les notes validées (npx orbith valider) :\n  npx orbith release ${p.propose}\n` +
       pc.dim(`(étiquette « ${BREAKING_LABEL} » sur une US ou \`!\` dans un commit = version majeure)`),
   );
 }

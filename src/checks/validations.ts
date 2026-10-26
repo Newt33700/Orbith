@@ -1,4 +1,4 @@
-import { scanAll } from '../core/index.js';
+import { arg, scanAll } from '../core/index.js';
 import { run as runGouvernance } from './gouvernance.js';
 import { chaineResultats } from './chaine.js';
 import type { CheckContext, CheckResult } from './types.js';
@@ -19,7 +19,7 @@ export async function run(ctx: CheckContext): Promise<CheckResult[]> {
       res.push({
         categorie: 'validations',
         niveau: 'erreur',
-        message: `Modifié après validation : le contenu ne correspond plus à la version validée. Relance \`orbith valider ${a.chemin}\`.`,
+        message: `Modifié après validation : le contenu ne correspond plus à la version validée. Relance \`npx orbith valider ${arg(a.chemin)}\`.`,
         fichier: a.chemin,
       });
     } else if (a.etat === 'non-tracé') {

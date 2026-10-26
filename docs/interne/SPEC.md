@@ -187,7 +187,9 @@ statut: brouillon | en-revue | validé     # human validation of the story conte
 epic: EPIC-001
 ```
 
-Board column (`status` in Backlog.md) values, in French: `À faire`, `Prête`, `En cours`, `En revue`, `Terminée`.
+Board column (`status` in Backlog.md) values, in French: `À faire`, `Prête`, `En cours`, `En revue`, `Terminée`, `Abandonnée`
+(aliases `abandonnee`, `abandoned`, `cancelled`). An `Abandonnée` story is out of `next`, `preparation`, the autopilot plan
+(reason « abandonnée »), `orbith version` and the release warnings.
 `status` is moved by humans (PO moves to `Prête` once DoR is met and the story is validated).
 
 Body sections (French headings):
@@ -217,6 +219,10 @@ Exit code 0 = OK, 1 = problem found / error. Colored output with `picocolors`, i
    `content/csr/CSR.exemple.md` → `.orbith/csr/CSR.md`, write `.orbith/config.yaml`, create `.orbith/custom/`,
    empty `validations.json`.
 3. Run every selected adapter (§6).
+3b. Ensure `.gitignore` ignores secrets (`assurerGitignoreSecrets`, `src/cli/install.ts`), for new **and** existing projects:
+   patterns of `GITIGNORE_SECRETS` (`.env`, `.env.*`, `!.env.example`, `*.pem`, `*.key`, `secrets/`) not already present as a
+   line are appended in an `# orbith:debut` / `# orbith:fin` block (file created if missing). Existing lines are never
+   modified, nothing is written when the patterns are already there or the block exists (idempotent).
 4. Print a French summary + "Prochaine étape : lance `npx orbith next`" + the new-session reminder.
 
 ### 4.2 Project skeleton (`content/projet/`, new projects only)
@@ -234,7 +240,9 @@ Deterministic (no AI). Reads config + artifacts + validations and prints ONE mai
 Claude `/orbith-po`, Copilot `/orbith-po` = name of its `.github/prompts/*.prompt.md`; default config: Gemini + Claude) or the CLI command (`npx orbith valider …`). Always ends with the new-session reminder.
 Rules by track (first matching wins):
 - **projet**: brief missing → po | brief not validated → review+valider | prd missing → po | prd not validated |
-  ux missing → ux | ux not validated | architecture missing → architecte | not validated | no epic → po |
+  ux missing → ux | ux not validated | architecture missing → architecte | not validated |
+  (only while **no epic exists**, workflow step 5 before step 7) environnements missing → devops | not validated → valider |
+  no epic → po |
   epic not validated | no story → po | then story rules.
 - **evolution**: (if no story) → po; then story rules. Suggest architecte if a story has label `impact-archi`
   and no validated ADR references it (keep simple: mention only).
@@ -242,7 +250,7 @@ Rules by track (first matching wins):
 - **story rules** (scan all stories): story without gherkin block in "Critères d'acceptation" → po;
   story not validated → valider; validated story in `À faire` → "vérifie la DoR puis passe-la en Prête";
   story `Prête` → dev (`/orbith-dev US-xxx`); story `En cours` → dev continue / qa for tests;
-  story `En revue` → qa + human review; all `Terminée` → sm (release notes) then "tout est livré 🎉".
+  story `En revue` → qa + human review; `Abandonnée` stories are ignored; all `Terminée`/`Abandonnée` → sm (release notes) then "tout est livré 🎉".
 - Also surface problems: artifacts "modifié après validation" (top priority).
 - When at least 2 stories are eligible for the autopilot (§17) and nothing is "modifié après validation", a
   secondary action suggesting `/orbith-autopilote` / `npx orbith autopilote` is inserted right after the dev action.
@@ -252,17 +260,22 @@ Shows file summary (type, id, title), asks confirmation ("Je confirme avoir relu
 reads git `user.name`/`user.email` (fails with a clear message if missing), sets frontmatter
 `statut: validé`, `valide_par`, `valide_le`, writes registry entry (replace existing entry for that file).
 Refuses files without Orbith frontmatter `type`. `--yes` skips the prompt (for scripted use; the docs warn it
-must only be used by a human).
+must only be used by a human). Without `--yes` and without a TTY the command fails with a message that never
+suggests `--yes`: « Si tu es un agent IA, arrête-toi : seul un humain valide. Humain : lance cette commande toi-même,
+dans ton terminal. ».
 
 ### 4.5 `orbith check [--format texte|json]`
 Runs all checks, prints a French report grouped by category, exit 1 if any **erreur** (avertissements don't fail):
 - **csr**: parse CSR.md (§7) and compare with detected stack: Node (`package.json` engines.node, `.nvmrc`,
-  `.node-version`, dependencies vs forbidden libs), Java (`pom.xml` `maven.compiler.release`/`java.version`,
+  `.node-version`, dependencies vs forbidden libs), plus an `info` result while `CSR.md` still carries the example banner
+  « EXEMPLE : ce fichier n'est pas le vrai référentiel » (the example CSR itself imposes no `obligatoire` tool, so a freshly
+  installed project passes `check`; a real CSR keeps every control), Java (`pom.xml` `maven.compiler.release`/`java.version`,
   `build.gradle(.kts)` toolchain/sourceCompatibility), Python (`pyproject.toml` requires-python,
   `.python-version`, `requirements*.txt` package names). Forbidden tool used → erreur; version below minimum →
   erreur; deprecated → avertissement.
 - **validations**: for every artifact: modifié après validation → erreur; validation non tracée → erreur.
-- **tracabilite**: last 50 commits (`git log`) without a story id → avertissement (skip if not a git repo);
+- **tracabilite**: last 50 commits (`git log`) without a story id → avertissement, except `docs`/`ci`/`chore`/`build`
+  Conventional Commit types (`sujetLivreCode`, `src/core/git.ts`), which touch neither code nor tests (skip if not a git repo);
   stories `Terminée` with no commit referencing them → avertissement.
 - **secrets**: scan tracked text files (git ls-files, else walk excluding node_modules/.git/dist) for common
   patterns (AWS keys, private key headers, `password\s*=\s*['"][^'"]+`, generic tokens, `.env` committed) → erreur.
@@ -276,7 +289,9 @@ order: `csr`, `validations`, `tracabilite`, `documentation`, `secrets`, `sbom` (
 
 ### 4.6 `orbith trace [ID] [--sortie <fichier.md>]`
 Builds a markdown traceability matrix: per story → title, statut, board status, validated by/when, commits
-(hash + subject), tests referencing it (files containing `@ID` or `ID`), release notes mentioning it.
+(hash + subject), tests referencing it (files containing `@ID` or `ID`), release notes mentioning it. A `.feature`
+file still starting with the header `# Squelette généré par « npx orbith tests »` is a skeleton, not a test: it is not in
+`StoryTrace.tests` (nor counted by the audit coverage) but listed as `<file> (squelette, non exécuté)` (`squelettes`).
 With ID: detail for one story. Prints to stdout or writes file.
 
 ### 4.6b `orbith tests [ID] [--dossier tests/features] [--force]`
@@ -287,7 +302,8 @@ Existing files are kept unless `--force`. Non-validated stories are skipped (hum
 
 ### 4.6b2 `orbith version <numero> [--depuis <ref>]`
 PO command. Number: digits and dots (`1.1.0.0`), optional `-suffix`. Stories = those whose id is mentioned
-(boundary-aware) in commit messages (subject and body, merge commits included) in `<prev>..HEAD`, where
+(boundary-aware) in commit messages (subject and body, merge commits included) whose subject is not of type
+`docs`/`ci`/`chore`/`build` (such commits only *cite* a story, e.g. `chore: valide US-003`), `Abandonnée` stories excluded in `<prev>..HEAD`, where
 `<prev>` = `--depuis` or the `commit` of the last entry of `.orbith/versions.json` (whole history for the first).
 Appends `{numero, date, commit: HEAD, par, us[]}` to `.orbith/versions.json` and writes the draft
 `docs/livraisons/release-notes-<numero>.md` (`statut: brouillon`, Nouveautés / Corrections split on the `bug`
@@ -408,7 +424,7 @@ export async function scanAll(root: string): Promise<{ artifacts: Artifact[]; pr
 export async function scanArtifacts(root: string): Promise<Artifact[]>;
 export function storyStatus(a: { data: Record<string, unknown> }): string; // board column, accent/case-insensitive
 export function hasGherkin(body: string): boolean;   // ```gherkin block or Scénario:/Scenario: lines in AC section
-export const STORY_STATUSES = ['À faire','Prête','En cours','En revue','Terminée'] as const;
+export const STORY_STATUSES = ['À faire','Prête','En cours','En revue','Terminée','Abandonnée'] as const;
 
 // git.ts
 export async function gitUser(root: string): Promise<{ name: string; email: string } | null>;
@@ -425,6 +441,7 @@ export async function gitLastAuthor(root: string, rel: string): Promise<{ name: 
 export async function exists(p: string): Promise<boolean>;
 export async function copyDir(src: string, dest: string, opts?: { overwrite?: boolean }): Promise<string[]>; // returns written files
 export async function writeFileSafe(p: string, content: string, opts?: { overwrite?: boolean }): Promise<boolean>;
+export function arg(p: string): string; // path as an argument of a SUGGESTED shell command: "quoted" when it has whitespace; used in every `npx orbith valider/decouper <path>` message
 
 // ui.ts  — French console helpers
 export const ui: { titre(s:string):void; ok(s:string):void; info(s:string):void; avert(s:string):void;
@@ -607,6 +624,8 @@ Files: `src/cli/version-calc.ts` (W.X.Y.Z version + Conventional Commits logic),
 - **`orbith version` (no argument; with a number it is §4.6b2) `[--format texte|json]`**: base = highest `vW.X.Y.Z` tag reachable (legacy 3-part tags read as `W.X.Y.0`) from HEAD (`git tag --merged HEAD`, annotated or lightweight; tags only on other branches are ignored; else 0.0.0.0); inputs = commits since that tag
   + pending stories (`Terminée`, no `mis_en_prod_le`, or cited by a commit since the tag), excluding stories cited by
   the release notes of a version that already has a tag (`storiesDejaLivrees`). Bump = max of:
+  The same commit-type rule applies to « cited by a commit » (`storiesEnAttente`). The text proposal advises
+  `npx orbith version <numéro>` (creates the version), then `npx orbith release <numéro>` once the notes are validated.
   major = `type!:` / `BREAKING CHANGE:` footer / story label `breaking` (case-insensitive, constant `BREAKING_LABEL`);
   minor = `feat` / done non-bug story; patch = `fix` / done story labelled `bug`. Other types do not bump.
   Read-only; prints the reasons; nothing proposed when no signal.
@@ -786,7 +805,9 @@ Deterministic, no AI. Code: `src/core/extraits.ts` (logic), `src/cli/decouper.ts
   (exit code 1 on error).
 - **Workflow** `content/workflows/creer-agent.md` (core entry `creer-agent`): guides a human one question at a time,
   invents no rule, writes only `.orbith/custom/agents/<key>.md`, never `statut: validé`.
-- **Check** `src/checks/agents.ts`, category `agents` (« Agents personnalisés »): invalid declaration → erreur;
+- **Check** `src/checks/agents.ts`, category `agents` (« Agents personnalisés »): forbidden instruction (`CONSIGNES_INTERDITES`:
+  `orbith valider … --yes`, `git push`, order to write `statut: validé`; a line holding a negation such as « jamais »/« ne » is
+  the prohibition itself and passes) → erreur; invalid declaration → erreur;
   ignored file → avertissement; custom agent body missing a mandatory rule → avertissement (accent/case-insensitive:
   validation humaine = `rules/validation-humaine.md` or « jamais … statut: validé » on one line; confidentialité;
   « nouvelle session »; `rules/documentation.md` or « documentation à jour »); marker still present → info. Keyword
@@ -810,12 +831,14 @@ Deterministic, no AI (`src/cli/autopilote-plan.ts`, pure `calculerPlan`; I/O in 
   listed in `ecartees` with a French reason.
 - **Order**: Backlog.md `ordinal`, then `priority` (high/medium/low, also haute/moyenne/basse), then id number.
 - **Bound `max_us`**: `--max-us`, else `autopilote.max_us`, else 3 (integer ≥ 1). It is a WIP limit of stories
-  awaiting human review: stories of the scope already `En cours`/`En revue` use up places
+  awaiting human review: stories of the **whole project** already `En cours`/`En revue` (not only those of the scope, so
+  narrowing the targets cannot dodge it) use up places
   (`places = max_us − en_attente`), so successive sessions can never pile up more than `max_us` unreviewed stories.
 - **Budget**: ceiling `--budget` (accepts `2,5`), else `autopilote.budget`, else none (warning). `consomme` = sum of
   the scope stories' `couts_ia` entries in `finops.devise` (entry without `cout` is priced from `tokens_entree`/
   `tokens_sortie` with `finops.prix`, key = longest prefix of `modele`, else `defaut`; other currency or no price →
-  ignored and counted). `cout_moyen_us` = mean recorded cost of `Terminée` stories (whole project); when known, the
+  ignored and counted). The ceiling stays per scope; `consomme_projet` gives the project total (shown in the text plan when it differs). All
+  amounts in messages use the French decimal separator (`montant`). `cout_moyen_us` = mean recorded cost of `Terminée` stories (whole project); when known, the
   plan is reduced to `floor(restant / cout_moyen_us)` stories.
 - **Refusals** (`ok: false`, exit code 1, empty plan): `orbith check` has errors; any artifact `modifié` (after
   validation); invalid frontmatter; budget exhausted (`restant ≤ 0`) or insufficient for one story at the average
@@ -829,8 +852,9 @@ Deterministic, no AI (`src/cli/autopilote-plan.ts`, pure `calculerPlan`; I/O in 
 ### 15.2 Workflow `content/workflows/autopilote.md`
 
 Registered in `AGENTS` (`autopilote`), hence one Gemini/Claude command and one Copilot prompt file. It runs
-`npx orbith autopilote <cibles> --format json`, stops on any refusal, shows the plan and asks **one** explicit
-confirmation (local commits, card moves `Prête → En cours → En revue` only). One task = one session: by default it
+`npx orbith autopilote <cibles> [--max-us N] [--budget M] --format json` (exactly the targets and options given by the
+human), stops on any refusal, shows the plan and asks **one** explicit confirmation given **after** the plan was shown (an
+advance « yes » does not count) (local commits, card moves `Prête → En cours → En revue` only). One task = one session: by default it
 handles the first story of the plan only; chaining in the same session requires an explicit human request and a
 fresh `orbith autopilote` run before each story. Per story: Dev (`agents/dev.md`), tests + `orbith check`, cost
 entry (`couts-ia` rule) checked against the remaining budget, QA (`agents/qa.md`), cost entry, then stop for human

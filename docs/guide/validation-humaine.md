@@ -62,6 +62,9 @@ L'option `--yes` supprime la confirmation interactive. Elle est prévue pour les
 utilisée que par une personne**, qui assume la validation. Ne l'intégrez jamais dans une automatisation qui validerait
 des documents sans relecture humaine.
 
+Sans `--yes`, dans un terminal non interactif (un agent IA, un script), la commande refuse de valider et le message
+rappelle que **seul un humain valide, dans son terminal** : il ne suggère jamais `--yes` à un agent.
+
 ## L'empreinte du contenu
 
 Pour savoir si un document a changé depuis sa validation, Orbith calcule une **empreinte** (un code SHA-256) du
