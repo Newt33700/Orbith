@@ -1,6 +1,6 @@
 import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
 import { mentions } from './trace-report.js';
-import { hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type OrbithConfig } from '../core/index.js';
+import { arg, hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type OrbithConfig } from '../core/index.js';
 
 /**
  * Bounded autopilot plan (SPEC §15). Pure and deterministic: no AI, no I/O.
@@ -45,6 +45,8 @@ export interface BudgetPlan {
   plafond: number | null;
   /** Sum of the recorded `couts_ia` entries of the scope's stories. */
   consomme: number;
+  /** Same sum over the whole project (shown for information; the ceiling applies to the scope). */
+  consomme_projet: number;
   restant: number | null;
   /** Average recorded cost of a finished story (whole project), null without history. */
   cout_moyen_us: number | null;
@@ -58,7 +60,7 @@ export interface PlanAutopilote {
   avertissements: string[];
   perimetre: string;
   max_us: number;
-  /** Stories of the scope already `En cours` or `En revue` (they use up places under `max_us`). */
+  /** Stories of the whole project already `En cours` or `En revue` (they use up places under `max_us`). */
   en_attente: string[];
   places: number;
   budget: BudgetPlan;
@@ -70,6 +72,9 @@ export interface PlanAutopilote {
 
 const norm = (s: string): string => s.trim().toLowerCase();
 const r2 = (n: number): number => Math.round(n * 100) / 100;
+
+/** Amount with the French decimal separator, as in the plan's Budget line (all autopilot messages use it). */
+export const montant = (n: number, devise: string): string => `${n.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} ${devise}`;
 
 function deps(s: Artifact): string[] {
   const d = s.data['dependencies'];
@@ -167,6 +172,7 @@ function comparer(a: Artifact, b: Artifact): number {
 export function raisonInelegible(s: Artifact, stories: Artifact[], adrsValides: Artifact[]): string | null {
   const col = storyStatus(s);
   if (col === 'Terminée') return 'déjà terminée';
+  if (col === 'Abandonnée') return 'abandonnée';
   if (s.etat === 'modifié') return 'modifiée après validation : à relire et revalider';
   if (s.etat !== 'validé') return "pas encore validée (npx orbith valider)";
   if (col === 'En cours' || col === 'En revue') return `déjà « ${col} » : attend la suite ou ta revue`;
@@ -265,7 +271,7 @@ export function calculerPlan(e: EntreesPlan): PlanAutopilote {
   // Refusals that stop everything.
   for (const p of e.problemes ?? []) refus.push(`Frontmatter invalide dans ${p.chemin} : corrige-le avant l'autopilote.`);
   for (const a of artifacts.filter((x) => x.etat === 'modifié')) {
-    refus.push(`${a.chemin} a été modifié après sa validation : relis-le puis revalide-le (npx orbith valider ${a.chemin}).`);
+    refus.push(`${a.chemin} a été modifié après sa validation : relis-le puis revalide-le (npx orbith valider ${arg(a.chemin)}).`);
   }
   const erreursCheck = e.erreursCheck ?? [];
   if (erreursCheck.length > 0) {
@@ -280,6 +286,7 @@ export function calculerPlan(e: EntreesPlan): PlanAutopilote {
     consomme += c.total;
     ignorees += c.ignorees;
   }
+  const consommeProjet = stories.reduce((t, s) => t + coutEnregistre(s, config).total, 0);
   const terminees = stories.filter((s) => storyStatus(s) === 'Terminée').map((s) => coutEnregistre(s, config).total).filter((c) => c > 0);
   const coutMoyen = terminees.length > 0 ? r2(terminees.reduce((a, b) => a + b, 0) / terminees.length) : null;
   const restant = plafond != null ? r2(plafond - consomme) : null;
@@ -289,26 +296,27 @@ export function calculerPlan(e: EntreesPlan): PlanAutopilote {
   if (plafond == null) {
     avertissements.push("Aucun budget plafond (option --budget ou autopilote.budget) : l'autopilote ne s'arrêtera qu'au plafond de US.");
   } else if (restant != null && restant <= 0) {
-    refus.push(`Budget épuisé : ${r2(consomme)} ${config.finops.devise} déjà consommés pour un plafond de ${plafond} ${config.finops.devise}.`);
+    refus.push(`Budget épuisé : ${montant(consomme, config.finops.devise)} déjà consommés pour un plafond de ${montant(plafond, config.finops.devise)}.`);
   }
 
-  // WIP bound: stories of the scope already in progress or awaiting review use up places.
-  const enAttente = scope.filter((s) => ['En cours', 'En revue'].includes(storyStatus(s))).map((s) => s.id ?? s.chemin);
+  // WIP bound: stories of the whole project already in progress or awaiting review use up places
+  // (narrowing the scope must not dodge the limit on work awaiting human review).
+  const enAttente = stories.filter((s) => ['En cours', 'En revue'].includes(storyStatus(s))).map((s) => s.id ?? s.chemin);
   let places = Math.max(0, maxUs - enAttente.length);
   if (places === 0 && refus.length === 0) {
     refus.push(
-      `Plafond atteint : ${enAttente.length} US déjà en cours ou en revue (${enAttente.join(', ')}) pour un maximum de ${maxUs}. Relis-les d'abord.`,
+      `Plafond atteint : ${enAttente.length} US du projet déjà en cours ou en revue (${enAttente.join(', ')}) pour un maximum de ${maxUs}. Relis-les d'abord.`,
     );
   }
   if (restant != null && restant > 0 && coutMoyen != null && coutMoyen > 0) {
     const parBudget = Math.floor(restant / coutMoyen);
     if (parBudget < places) {
       avertissements.push(
-        `Le budget restant (${restant} ${config.finops.devise}) couvre environ ${parBudget} US au coût moyen constaté (${coutMoyen} ${config.finops.devise}) : plan réduit.`,
+        `Le budget restant (${montant(restant, config.finops.devise)}) couvre environ ${parBudget} US au coût moyen constaté (${montant(coutMoyen, config.finops.devise)}) : plan réduit.`,
       );
       places = parBudget;
       if (places === 0 && refus.length === 0) {
-        refus.push(`Budget insuffisant pour une US de plus (coût moyen constaté : ${coutMoyen} ${config.finops.devise}).`);
+        refus.push(`Budget insuffisant pour une US de plus (coût moyen constaté : ${montant(coutMoyen, config.finops.devise)}).`);
       }
     }
   }
@@ -317,7 +325,7 @@ export function calculerPlan(e: EntreesPlan): PlanAutopilote {
   const ecartees: UsEcartee[] = [];
   const eligibles: Artifact[] = [];
   for (const s of scope) {
-    if (storyStatus(s) === 'Terminée') continue;
+    if (['Terminée', 'Abandonnée'].includes(storyStatus(s))) continue;
     const raison = s.id ? raisonInelegible(s, stories, adrs) : 'pas d\'identifiant (champ id)';
     if (raison) ecartees.push({ id: s.id ?? '?', chemin: s.chemin, raison });
     else eligibles.push(s);
@@ -369,6 +377,7 @@ export function calculerPlan(e: EntreesPlan): PlanAutopilote {
       devise: config.finops.devise,
       plafond,
       consomme: r2(consomme),
+      consomme_projet: r2(consommeProjet),
       restant,
       cout_moyen_us: coutMoyen,
       entrees_ignorees: ignorees,

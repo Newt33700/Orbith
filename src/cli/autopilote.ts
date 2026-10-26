@@ -2,20 +2,19 @@ import type { Command } from 'commander';
 import pc from 'picocolors';
 import { OrbithError, loadConfig, requireProjectRoot, scanAll, ui } from '../core/index.js';
 import { buildContext, runAll } from '../checks/index.js';
-import { calculerPlan, type PlanAutopilote } from './autopilote-plan.js';
+import { calculerPlan, montant, type PlanAutopilote } from './autopilote-plan.js';
 
 export { calculerPlan, dorRemplie, usEligibles, AUTOPILOTE_MAX_US_DEFAUT } from './autopilote-plan.js';
 export type { PlanAutopilote } from './autopilote-plan.js';
 
-const montant = (n: number, devise: string): string => `${n.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} ${devise}`;
-
 export function renderPlan(p: PlanAutopilote): string {
   const out: string[] = [pc.bold(pc.cyan('Plan de l\'autopilote (borné, sans IA)')), ''];
   out.push(`  Périmètre : ${p.perimetre}`);
-  out.push(`  Plafond : ${p.max_us} US en attente de revue au plus${p.en_attente.length ? ` (déjà : ${p.en_attente.join(', ')})` : ''}`);
+  out.push(`  Plafond : ${p.max_us} US en attente de revue au plus ${p.en_attente.length ? ` (déjà, tout le projet : ${p.en_attente.join(', ')})` : ' (tout le projet)'}`);
   const b = p.budget;
   out.push(
     `  Budget IA : ${b.plafond != null ? `${montant(b.consomme, b.devise)} consommés sur ${montant(b.plafond, b.devise)} (reste ${montant(b.restant ?? 0, b.devise)})` : `${montant(b.consomme, b.devise)} consommés, aucun plafond`}` +
+      (b.consomme_projet !== b.consomme ? ` · total du projet : ${montant(b.consomme_projet, b.devise)}` : '') +
       (b.cout_moyen_us != null ? ` · coût moyen constaté par US : ${montant(b.cout_moyen_us, b.devise)}` : '') +
       pc.dim(' (estimations, pas une facture)'),
   );
