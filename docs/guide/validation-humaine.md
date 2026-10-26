@@ -74,6 +74,14 @@ Conséquences pratiques :
 - **Modifier le texte** du document change l'empreinte : la validation n'est plus valable.
 - **Déplacer une story** d'une colonne à l'autre (`status`) ne modifie pas l'empreinte : une story peut donc passer
   de « Prête » à « En cours » sans être revalidée.
+- Pour une **story** seulement, la section `## Journal de réalisation` est exclue de l'empreinte. Les agents (Dev,
+  QA, Sécurité, Test) y notent ce qu'ils ont fait et leurs revues sans annuler la validation. Tout le reste du corps
+  (description, critères, `## Notes techniques`, Definition of Ready) reste couvert : le modifier annule la
+  validation. La section va d'un titre `## Journal de réalisation` au titre de niveau 1 ou 2 suivant ; n'y mettez
+  ni exigence ni critère, ils ne seraient pas validés. Les validations enregistrées avant cette règle restent
+  valables.
+- **Cochez la Definition of Ready avant de valider** : cocher une case ensuite modifie le corps. Il n'y a plus de
+  case « Validée par le PO » : la validation est prouvée par `statut: validé` et le registre.
 
 ## Les situations possibles
 

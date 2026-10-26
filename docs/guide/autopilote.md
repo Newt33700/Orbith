@@ -38,7 +38,7 @@ Une US est retenue seulement si **tout** est vrai :
 | Condition | Comment la remplir |
 |---|---|
 | Elle est validée (et pas modifiée depuis) | `npx orbith valider "<fichier>"` |
-| Sa Definition of Ready est remplie | toutes les cases de la section « Definition of Ready » sont cochées |
+| Sa Definition of Ready est remplie | toutes les cases de la section « Definition of Ready » sont cochées, avant la validation (une ancienne case « Validée par le PO » est ignorée : la validation suffit) |
 | Elle est dans la colonne `Prête` | c'est toi qui déplaces la carte |
 | Elle a au moins un scénario Gherkin | section « Critères d'acceptation » |
 | Ses dépendances (`dependencies`) sont `Terminée` | une US qui attend une autre US reste en dehors du plan |

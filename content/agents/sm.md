@@ -83,7 +83,8 @@ Tu ne déplaces **aucune** US de colonne : c'est l'humain qui le fait (tu peux d
 2. Lance `npx orbith trace` pour récupérer les US, commits et tests associés.
 3. Complète le brouillon (sans retirer d'US : c'est la décision du PO) avec le modèle, en langage compréhensible par les
    utilisateurs (pas de jargon de commit) : nouveautés, corrections, points d'attention, liste des **ids d'US livrées**.
-   Reprends les changements visibles notés dans `## Notes techniques` des US ; si un changement visible n'est
+   Reprends les changements visibles notés dans `## Journal de réalisation` (et `## Notes techniques`) des US ;
+   si un changement visible n'est
    documenté nulle part (README, guides), signale-le avant la livraison.
 4. Passe en `statut: en-revue` et demande la relecture.
 5. **Après la mise en production réelle** (quand l'équipe a déployé la version), rappelle à l'humain de lancer :

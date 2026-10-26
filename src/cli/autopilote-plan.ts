@@ -76,9 +76,13 @@ function deps(s: Artifact): string[] {
   return Array.isArray(d) ? d.map((x) => String(x).trim()).filter((x) => x !== '') : [];
 }
 
+/** « Validée par le PO » checkbox of older DoR checklists. */
+const CASE_VALIDATION_PO = /valid[ée]e?\s+par\s+le\s+po\b/i;
+
 /**
  * Definition of Ready filled: the `## Definition of Ready` section exists, holds at least one checkbox,
- * and every checkbox is ticked.
+ * and every checkbox is ticked. A « Validée par le PO » box (older templates) is ignored: PO validation is proven by
+ * `statut: validé` + the registry (checked separately), and ticking it after `valider` would void the validation.
  */
 export function dorRemplie(body: string): boolean {
   const lines = body.replace(/\r\n/g, '\n').split('\n');
@@ -93,7 +97,7 @@ export function dorRemplie(body: string): boolean {
     }
     if (!inDor) continue;
     const c = /^\s*[-*]\s+\[([ xX])\]/.exec(line);
-    if (!c) continue;
+    if (!c || CASE_VALIDATION_PO.test(line.normalize('NFC'))) continue;
     total++;
     if (c[1] !== ' ') coches++;
   }

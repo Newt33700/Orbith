@@ -27,6 +27,41 @@ export function hashBody(body: string): string {
   return createHash('sha256').update(normalized, 'utf8').digest('hex');
 }
 
+/** Heading of the only body section left out of the validation hash (stories only, bugs included: `type: story`). */
+export const SECTION_JOURNAL = 'Journal de réalisation';
+const TYPES_AVEC_JOURNAL = new Set(['story']);
+const RE_JOURNAL = /^##[ \t]+journal[ \t]+de[ \t]+réalisation[ \t]*#*[ \t]*$/i;
+
+/**
+ * Body without its `## Journal de réalisation` sections: each one runs from its heading up to the next heading of
+ * level 1 or 2 (or the end). Everything else is kept byte for byte, so a body without journal is unchanged.
+ */
+export function retirerJournal(body: string): string {
+  const out: string[] = [];
+  let dansJournal = false;
+  for (const ligne of body.replace(/\r\n/g, '\n').split('\n')) {
+    if (/^#{1,2}[ \t]/.test(ligne)) dansJournal = RE_JOURNAL.test(ligne.normalize('NFC'));
+    if (!dansJournal) out.push(ligne);
+  }
+  return out.join('\n');
+}
+
+/**
+ * Hash recorded by `orbith valider`. For a story, the `## Journal de réalisation` section is excluded, so
+ * agents can log their work there without invalidating the human validation. Other types: `hashBody`.
+ */
+export function empreinteValidation(body: string, type: unknown): string {
+  return typeof type === 'string' && TYPES_AVEC_JOURNAL.has(type) ? hashBody(retirerJournal(body)) : hashBody(body);
+}
+
+/**
+ * Does a recorded hash still match the body? Accepts the full-body hash (registries written before the journal
+ * existed) or, for a story, the hash without the journal. Any other change of the body is still detected.
+ */
+export function empreinteCorrespond(sha256: string, body: string, type: unknown): boolean {
+  return sha256 === hashBody(body) || sha256 === empreinteValidation(body, type);
+}
+
 function registryPath(root: string): string {
   return path.join(root, ORBITH_DIR, 'validations.json');
 }
@@ -82,5 +117,5 @@ export async function etatValidation(root: string, file: string, doc?: Doc): Pro
   const rel = toPosixRelative(root, abs);
   const entry = (await loadRegistry(root)).find((e) => e.fichier === rel);
   if (!entry) return 'non-tracé';
-  return entry.sha256 === hashBody(d.body) ? 'validé' : 'modifié';
+  return empreinteCorrespond(entry.sha256, d.body, d.data['type']) ? 'validé' : 'modifié';
 }

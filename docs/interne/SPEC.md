@@ -167,6 +167,12 @@ Scanning uses the frontmatter `type` (files without it are ignored), the table a
   (`status`) of a story can move without invalidating it.
 - A file is **validated** iff its frontmatter says `statut: validé` AND the registry has an entry whose hash
   equals the current body hash. If frontmatter says validé but hash differs → **modifié après validation**.
+- Stories (`type: story`, bugs included) only: `orbith valider` records the hash of the body **without** its
+  `## Journal de réalisation` sections (`retirerJournal`: from that level-2 heading to the next level-1/2 heading or
+  the end; `empreinteValidation(body, type)`). Agents log their work and reviews there without voiding the human
+  validation; every other body change is still detected (a journal heading inserted mid-section hides the text it
+  swallows, so the hash changes). Backward compatible: `empreinteCorrespond(sha, body, type)` accepts the full-body
+  hash (older registry entries, unchanged) or the hash without the journal. Other types: full body, as before.
   If frontmatter says validé but no registry entry → **validation non tracée** (someone/AI edited by hand).
 
 ### 3.4 User stories (Backlog.md compatible)
@@ -187,7 +193,9 @@ Board column (`status` in Backlog.md) values, in French: `À faire`, `Prête`, `
 Body sections (French headings):
 `## Description` (En tant que… je veux… afin de…), `## Critères d'acceptation` (one or more fenced
 ```gherkin blocks: Fonctionnalité/Scénario/Étant donné/Quand/Alors, or English keywords — both accepted),
-`## Notes techniques`, `## Definition of Ready` (checklist copied from dor.md).
+`## Notes techniques`, `## Definition of Ready` (checklist copied from dor.md, ticked **before** validation; no
+« Validée par le PO » box: validation is proven by `statut: validé` + registry), `## Journal de réalisation` (last,
+excluded from the validation hash, written by agents: dev/QA/security/test notes, release-note input).
 
 ### 3.5 Traceability conventions
 
@@ -383,6 +391,9 @@ export async function writeDoc(file: string, doc: Doc): Promise<void>;
 export type EtatValidation = 'validé' | 'non-validé' | 'modifié' | 'non-tracé';
 export interface ValidationEntry { fichier: string; sha256: string; par: string; email: string; le: string; }
 export function hashBody(body: string): string;
+export function retirerJournal(body: string): string;             // drops `## Journal de réalisation` sections
+export function empreinteValidation(body: string, type: unknown): string; // hash recorded by `valider`
+export function empreinteCorrespond(sha256: string, body: string, type: unknown): boolean;
 export async function loadRegistry(root: string): Promise<ValidationEntry[]>;
 export async function recordValidation(root: string, entry: ValidationEntry): Promise<void>;
 export async function etatValidation(root: string, file: string, doc?: Doc): Promise<EtatValidation>;
@@ -703,7 +714,7 @@ Files: `src/cli/version-calc.ts` (W.X.Y.Z version + Conventional Commits logic),
 - **Rule** `content/rules/documentation.md` (in `RULES`, hence in the GEMINI.md/CLAUDE.md block): any code change made
   or proposed by an agent updates, in the same commit or at the latest in the same story, the documentation it makes
   wrong or incomplete (README, user guides, technical docs/ADR, code comments, documented config, release-note input
-  in `## Notes techniques`, runnable examples), with a checklist; an agent never says "done" without reporting it.
+  in `## Journal de réalisation`, runnable examples), with a checklist; an agent never says "done" without reporting it.
   Applied by `dev` (procedure step + end-of-task line), `qa` (gap = « À corriger » finding), `devops` (pipeline
   docs), `sm` (DoD proof, release notes); DoD item « Documentation à jour » is made verifiable.
 - **Check** `src/checks/documentation.ts`, category `documentation`, level `avertissement` only (never fails `check`):
@@ -793,7 +804,8 @@ Deterministic, no AI (`src/cli/autopilote-plan.ts`, pure `calculerPlan`; I/O in 
 - **Scope**: each target is matched (case-insensitive) against the story `epic` field or the story `id`; none =
   whole project. An unknown target is a refusal.
 - **Eligible story**: `type: story`, has an `id`, `etat === 'validé'`, column `Prête`, a Gherkin block, a
-  `## Definition of Ready` section with ≥1 checkbox and all ticked, every `dependencies` entry exists and is
+  `## Definition of Ready` section with ≥1 checkbox and all ticked (a « Validée par le PO » box of older templates is
+  ignored), every `dependencies` entry exists and is
   `Terminée`, and (label `impact-archi`) a validated ADR mentions it. Non-eligible open stories of the scope are
   listed in `ecartees` with a French reason.
 - **Order**: Backlog.md `ordinal`, then `priority` (high/medium/low, also haute/moyenne/basse), then id number.

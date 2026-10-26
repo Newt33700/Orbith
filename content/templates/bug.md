@@ -78,4 +78,10 @@ Fonctionnalité: <nom du comportement corrigé>
 - [ ] Critères d'acceptation en Gherkin (scénario qui reproduit le bug)
 - [ ] Estimable par l'équipe
 - [ ] Dépendances identifiées
-- [ ] Validée par le PO
+
+<!-- Pas de case « Validée par le PO » : la validation est prouvée par `statut: validé` (npx orbith valider). -->
+
+## Journal de réalisation
+
+<!-- Seule section hors empreinte de validation : les agents y notent la cause trouvée, ce qui a été fait et leurs
+     revues, sans annuler la validation. Ne mets ici ni exigence ni critère d'acceptation : ils ne seraient pas validés. -->

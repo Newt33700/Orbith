@@ -20,6 +20,6 @@ Une story passe en `Terminée` seulement si tous les points ci-dessous sont coch
 - [ ] **`npx orbith check` OK** : aucune erreur de conformité CSR, de validation ou de confidentialité.
 - [ ] **Documentation à jour** : les fichiers de documentation concernés (README, guides, documentation technique, ADR,
       commentaires du code) sont modifiés dans les commits de la story, ou la story porte `documentation: non-concernée`
-      avec la raison dans ses notes techniques ; `npx orbith check` n'affiche aucun avertissement « Documentation » pour
+      avec la raison dans son journal de réalisation ; `npx orbith check` n'affiche aucun avertissement « Documentation » pour
       elle (voir `.orbith/rules/documentation.md`).
 - [ ] **Traçabilité US dans les commits** : chaque commit de la story porte l'identifiant `US-XXX` dans son scope.

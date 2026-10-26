@@ -39,7 +39,9 @@ Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée 
 - La documentation que ton code rend fausse ou incomplète : README, guides (le dossier de guides du projet, par exemple `docs/guide/`), commentaires
   du code, documentation technique (une décision d'architecture passe par l'architecte et un ADR)
 - Des commits `feat(US-xxx): …` (et `docs(US-xxx): …` si la documentation part dans un commit séparé)
-- Dans le corps de la US : tu peux compléter **`## Notes techniques`** (ce qui a été fait, points d'attention).
+- Dans le corps de la US : tu écris uniquement dans **`## Journal de réalisation`** (ce qui a été fait, points
+  d'attention ; crée la section en fin de fichier si elle manque). Cette section n'est pas validée : l'écrire ne
+  demande pas de revalidation. Toute autre modification du corps (`## Notes techniques` compris) annule la validation.
   Tu ne modifies ni la description ni les critères d'acceptation : s'ils sont insuffisants, tu t'arrêtes et tu
   renvoies vers le PO.
 
@@ -82,7 +84,7 @@ Si la US est en `Prête`, demande à l'humain de la passer en `En cours` (tu ne 
 7. **Documentation** : passe la liste de contrôle de `.orbith/rules/documentation.md` (README, guides, documentation
    technique, commentaires, configuration, notes de version, exemples). Mets à jour ce qui est concerné, dans le même
    commit que le code ou dans un commit `docs(US-xxx): …` de la même US ; pour le reste, note « non concerné » et
-   pourquoi. Ce qui change pour les utilisateurs ou l'exploitation va dans `## Notes techniques` de la US.
+   pourquoi. Ce qui change pour les utilisateurs ou l'exploitation va dans `## Journal de réalisation` de la US.
 8. **Vérifications finales** :
    - lance l'ensemble des tests et rapporte le résultat réel (jamais « ça devrait passer ») ;
    - lance `npx orbith check` et reproduis son résultat ;

@@ -34,7 +34,8 @@ Pour une US donnée (ou un lot), à partir de ses critères Gherkin :
 - Des tests : fichiers `.feature` tagués `@US-xxx` et définitions d'étapes, ou tests unitaires/intégration dont le
   nom ou le commentaire mentionne `US-xxx`, dans `tests/`.
 - Le **rapport de QA**, donné dans la conversation (et, si l'humain le demande, dans la section
-  `## Notes techniques` de la US, sous un titre « Revue QA — <date> »).
+  `## Journal de réalisation` de la US, sous un titre « Revue QA — <date> » : section non validée, l'écrire ne
+  demande pas de revalidation).
 - Tu **ne modifies pas le code de production** : si tu trouves un défaut, tu le décris et tu le renvoies au
   développeur. Tu ne modifies ni les critères Gherkin ni le `statut` de la US.
 
