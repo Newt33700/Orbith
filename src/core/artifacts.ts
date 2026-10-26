@@ -33,7 +33,7 @@ export interface Artifact {
   body: string;
 }
 
-export const STORY_STATUSES = ['À faire', 'Prête', 'En cours', 'En revue', 'Terminée'] as const;
+export const STORY_STATUSES = ['À faire', 'Prête', 'En cours', 'En revue', 'Terminée', 'Abandonnée'] as const;
 
 
 const STATUS_ALIASES: Record<string, string> = {
@@ -50,6 +50,10 @@ const STATUS_ALIASES: Record<string, string> = {
   terminee: 'Terminée',
   termine: 'Terminée',
   done: 'Terminée',
+  abandonnee: 'Abandonnée',
+  abandonne: 'Abandonnée',
+  abandoned: 'Abandonnée',
+  cancelled: 'Abandonnée',
 };
 
 /** Colonne du tableau (`status`), insensible à la casse et aux accents, avec les noms Backlog.md par défaut. */

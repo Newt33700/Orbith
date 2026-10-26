@@ -172,7 +172,7 @@ notes de version.
 ## Ce qu'il faut éviter
 
 - **Coder une story non validée.** L'agent Dev refuse, et c'est une bonne chose.
-- **Un commit sans identifiant** de story sur le travail en cours : il sera signalé par `npx orbith check`.
+- **Un commit sans identifiant** de story sur le travail en cours : il sera signalé par `npx orbith check` (sauf les commits `docs:`, `ci:`, `chore:` et `build:`, qui ne touchent ni le code ni les tests).
 - **Un secret dans le code** (mot de passe, clé), même « temporairement ».
 - **Enchaîner plusieurs stories dans la même session.** Ouvrez une nouvelle session (`/clear`) pour chaque story.
 - **Livrer du code sans sa documentation** : un README ou un guide qui décrit l'ancien comportement induit l'équipe en

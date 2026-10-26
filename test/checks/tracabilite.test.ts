@@ -19,7 +19,7 @@ describe('check tracabilite', () => {
     git(fx.root, 'add', '.');
     git(fx.root, 'commit', '-q', '-m', 'feat(US-001): premier');
     await fx.put('a.txt', '2');
-    git(fx.root, 'commit', '-q', '-am', 'chore: sans story');
+    git(fx.root, 'commit', '-q', '-am', 'feat: sans story');
     const story = (id: string) => `---\ntype: story\nid: ${id}\nstatut: brouillon\nstatus: Terminée\n---\n# ${id}\n`;
     await fx.put('backlog/tasks/us-001.md', story('US-001'));
     await fx.put('backlog/tasks/us-002.md', story('US-002'));
@@ -29,5 +29,19 @@ describe('check tracabilite', () => {
     const st = r.filter((x) => /Terminée/.test(x.message));
     expect(st).toHaveLength(1);
     expect(st[0]!.message).toContain('US-002');
+  });
+
+  it("n'avertit pas pour les commits docs/ci/chore/build sans US, mais toujours pour le code", async () => {
+    initRepo(fx.root);
+    await fx.put('a.txt', '1');
+    git(fx.root, 'add', '.');
+    git(fx.root, 'commit', '-q', '-m', 'docs: ajoute le PRD');
+    for (const t of ['ci: ajoute le pipeline', 'chore(deps): met à jour', 'build: config', 'docs(prd)!: refonte']) {
+      git(fx.root, 'commit', '-q', '--allow-empty', '-m', t);
+    }
+    expect(await run(ctx())).toEqual([]);
+    git(fx.root, 'commit', '-q', '--allow-empty', '-m', 'fix: corrige un bug');
+    git(fx.root, 'commit', '-q', '--allow-empty', '-m', 'correction diverse');
+    expect((await run(ctx())).filter((x) => /sans identifiant/.test(x.message))).toHaveLength(2);
   });
 });

@@ -1,6 +1,8 @@
 import path from 'node:path';
-import { gitCommitsSince, gitReachableTags, gitTags, storyStatus, type Artifact, type RawCommit } from '../core/index.js';
+import { COMMIT_TYPES_SANS_LIVRAISON, sujetLivreCode, gitCommitsSince, gitReachableTags, gitTags, storyStatus, type Artifact, type RawCommit } from '../core/index.js';
 import { mentions } from './trace-report.js';
+
+export { COMMIT_TYPES_SANS_LIVRAISON, sujetLivreCode };
 
 /** Story label that forces a major bump (case-insensitive). */
 export const BREAKING_LABEL = 'breaking';
@@ -135,7 +137,8 @@ export function storiesDejaLivrees(arts: Artifact[], tags: string[]): Set<string
 export function storiesEnAttente(arts: Artifact[], commits: ParsedCommit[], livrees: Set<string> = new Set()): Artifact[] {
   return arts.filter((a) => {
     if (a.type !== 'story' || !a.id || a.data['mis_en_prod_le'] != null || livrees.has(a.id)) return false;
-    return storyStatus(a) === 'Terminée' || commits.some((c) => c.us.includes(a.id!));
+    if (storyStatus(a) === 'Abandonnée') return false;
+    return storyStatus(a) === 'Terminée' || commits.some((c) => c.us.includes(a.id!) && sujetLivreCode(c.subject));
   });
 }
 

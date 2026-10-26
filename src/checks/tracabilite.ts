@@ -1,4 +1,4 @@
-import { gitLog, isGitRepo, scanArtifacts, storyStatus } from '../core/index.js';
+import { gitLog, sujetLivreCode, isGitRepo, scanArtifacts, storyStatus } from '../core/index.js';
 import type { CheckContext, CheckResult } from './types.js';
 
 function escapeRe(s: string): string {
@@ -15,7 +15,8 @@ export async function run(ctx: CheckContext): Promise<CheckResult[]> {
   const prefixe = ctx.config?.backlog.prefixe ?? 'US';
   const idRe = new RegExp(`\\b${escapeRe(prefixe)}-\\d+\\b`);
   for (const c of await gitLog(ctx.root, 50)) {
-    if (!idRe.test(c.subject)) {
+    // Documentation, CI, chore and build commits touch neither code nor tests: no story id required.
+    if (!idRe.test(c.subject) && sujetLivreCode(c.subject)) {
       res.push({
         categorie: 'tracabilite',
         niveau: 'avertissement',

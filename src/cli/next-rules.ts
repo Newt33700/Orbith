@@ -2,7 +2,7 @@ import { AGENTS as AGENT_DEFS } from '../adapters/agents.js';
 import { mentions } from './trace-report.js';
 import { usEligibles } from './autopilote-plan.js';
 import { ameliorationHints } from './next-amelioration.js';
-import { changesPourVersion, hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
+import { arg, changesPourVersion, hasGherkin, storyStatus, type Artifact, type FrontmatterProblem, type ArtifactType, type OrbithConfig } from '../core/index.js';
 
 export interface Action {
   kind: 'probleme' | 'agent' | 'valider' | 'humain' | 'fini';
@@ -33,7 +33,7 @@ export function agent(key: AgentKey, message: string, arg?: string): Action {
 }
 
 function valider(a: Artifact, message: string): Action {
-  return { kind: 'valider', message, cli: `npx orbith valider ${a.chemin}` };
+  return { kind: 'valider', message, cli: `npx orbith valider ${arg(a.chemin)}` };
 }
 
 function ofType(arts: Artifact[], type: ArtifactType): Artifact[] {
@@ -53,13 +53,13 @@ function problemes(arts: Artifact[]): Action[] {
       out.push({
         kind: 'probleme',
         message: `${a.chemin} a été modifié après sa validation. Relis-le puis revalide-le.`,
-        cli: `npx orbith valider ${a.chemin}`,
+        cli: `npx orbith valider ${arg(a.chemin)}`,
       });
     } else if (a.etat === 'non-tracé') {
       out.push({
         kind: 'probleme',
         message: `${a.chemin} est marqué « validé » sans trace de validation. Relis-le puis valide-le.`,
-        cli: `npx orbith valider ${a.chemin}`,
+        cli: `npx orbith valider ${arg(a.chemin)}`,
       });
     }
   }
@@ -84,7 +84,7 @@ function gate(
 function storyActions(arts: Artifact[], config?: OrbithConfig): Action[] {
   const stories = ofType(arts, 'story');
   const actions: Action[] = [];
-  const open = stories.filter((s) => status(s) !== 'Terminée');
+  const open = stories.filter((s) => !['Terminée', 'Abandonnée'].includes(status(s)));
 
   for (const s of open) {
     if (!hasGherkin(s.body)) {
@@ -150,6 +150,20 @@ function storyActions(arts: Artifact[], config?: OrbithConfig): Action[] {
     }
   }
   return actions;
+}
+
+/**
+ * Piste projet, étape 5 du workflow (avant les epics de l'étape 7) : les environnements sont décrits puis validés
+ * avant de découper en epics. Ne s'applique que tant qu'aucun epic n'existe : un projet déjà découpé n'est pas bloqué.
+ */
+function environnementsGate(arts: Artifact[]): Action | null {
+  if (ofType(arts, 'epic').length > 0) return null;
+  const envs = ofType(arts, 'environnements');
+  if (envs.length === 0) {
+    return agent('devops', "Décris les environnements (dev, recette, prod…) avec l'agent DevOps avant de découper en epics (étape 5 du workflow projet).");
+  }
+  const pending = envs.find((a) => a.etat !== 'validé');
+  return pending ? valider(pending, `Relis les environnements (${pending.chemin}) puis valide-les.`) : null;
 }
 
 /** Piste projet : décrire les environnements (non identiques) puis les faire valider avant le pipeline. */
@@ -248,6 +262,7 @@ export function computeNext(
         'architecte',
         "Pas encore d'architecture : lance l'architecte (conforme au CSR).",
       ) ??
+      environnementsGate(artifacts) ??
       gate(artifacts, 'epic', "l'epic", 'po', 'Pas encore d\'epic : lance le PO pour découper le PRD.');
   }
   if (!blocked && ofType(artifacts, 'story').length === 0) {

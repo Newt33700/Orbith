@@ -105,12 +105,12 @@ export function evaluerPreparation(
   for (const [type, nom, requis] of docs) {
     const found = ofType(artifacts, type);
     if (found.length === 0) {
-      if (projet) (requis ? fail : concern)(`Pas de ${nom} (piste projet).`);
+      if (projet) (requis ? fail : concern)(`Pas encore de document : ${nom} (piste projet).`);
       continue;
     }
     for (const a of found) {
       if (a.etat === 'validé') ok(`${nom} validé`);
-      else if (a.etat === 'non-validé') (projet && requis ? fail : concern)(`Le ${nom} n'est pas validé.`, a.chemin);
+      else if (a.etat === 'non-validé') (projet && requis ? fail : concern)(`Non validé : ${nom}.`, a.chemin);
     }
   }
 
@@ -140,7 +140,7 @@ export function evaluerPreparation(
   }
 
   // 3. Gherkin, dépendances, ADR.
-  const open = stories.filter((s) => storyStatus(s) !== 'Terminée');
+  const open = stories.filter((s) => !['Terminée', 'Abandonnée'].includes(storyStatus(s)));
   for (const s of open) {
     if (!hasGherkin(s.body)) fail(`${s.id ?? s.chemin} n'a pas de critères d'acceptation Gherkin.`, s.chemin);
     if (s.etat === 'non-validé') concern(`${s.id ?? s.chemin} n'est pas encore validée.`, s.chemin);

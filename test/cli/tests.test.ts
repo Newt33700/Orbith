@@ -1,9 +1,9 @@
-import { readFile, rm } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runValider } from '../../src/cli/valider.js';
 import { extractGherkin, runTests, toFeature } from '../../src/cli/tests.js';
-import { buildTraces } from '../../src/cli/trace-report.js';
+import { buildTraces, renderMatrix } from '../../src/cli/trace-report.js';
 import { scanArtifacts } from '../../src/core/index.js';
 import { GHERKIN, makeProject, put } from './helpers.js';
 
@@ -55,7 +55,17 @@ describe('orbith tests', () => {
     expect(content).toContain('@US-001');
     expect(content).toContain('Scénario: ok');
     const [t] = await buildTraces(root, await scanArtifacts(root));
-    expect(t!.tests).toContain('tests/features/us-001.feature');
+    // Un squelette généré n'est pas un test : il est listé à part, « non exécuté ».
+    expect(t!.tests).not.toContain('tests/features/us-001.feature');
+    expect(t!.squelettes).toContain('tests/features/us-001.feature');
+    const matrice = renderMatrix([t!], 'x');
+    expect(matrice).toContain('tests/features/us-001.feature (squelette, non exécuté)');
+    // Une fois l'en-tête de squelette retiré, le fichier compte comme un test.
+    const f = path.join(root, 'tests/features/us-001.feature');
+    await writeFile(f, (await readFile(f, 'utf8')).replace(/^# Squelette.*\n/, ''));
+    const [t2] = await buildTraces(root, await scanArtifacts(root));
+    expect(t2!.tests).toContain('tests/features/us-001.feature');
+    expect(t2!.squelettes).toEqual([]);
   });
   it('ne réécrit pas un fichier existant sans --force', async () => {
     const root = await fixture();

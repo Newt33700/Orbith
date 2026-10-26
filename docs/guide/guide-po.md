@@ -147,7 +147,7 @@ npx orbith version 1.1.0.0
 
 La commande :
 
-1. retrouve dans l'historique Git les stories citées dans les commits fusionnés depuis la version précédente (pour la
+1. retrouve dans l'historique Git les stories citées dans les commits fusionnés (hors commits `docs:`, `ci:`, `chore:`, `build:`, qui ne font que les citer) depuis la version précédente (pour la
    toute première version : tout l'historique) ;
 2. les enregistre dans `.orbith/versions.json` ;
 3. crée le brouillon des notes de version `docs/livraisons/release-notes-1.1.0.0.md`, avec les nouveautés, les
