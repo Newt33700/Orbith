@@ -146,7 +146,7 @@ describe('défaut 10 : .env dans le .gitignore', () => {
     await runInstall({ cwd: root, yes: true, nom: 'neuf' });
     const g = await readFile(path.join(root, '.gitignore'), 'utf8');
     expect(g).not.toContain('# orbith:debut');
-    expect(g.split('\n').filter((l) => l === '.env')).toHaveLength(1);
+    expect(g.split(/\r?\n/).filter((l) => l === '.env')).toHaveLength(1);
   });
 });
 
