@@ -1,4 +1,5 @@
 import type { Artifact } from './artifacts.js';
+import { arg } from './fsutil.js';
 
 export const CHANGE_TYPES = ['standard', 'normal', 'urgent'] as const;
 export const CHANGE_RISQUES = ['faible', 'moyen', 'élevé'] as const;
@@ -57,7 +58,7 @@ export function refusChangement(arts: Artifact[], version: string): string | nul
   }
   if (!liees.some((c) => c.etat === 'validé')) {
     const c = liees[0]!;
-    return `La demande de changement ${c.id ?? c.chemin} n'est pas validée. Relis-la puis lance : npx orbith valider ${c.chemin}`;
+    return `La demande de changement ${c.id ?? c.chemin} n'est pas validée. Relis-la puis lance : npx orbith valider ${arg(c.chemin)}`;
   }
   return null;
 }

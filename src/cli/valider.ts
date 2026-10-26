@@ -85,7 +85,7 @@ export async function runValider(fichier: string, opts: ValiderOptions = {}): Pr
   if (!opts.yes) {
     if (!process.stdin.isTTY) {
       throw new OrbithError(
-        "Confirmation impossible : ce terminal n'est pas interactif. Lance la commande toi-même dans un terminal (ou ajoute --yes si tu es bien le relecteur humain).",
+        "Confirmation impossible : ce terminal n'est pas interactif. Si tu es un agent IA, arrête-toi : seul un humain valide. Humain : lance cette commande toi-même, dans ton terminal.",
       );
     }
     const ok = await confirm({ message: 'Je confirme avoir relu et valider ce document', initialValue: false });

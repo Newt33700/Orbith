@@ -1,4 +1,4 @@
-import { EXTRAITS_SEUIL_DEFAUT, documentsVolumineux, extraitsPerimes, scanArtifacts } from '../core/index.js';
+import { arg, EXTRAITS_SEUIL_DEFAUT, documentsVolumineux, extraitsPerimes, scanArtifacts } from '../core/index.js';
 import type { CheckContext, CheckResult } from './types.js';
 
 /**
@@ -26,7 +26,7 @@ export async function run(ctx: CheckContext): Promise<CheckResult[]> {
       out.push({
         categorie: 'documentation',
         niveau: 'info',
-        message: `${d.chemin} est volumineux (environ ${d.jetons} jetons, seuil ${seuil}). Découpe-le : \`npx orbith decouper ${d.chemin}\`.`,
+        message: `${d.chemin} est volumineux (environ ${d.jetons} jetons, seuil ${seuil}). Découpe-le : \`npx orbith decouper ${arg(d.chemin)}\`.`,
         fichier: d.chemin,
       });
     }

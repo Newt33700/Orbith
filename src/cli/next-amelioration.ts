@@ -1,5 +1,5 @@
 import { AGENTS } from '../adapters/agents.js';
-import { ameliorationsLiees, avancement, dateJour, enRetard, type Artifact } from '../core/index.js';
+import { arg, ameliorationsLiees, avancement, dateJour, enRetard, type Artifact } from '../core/index.js';
 import type { Action } from './next-rules.js';
 
 // `orbith next` suggestions for continual improvement (AMEL-NNN). Low priority: appended after the other rules.
@@ -26,7 +26,7 @@ export function ameliorationHints(arts: Artifact[], aujourdhui = new Date().toIS
   for (const a of actions) {
     const av = avancement(a);
     if (a.etat !== 'validé' && av !== 'abandonné') {
-      out.push({ kind: 'valider', message: `Relis l'action d'amélioration ${nom(a)} puis valide-la.`, cli: `npx orbith valider ${a.chemin}` });
+      out.push({ kind: 'valider', message: `Relis l'action d'amélioration ${nom(a)} puis valide-la.`, cli: `npx orbith valider ${arg(a.chemin)}` });
     }
   }
   // An incident with a restore date (or a validated post-mortem) and no linked action: suggest one.

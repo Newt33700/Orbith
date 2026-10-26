@@ -89,8 +89,9 @@ Tout agent personnalisé doit contenir ces règles. `npx orbith check` affiche u
 
 Ce contrôle cherche des mots : il ne prouve pas que l'agent applique la règle. Relisez le fichier.
 
-`check` signale aussi, en **erreur**, un agent personnalisé invalide (nom ou commande mal formé, commande déjà
-prise), en avertissement un fichier ignoré, et en information un squelette encore marqué « à compléter ».
+`check` signale aussi, en **erreur**, un agent qui ordonne une action réservée à l'humain (`orbith valider … --yes`,
+`git push`, écrire `statut: validé`) : une ligne qui l'interdit (« jamais », « ne … pas ») est acceptée ; et un agent
+personnalisé invalide (nom ou commande mal formé, commande déjà prise), en avertissement un fichier ignoré, et en information un squelette encore marqué « à compléter ».
 
 ## 5. Collisions : jamais d'écrasement du cœur
 

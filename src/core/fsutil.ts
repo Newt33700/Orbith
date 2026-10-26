@@ -45,3 +45,8 @@ export async function copyDir(
   }
   return written;
 }
+
+/** Path as an argument of a suggested shell command: quoted when it contains whitespace, so it can be pasted. */
+export function arg(p: string): string {
+  return /\s/.test(p) ? `"${p.replace(/"/g, '\\"')}"` : p;
+}
