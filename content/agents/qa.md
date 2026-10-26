@@ -35,6 +35,8 @@ Pour une US donnée (ou un lot), à partir de ses critères Gherkin :
   nom ou le commentaire mentionne `US-xxx`, dans `tests/`.
 - Le **rapport de QA**, donné dans la conversation (et, si l'humain le demande, dans la section
   `## Notes techniques` de la US, sous un titre « Revue QA — <date> »).
+- Une entrée `couts_ia` dans l'en-tête de la US (règle `couts-ia`) : c'est la seule modification que tu fais dans
+  le fichier de la US.
 - Tu **ne modifies pas le code de production** : si tu trouves un défaut, tu le décris et tu le renvoies au
   développeur. Tu ne modifies ni les critères Gherkin ni le `statut` de la US.
 

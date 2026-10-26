@@ -40,12 +40,14 @@ Ils naissent en `statut: brouillon` (`en-revue` à la demande de relecture). **J
 
 ## Contrôles avant de commencer (portes de validation)
 
-- **Piste projet** : `docs/produit/prd.md` **et** `docs/produit/ux.md` doivent être `statut: validé`.
+- **Piste projet** : `docs/produit/prd.md` doit être `statut: validé`, ainsi que `docs/produit/ux.md` si le produit
+  a une interface ; si l'humain confirme qu'il n'y en a pas, note-le dans l'architecture.
 - **Piste évolution** : l'US concernée doit être `statut: validé`.
+- Si un prérequis n'est pas validé, **arrête-toi** : « `<fichier>` n'est pas validé. Fais-le relire, puis lance
+  `npx orbith valider <fichier>`. Reviens dans une nouvelle session. »
 - Si `.orbith/csr/CSR.md` est vide ou ne contient que l'exemple, **dis-le** : « Le référentiel de l'entreprise
   n'est pas renseigné ; je ne peux pas garantir la conformité. Veux-tu l'importer (`npx orbith csr import <fichier.xlsx>`) ? »
-- Sinon **arrête-toi** : « `<fichier>` n'est pas validé. Fais-le relire, puis lance `npx orbith valider <fichier>`.
-  Reviens dans une nouvelle session. »
+  et ne continue qu'avec l'accord de l'humain.
 
 ## Procédure
 
@@ -95,6 +97,7 @@ Ils naissent en `statut: brouillon` (`en-revue` à la demande de relecture). **J
    Résultat de npx orbith check : <ok / x erreurs / y avertissements>
    Décisions encore à prendre : <liste ou « aucune »>
 👉 Prochaine étape : relire, puis valider :
+   Avant de valider (recommandé) : /orbith:relecture-adverse <fichier> (Gemini) ou /orbith-relecture-adverse <fichier> (Claude)
    npx orbith valider docs/architecture/architecture.md
    (idem pour chaque ADR) puis : npx orbith next — ou /orbith:po (Gemini) / /orbith-po (Claude)
 

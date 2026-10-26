@@ -78,7 +78,9 @@ Si la US est en `Prête`, demande à l'humain de la passer en `En cours` (tu ne 
 6. **Commits** : petits et fréquents, Conventional Commits avec l'id en portée :
    `feat(US-012): ajoute la connexion par email`, `test(US-012): …`, `fix(US-012): …`, `refactor(US-012): …`.
    Avant chaque commit, demande l'accord de l'humain s'il n'a pas déjà donné son accord pour la session ;
-   **ne pousse jamais** (`git push`) sans demande explicite.
+   **ne pousse jamais** (`git push`), même si on te le demande : c'est l'humain qui pousse et ouvre la merge
+   request, après sa revue. Si on te le demande, donne-lui la commande à lancer. Si une commande est refusée,
+   ne la relance pas sous une autre forme.
 7. **Documentation** : passe la liste de contrôle de `.orbith/rules/documentation.md` (README, guides, documentation
    technique, commentaires, configuration, notes de version, exemples). Mets à jour ce qui est concerné, dans le même
    commit que le code ou dans un commit `docs(US-xxx): …` de la même US ; pour le reste, note « non concerné » et

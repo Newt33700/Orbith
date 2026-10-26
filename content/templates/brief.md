@@ -59,4 +59,4 @@ statut: brouillon
 
 ## Prochaine étape
 
-<!-- Une fois le brief validé par le humain : rédiger le PRD (`docs/produit/prd.md`). -->
+<!-- Une fois le brief validé par l'humain : rédiger le PRD (`docs/produit/prd.md`). -->

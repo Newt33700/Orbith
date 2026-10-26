@@ -2,7 +2,7 @@
   DEFINITION OF DONE (DoD) : quand une story est-elle réellement terminée ?
 
   Ce fichier appartient à l'équipe. Tu peux le modifier librement :
-  - adapte les points à vos outils (par exemple, ajoute « déployé en préproduction ») ;
+  - adapte les points à tes outils (par exemple, ajoute « déployé en préproduction ») ;
   - garde une liste courte (6 à 10 points maximum) ;
   - un point doit être vérifiable : oui ou non, sans discussion.
 

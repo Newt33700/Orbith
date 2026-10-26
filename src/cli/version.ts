@@ -79,7 +79,7 @@ function notesBody(numero: string, date: string, stories: (Artifact & { id: stri
     `# Notes de livraison : version ${numero}`,
     '',
     `<!-- Brouillon créé par « npx orbith version ${numero} » : US citées dans les commits fusionnés depuis la version`,
-    '     précédente. Le SM réécrit les lignes en langage utilisateur ; retire une US qui ne doit pas partir.',
+    '     précédente. Le SM réécrit les lignes en langage utilisateur ; seul le PO humain décide de retirer une US.',
     '     Une fois relu : npx orbith valider, puis après la mise en production : npx orbith deploiement. -->',
     '',
     '## Résumé',

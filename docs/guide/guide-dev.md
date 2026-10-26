@@ -173,6 +173,8 @@ notes de version.
 
 - **Coder une story non validée.** L'agent Dev refuse, et c'est une bonne chose.
 - **Un commit sans identifiant** de story sur le travail en cours : il sera signalé par `npx orbith check`.
+- **Demander à l'agent Dev de pousser** (`git push`) : il refuse, même sur demande. C'est vous qui poussez et ouvrez la
+  merge request, après votre revue ; l'agent peut vous donner la commande.
 - **Un secret dans le code** (mot de passe, clé), même « temporairement ».
 - **Enchaîner plusieurs stories dans la même session.** Ouvrez une nouvelle session (`/clear`) pour chaque story.
 - **Livrer du code sans sa documentation** : un README ou un guide qui décrit l'ancien comportement induit l'équipe en
