@@ -58,11 +58,12 @@ juger des personnes.
 Chaque action que vous retenez devient une action suivie `docs/amelioration/AMEL-NNN-*.md` (responsable, échéance,
 indicateur de succès) : voir [Amélioration continue et liens de connaissance](amelioration-continue.md).
 
-## Relecture adverse : une passe critique obligatoire
+## Relecture adverse : une passe critique fortement recommandée
 
-Avant de valider un PRD, une architecture, un ADR, une epic ou une US, lancez cette passe : le relecteur joue
+Avant de valider un PRD, une architecture, un ADR, une epic ou une US, lance cette passe : le relecteur joue
 l'avocat du diable et classe ses constats (bloquant, à corriger, suggestion). Il n'approuve jamais et ne
-corrige rien. Ensuite, vous décidez : faire corriger, ou valider en connaissance de cause.
+corrige rien. Orbith ne l'impose pas (`npx orbith valider` ne la contrôle pas) : c'est toi qui la demandes.
+Ensuite, tu décides : faire corriger, ou valider en connaissance de cause.
 
 Exemple : `/orbith-relecture-adverse backlog/tasks/us-003 - Annuler une réservation.md`
 

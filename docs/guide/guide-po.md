@@ -106,7 +106,6 @@ Fonctionnalité: Connexion par email
 
 ## Definition of Ready
 
-- [ ] La story est validée par le PO
 - [ ] Les critères d'acceptation sont en Gherkin
 - [ ] Les dépendances sont identifiées
 ````
@@ -128,6 +127,11 @@ La **DoR** est la liste des conditions à remplir avant qu'un développeur prenn
 
 ## Étape 7 : passer la story en « Prête »
 
+Cochez la DoR **avant** `npx orbith valider` : cocher une case après la validation modifie la story et l'annule. La
+DoR ne contient pas de case « Validée par le PO » : c'est `statut: validé`, écrit par `npx orbith valider`, qui le
+prouve. Les agents notent ensuite leur travail dans `## Journal de réalisation`, la seule section qu'ils peuvent
+écrire sans annuler la validation.
+
 Quand la story est validée **et** que sa DoR est complète, un humain la déplace dans la colonne **Prête**. C'est le
 signal donné à l'équipe technique.
 
@@ -147,7 +151,7 @@ npx orbith version 1.1.0.0
 
 La commande :
 
-1. retrouve dans l'historique Git les stories citées dans les commits fusionnés depuis la version précédente (pour la
+1. retrouve dans l'historique Git les stories citées dans les commits fusionnés (hors commits `docs:`, `ci:`, `chore:`, `build:`, qui ne font que les citer) depuis la version précédente (pour la
    toute première version : tout l'historique) ;
 2. les enregistre dans `.orbith/versions.json` ;
 3. crée le brouillon des notes de version `docs/livraisons/release-notes-1.1.0.0.md`, avec les nouveautés, les

@@ -48,7 +48,12 @@ Pour marquer une rupture sur une US, ajoute l'étiquette `breaking` dans ses `la
 labels: [breaking]
 ```
 
+Une US seulement *citée* par un commit `docs:`, `ci:`, `chore:` ou `build:` (par exemple `chore: valide US-003`) n'est pas
+comptée comme développée : ni dans la proposition, ni dans `orbith version <numéro>`. Une US `Abandonnée` n'est jamais comptée.
+
 `npx orbith version --format json` donne le même résultat pour un script. C'est une **proposition** : rien n'est écrit.
+La proposition te conseille ensuite `npx orbith version <numéro>` (crée la version et le brouillon des notes), puis, une fois
+les notes validées, `npx orbith release <numéro>`.
 
 ## 2. Préparer la version : `orbith release <version>`
 
@@ -80,9 +85,8 @@ npx orbith release 1.3.0.0
    suivi par Git (moins de 3 fichiers hors `.orbith/`), Orbith t'avertit que le tag serait quasi vide : commite d'abord
    ton travail.
 
-Le commit `chore(release): v1.3.0.0` ne porte pas d'identifiant d'US (`US-NNN`). Il peut donc apparaître comme
-**avertissement** de traçabilité dans `npx orbith check` (« Commit … sans identifiant de story »). C'est attendu : c'est
-un commit technique de version, rien à corriger ni à réécrire.
+Le commit `chore(release): v1.3.0.0` ne porte pas d'identifiant d'US (`US-NNN`) : comme tout commit `chore:`, `docs:`, `ci:` ou
+`build:`, il n'est pas signalé par la traçabilité de `npx orbith check`.
 
 Orbith **ne pousse jamais**. Il t'indique la commande à lancer toi-même : `git push && git push origin v1.3.0.0`.
 

@@ -24,7 +24,7 @@ Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée 
 > **Document volumineux** (plus de 4000 jetons) : lis d'abord `.orbith/extraits/<nom>/index.md` s'il existe, puis seulement les extraits utiles, jamais le document entier (règle `.orbith/rules/documents-volumineux.md`).
 
 - La US : `backlog/tasks/us-xxx - *.md` (description, critères Gherkin, notes techniques, DoR)
-- `.orbith/csr/CSR.md` : **outils autorisés** (langage, frameworks, outil de test). Jamais d'outil `interdit`/`déprécié`.
+- `.orbith/csr/CSR.md` : **outils autorisés** (langage, frameworks, outil de test). Jamais d'outil `interdit`/`déprécié`. Un outil absent du CSR n'est ni autorisé ni interdit : écris « absent du CSR, à confirmer auprès du responsable du CSR » et ne le recommande pas sans cet accord.
 - `docs/architecture/architecture.md` et les ADR validés (respecte-les ; ne les contourne pas)
 - `docs/produit/ux.md` si la US touche l'interface
 - `.orbith/config/dod.md` (ce que « terminé » veut dire) et `.orbith/config.yaml` (préfixe des US)
@@ -39,7 +39,9 @@ Implémenter la US demandée (par exemple `US-012`), de façon testée, tracée 
 - La documentation que ton code rend fausse ou incomplète : README, guides (le dossier de guides du projet, par exemple `docs/guide/`), commentaires
   du code, documentation technique (une décision d'architecture passe par l'architecte et un ADR)
 - Des commits `feat(US-xxx): …` (et `docs(US-xxx): …` si la documentation part dans un commit séparé)
-- Dans le corps de la US : tu peux compléter **`## Notes techniques`** (ce qui a été fait, points d'attention).
+- Dans le corps de la US : tu écris uniquement dans **`## Journal de réalisation`** (ce qui a été fait, points
+  d'attention ; crée la section en fin de fichier si elle manque). Cette section n'est pas validée : l'écrire ne
+  demande pas de revalidation. Toute autre modification du corps (`## Notes techniques` compris) annule la validation.
   Tu ne modifies ni la description ni les critères d'acceptation : s'ils sont insuffisants, tu t'arrêtes et tu
   renvoies vers le PO.
 
@@ -78,11 +80,13 @@ Si la US est en `Prête`, demande à l'humain de la passer en `En cours` (tu ne 
 6. **Commits** : petits et fréquents, Conventional Commits avec l'id en portée :
    `feat(US-012): ajoute la connexion par email`, `test(US-012): …`, `fix(US-012): …`, `refactor(US-012): …`.
    Avant chaque commit, demande l'accord de l'humain s'il n'a pas déjà donné son accord pour la session ;
-   **ne pousse jamais** (`git push`) sans demande explicite.
+   **ne pousse jamais** (`git push`), même si on te le demande : c'est l'humain qui pousse et ouvre la merge
+   request, après sa revue. Si on te le demande, donne-lui la commande à lancer. Si une commande est refusée,
+   ne la relance pas sous une autre forme.
 7. **Documentation** : passe la liste de contrôle de `.orbith/rules/documentation.md` (README, guides, documentation
    technique, commentaires, configuration, notes de version, exemples). Mets à jour ce qui est concerné, dans le même
    commit que le code ou dans un commit `docs(US-xxx): …` de la même US ; pour le reste, note « non concerné » et
-   pourquoi. Ce qui change pour les utilisateurs ou l'exploitation va dans `## Notes techniques` de la US.
+   pourquoi. Ce qui change pour les utilisateurs ou l'exploitation va dans `## Journal de réalisation` de la US.
 8. **Vérifications finales** :
    - lance l'ensemble des tests et rapporte le résultat réel (jamais « ça devrait passer ») ;
    - lance `npx orbith check` et reproduis son résultat ;

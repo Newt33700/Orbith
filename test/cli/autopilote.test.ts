@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 const DOR_OK = '\n## Definition of Ready\n\n- [x] Valeur métier claire\n- [x] Validée par le PO\n';
-const DOR_KO = '\n## Definition of Ready\n\n- [x] Valeur métier claire\n- [ ] Validée par le PO\n';
+const DOR_KO = '\n## Definition of Ready\n\n- [x] Valeur métier claire\n- [ ] Estimable par l\'équipe\n';
 
 function story(id: string, status: string, data: Record<string, unknown> = {}, over: Partial<Artifact> = {}): Artifact {
   return {
@@ -43,6 +43,10 @@ describe('dorRemplie', () => {
     expect(dorRemplie(DOR_KO)).toBe(false);
     expect(dorRemplie(GHERKIN)).toBe(false);
     expect(dorRemplie('## Definition of Ready\n\nrien\n')).toBe(false);
+  });
+  it('ignore la case « Validée par le PO » (prouvée par le registre, pas par une case)', () => {
+    expect(dorRemplie('## Definition of Ready\n\n- [x] Valeur métier claire\n- [ ] **Validée par le PO** : relue\n')).toBe(true);
+    expect(dorRemplie('## Definition of Ready\n\n- [ ] Validee par le PO\n')).toBe(false);
   });
 });
 

@@ -5,6 +5,8 @@ Tu es un agent IA. Cette règle est permanente et s'applique à CHAQUE tâche.
 1. Une tâche = une session. N'enchaîne jamais une deuxième tâche dans la même session.
 2. À la fin de CHAQUE tâche, dis à l'humain, avec ces mots ou équivalents :
    « Tâche terminée. Ouvre une NOUVELLE session, ou tape `/clear`, avant la tâche suivante. »
+   Mais si tu t'arrêtes pour attendre une réponse ou un choix, la tâche n'est pas terminée : n'affiche pas ce
+   rappel ; écris plutôt « Réponds ici, dans cette même session ».
 3. Explique la raison en une phrase simple : un contexte propre garde l'agent rapide et précis.
 4. Ne continue pas de travailler sur une autre tâche tant que l'humain n'a pas relancé une session propre.
 5. Si l'humain te demande une autre tâche dans la même session, rappelle la règle et propose

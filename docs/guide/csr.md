@@ -6,7 +6,9 @@ avec leurs versions minimales. Orbith le met à disposition des agents et le con
 ## Ce qu'il faut savoir
 
 - **Dans ce dépôt public**, le fichier `content/csr/CSR.exemple.md` est **un exemple**. Il sert à comprendre le format.
-  Il ne représente pas les règles de votre entreprise.
+  Il ne représente pas les règles de votre entreprise. Il n'impose aucun outil `obligatoire` : un projet neuf passe
+  `npx orbith check`, qui vous rappelle en information que le CSR est encore l'exemple. Les règles de l'exemple
+  (outils interdits ou dépréciés) s'appliquent tant que vous ne l'avez pas remplacé.
 - **Le vrai CSR** est maintenu dans le dépôt privé de votre entreprise, et importé dans chaque projet.
 - Une fois installé, votre CSR est copié dans `.orbith/csr/CSR.md`. Vous pouvez le relire et l'adapter avec votre
   équipe architecture.
@@ -164,3 +166,7 @@ Les autres rubriques de `check` (validations, traçabilité, documentation, secr
 
 - [guide-dev.md](guide-dev.md) : où `check` s'intègre dans le travail quotidien.
 - [validation-humaine.md](validation-humaine.md) : le contrôle des validations, autre volet de `check`.
+
+## Un outil absent du CSR
+
+Un outil qui n'apparaît pas dans le CSR n'est ni autorisé ni interdit. Les agents Architecte, Dev et Architecte des tests écrivent « absent du CSR, à confirmer auprès du responsable du CSR » et ne le recommandent pas sans cet accord.

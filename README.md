@@ -324,7 +324,7 @@ npx orbith plugin add backlog-md
 backlog browser
 ```
 
-Le tableau comporte cinq colonnes, qui suivent l'avancement d'une story :
+Le tableau comporte cinq colonnes (plus `Abandonnée`, facultative), qui suivent l'avancement d'une story :
 
 | Colonne | Quand la story y est placée |
 |---|---|
@@ -333,6 +333,7 @@ Le tableau comporte cinq colonnes, qui suivent l'avancement d'une story :
 | En cours | Un développeur travaille dessus |
 | En revue | Le code est prêt, il attend la relecture et les tests QA |
 | Terminée | La story est livrée |
+| Abandonnée | La story est abandonnée : elle sort de `next`, de l'autopilote et des versions (facultatif) |
 
 Les colonnes sont déplacées par les humains (le PO passe la story en « Prête », le développeur la passe en
 « En cours », etc.). Les agents les lisent mais ne les modifient pas. Voir

@@ -68,4 +68,11 @@ Fonctionnalité: <nom de la fonctionnalité>
 - [ ] Estimable par l'équipe
 - [ ] Dépendances identifiées
 - [ ] Maquette UX disponible (si besoin)
-- [ ] Validée par le PO
+
+<!-- Pas de case « Validée par le PO » : la validation est prouvée par `statut: validé` (npx orbith valider). -->
+
+## Journal de réalisation
+
+<!-- Seule section hors empreinte de validation : les agents (dev, QA, sécurité, test) y notent ce qui a été fait,
+     leurs revues et les changements visibles pour les notes de version, sans annuler la validation de la US.
+     Ne mets ici ni exigence ni critère d'acceptation : ils ne seraient pas validés. -->

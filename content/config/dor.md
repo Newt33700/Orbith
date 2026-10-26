@@ -19,4 +19,7 @@ Une story passe en `Prête` seulement si tous les points ci-dessous sont cochés
 - [ ] **Estimable** : l'équipe peut dire grossièrement combien de temps cela prend, sans grande inconnue.
 - [ ] **Dépendances identifiées** : les stories, décisions (ADR) ou accès externes nécessaires sont listés.
 - [ ] **Maquette UX si besoin** : pour toute story qui touche une interface, la maquette ou le parcours est disponible.
-- [ ] **Validée par le PO** : la story a été relue et validée avec `npx orbith valider`.
+
+> La validation par le PO n'est pas une case à cocher : elle est prouvée par `statut: validé`, écrit uniquement par
+> `npx orbith valider`. (Cocher une case après la validation l'annulerait ; une ancienne case « Validée par le PO »
+> est ignorée par `npx orbith autopilote`.)

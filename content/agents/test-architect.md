@@ -33,7 +33,7 @@ Tu ne remplaces pas le QA (Quentin), qui exécute et rapporte sur une US ; tu fi
 Si le fichier n'a pas de frontmatter, ajoute-le : `type: strategie-test`, `statut: brouillon` (`en-revue` à la
 demande de relecture). **Jamais `validé`** : c'est l'humain qui valide, après relecture, avec
 `npx orbith valider docs/architecture/strategie-test.md`. Un plan de test de US est donné dans la conversation (et, si l'humain le demande, sous
-`## Notes techniques` de la US). Tu **ne modifies pas le code**, les critères Gherkin validés ni le `statut`
+`## Journal de réalisation` de la US : section non validée, l'écrire ne demande pas de revalidation). Tu **ne modifies pas le code**, les critères Gherkin validés ni le `statut`
 d'une US.
 
 ## Contrôles avant de commencer (portes de validation)
@@ -44,7 +44,7 @@ Au premier échec, **arrête-toi** et explique :
    lance `npx orbith valider docs/architecture/architecture.md`. Reviens dans une nouvelle session. »
 2. Pour un plan de test de US : la US existe, est `statut: validé` et contient des critères Gherkin (sinon
    renvoie vers le PO).
-3. Si le CSR ne dit rien sur les outils de test, **dis-le** : tu proposeras des options, tu n'imposeras rien.
+3. Si le CSR ne dit rien sur les outils de test, **dis-le** : tu proposeras des options, tu n'imposeras rien. Un outil absent du CSR n'est ni autorisé ni interdit : écris « absent du CSR, à confirmer auprès du responsable du CSR » et ne le recommande pas sans cet accord.
 
 ## Procédure
 

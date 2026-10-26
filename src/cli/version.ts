@@ -18,6 +18,7 @@ import {
 } from '../core/index.js';
 import { estBug } from './metriques-calc.js';
 import { mentions } from './trace-report.js';
+import { sujetLivreCode } from './version-calc.js';
 import { runProposition } from './version-proposition.js';
 
 export interface Version {
@@ -79,7 +80,7 @@ function notesBody(numero: string, date: string, stories: (Artifact & { id: stri
     `# Notes de livraison : version ${numero}`,
     '',
     `<!-- Brouillon créé par « npx orbith version ${numero} » : US citées dans les commits fusionnés depuis la version`,
-    '     précédente. Le SM réécrit les lignes en langage utilisateur ; retire une US qui ne doit pas partir.',
+    '     précédente. Le SM réécrit les lignes en langage utilisateur ; seul le PO humain décide de retirer une US.',
     '     Une fois relu : npx orbith valider, puis après la mise en production : npx orbith deploiement. -->',
     '',
     '## Résumé',
@@ -143,7 +144,8 @@ export async function runVersion(numero: string, opts: VersionOptions = {}): Pro
   const commits = await gitLogSince(root, depuis);
   const stories = (await scanArtifacts(root))
     .filter((a): a is Artifact & { id: string } => a.type === 'story' && !!a.id)
-    .filter((s) => commits.some((c) => mentions(c.message, s.id)))
+    .filter((s) => storyStatus(s) !== 'Abandonnée')
+    .filter((s) => commits.some((c) => sujetLivreCode(c.message.split(/\r?\n/)[0] ?? '') && mentions(c.message, s.id)))
     .sort((a, b) => a.id.localeCompare(b.id, 'fr', { numeric: true }));
 
   const avertissements: string[] = [];

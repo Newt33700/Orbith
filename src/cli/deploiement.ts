@@ -4,6 +4,7 @@ import type { Command } from 'commander';
 import { confirm, isCancel } from '@clack/prompts';
 import {
   ORBITH_DIR,
+  arg,
   chainer,
   verifierChaine,
   OrbithError,
@@ -109,7 +110,7 @@ export async function runDeploiement(version: string, opts: DeploiementOptions =
   }
   // Validation humaine d'abord : on ne date pas une livraison que personne n'a relue.
   if (notes.etat !== 'validé') {
-    throw new OrbithError(`Les notes de version ${notes.chemin} ne sont pas validées. Relis-les puis lance : npx orbith valider ${notes.chemin}`);
+    throw new OrbithError(`Les notes de version ${notes.chemin} ne sont pas validées. Relis-les puis lance : npx orbith valider ${arg(notes.chemin)}`);
   }
   // Gestion des changements (facultative) : pas de mise en production sans demande de changement validée.
   const config = await loadConfig(root).catch(() => null);

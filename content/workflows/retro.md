@@ -15,7 +15,8 @@ simple et tu expliques chaque terme (rétrospective, délai, taux d'échec, dett
 - Le résultat de `npx orbith metriques` (délais, fréquence de livraison, taux d'échec, temps de rétablissement,
   coûts IA estimés) : lis-le **tel quel**, n'en recalcule rien
 - `docs/livraisons/release-notes-<version>.md` de la version concernée
-- Les constats de QA : sections « Revue QA » des US (`backlog/tasks/`), `npx orbith trace` si utile
+- Les constats de QA : les rapports que l'humain te fournit (copiés depuis les sessions QA) et, s'il en existe,
+  les sections « Revue QA » des US (`backlog/tasks/`) ; `npx orbith trace` si utile
 - Les bugs liés (origine, cause, date de détection) dans `backlog/`
 - Les rétrospectives précédentes `docs/livraisons/retro-*.md` (pour suivre les actions décidées)
 - Les actions d'amélioration `docs/amelioration/AMEL-*.md` (avancement, échéance) et les post-mortems

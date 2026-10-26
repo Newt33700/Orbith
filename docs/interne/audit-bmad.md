@@ -150,7 +150,7 @@ Tout ce qui suit est fusionné dans `main` (PR #1 à #9, CI verte sur 3 système
 
 ### 7.5 Reste à faire et limites connues
 
-- **Aucun agent ni workflow n'a tourné sur un vrai modèle.** Les fichiers, l'enregistrement des commandes et les commandes déterministes sont testés ; le comportement des prompts ne l'est pas.
+- **Agents essayés sur un vrai modèle (26 octobre 2026) :** 18 cas joués par un agent qui connaissait les pièges (tous réussis) et 9 scénarios avec Claude Code réel (Sonnet 5.5) sans que le modèle connaisse les pièges : 5 réussis, 1 partiel, 3 échecs. 31 défauts de prompts ou de code relevés, corrigés dans la foulée (journal de réalisation hors empreinte, case DoR retirée, push interdit même sur demande, portes des epics et du guide, autopilote, traçabilité, `.gitignore`, etc.). Non corrigé : la liste de confirmation (`"ask"`) pour `git push` et `orbith valider` dans les permissions générées, décision laissée au porteur du projet. Non testés : ux, devops, atelier, workflows correctif et évolution, `release`, `deploiement`, Gemini CLI. Une seule exécution par scénario : à refaire après correction.
 - **`release` n'a pas été essayé sur un vrai poste Windows** (la CI le couvre sur des dépôts temporaires).
 - **Versions à 4 chiffres : réglé.** `orbith release` et la proposition de `orbith version` utilisent le format `W.X.Y.Z` (majeur, mineur, correctif, révision) ; les anciens tags à trois chiffres sont lus comme `W.X.Y.0`.
 - **Gemini CLI :** pas d'import des coûts mesurés (format local non confirmé). Les totaux mesurés de Claude Code sont un minimum.

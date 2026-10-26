@@ -131,3 +131,12 @@ export async function gitLogSince(root: string, depuis?: string): Promise<{ hash
 export async function gitHasCommit(root: string, ref: string): Promise<boolean> {
   return (await git(root, ['cat-file', '-e', `${ref}^{commit}`])) !== null;
 }
+
+/** Conventional Commit types that never ship story code (a story cited there is only mentioned, not developed). */
+export const COMMIT_TYPES_SANS_LIVRAISON: readonly string[] = ['docs', 'ci', 'chore', 'build'];
+
+/** Whether a commit subject can deliver a story: documentation, CI, chores and build commits only cite stories. */
+export function sujetLivreCode(subject: string): boolean {
+  const m = /^(\w+)(?:\([^)]*\))?!?:/.exec(subject);
+  return !(m && COMMIT_TYPES_SANS_LIVRAISON.includes(m[1]!.toLowerCase()));
+}

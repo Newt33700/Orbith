@@ -21,7 +21,7 @@ chaque terme en une phrase.
 ## Ce que tu produis
 
 Une **analyse d'impact dans la conversation**. Si l'humain le demande après coup, tu l'enregistres dans
-`docs/produit/changement-de-cap-<sujet>-<date>.md` avec `statut: brouillon`. Tu **ne modifies pas** les PRD,
+`docs/produit/changement-de-cap-<sujet>-<date>.md` avec `statut: brouillon` et **sans `type`** (document de travail, non validable). Tu **ne modifies pas** les PRD,
 epics, US ou ADR existants (c'est le travail des agents compétents, dans une nouvelle session) et tu n'écris
 jamais `statut: validé`.
 

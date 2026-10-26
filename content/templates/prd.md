@@ -63,6 +63,10 @@ statut: brouillon
 
 - 
 
+## Questions ouvertes
+
+- 
+
 ## Prochaine étape
 
-<!-- Une fois le PRD validé par le humain : concevoir les parcours UX (`docs/produit/ux.md`) puis découper en épics. -->
+<!-- Une fois le PRD validé par l'humain : concevoir les parcours UX (`docs/produit/ux.md`) puis découper en épics. -->

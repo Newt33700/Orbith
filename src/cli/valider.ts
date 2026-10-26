@@ -11,7 +11,8 @@ import {
   loadConfig,
   refusQuatreYeux,
   refusRole,
-  hashBody,
+  empreinteCorrespond,
+  empreinteValidation,
   loadRegistry,
   readDoc,
   recordValidation,
@@ -55,7 +56,7 @@ export async function runValider(fichier: string, opts: ValiderOptions = {}): Pr
 
   if (estValide(doc.data['statut'])) {
     const entry = (await loadRegistry(root)).find((e) => e.fichier === rel);
-    if (entry && entry.sha256 === hashBody(doc.body)) {
+    if (entry && empreinteCorrespond(entry.sha256, doc.body, type)) {
       ui.info(`${rel} est déjà validé (par ${entry.par}) et n'a pas changé depuis.`);
       return true;
     }
@@ -85,7 +86,7 @@ export async function runValider(fichier: string, opts: ValiderOptions = {}): Pr
   if (!opts.yes) {
     if (!process.stdin.isTTY) {
       throw new OrbithError(
-        "Confirmation impossible : ce terminal n'est pas interactif. Lance la commande toi-même dans un terminal (ou ajoute --yes si tu es bien le relecteur humain).",
+        "Confirmation impossible : ce terminal n'est pas interactif. Si tu es un agent IA, arrête-toi : seul un humain valide. Humain : lance cette commande toi-même, dans ton terminal.",
       );
     }
     const ok = await confirm({ message: 'Je confirme avoir relu et valider ce document', initialValue: false });
@@ -104,7 +105,7 @@ export async function runValider(fichier: string, opts: ValiderOptions = {}): Pr
   const written = await readDoc(abs);
   await recordValidation(root, {
     fichier: rel,
-    sha256: hashBody(written.body),
+    sha256: empreinteValidation(written.body, written.data['type']),
     par: user.name,
     email: user.email,
     le: now,

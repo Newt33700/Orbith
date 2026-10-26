@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { Command } from 'commander';
-import { OrbithError, exists, requireProjectRoot, scanArtifacts, toPosixRelative, ui, type Artifact } from '../core/index.js';
+import { arg, OrbithError, exists, requireProjectRoot, scanArtifacts, toPosixRelative, ui, type Artifact } from '../core/index.js';
 import { mentions } from './trace-report.js';
 
 export interface TestsOptions {
@@ -80,7 +80,7 @@ export async function runTests(id: string | undefined, opts: TestsOptions = {}):
   for (const s of stories) {
     // Validation humaine d'abord : pas de tests tirés de critères que personne n'a relus.
     if (s.etat !== 'validé') {
-      result.ignorees.push({ id: s.id, raison: `non validée (lance \`npx orbith valider ${s.chemin}\`)` });
+      result.ignorees.push({ id: s.id, raison: `non validée (lance \`npx orbith valider ${arg(s.chemin)}\`)` });
       continue;
     }
     const blocks = extractGherkin(s.body);

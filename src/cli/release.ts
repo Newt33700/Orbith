@@ -4,6 +4,7 @@ import type { Command } from 'commander';
 import { confirm, isCancel } from '@clack/prompts';
 import {
   ORBITH_DIR,
+  arg,
   OrbithError,
   exists,
   gitCommitPaths,
@@ -33,6 +34,7 @@ import {
   parseCommit,
   parseSemVer,
   proposerVersion,
+  sujetLivreCode,
   type ParsedCommit,
 } from './version-calc.js';
 
@@ -238,14 +240,14 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
     await fs.writeFile(file, renderNotesBrouillon(version, date, livrees), 'utf8');
     throw new OrbithError(
       `Notes de version introuvables pour ${version}. Un brouillon a été créé : ${rel}\n` +
-        `Relis-le (public utilisateur et public exploitation), puis : npx orbith valider ${rel}\nEnsuite relance : npx orbith release ${version}`,
+        `Relis-le (public utilisateur et public exploitation), puis : npx orbith valider ${arg(rel)}\nEnsuite relance : npx orbith release ${version}`,
     );
   }
 
   // Guardrails: everything is collected so the human sees every blocker at once.
   const refus: string[] = [];
   if (notes.etat !== 'validé') {
-    refus.push(`les notes de version ${notes.chemin} ne sont pas validées (état : ${notes.etat}) → npx orbith valider ${notes.chemin}`);
+    refus.push(`les notes de version ${notes.chemin} ne sont pas validées (état : ${notes.etat}) → npx orbith valider ${arg(notes.chemin)}`);
   }
   const stories = arts.filter((a): a is Artifact & { id: string } => a.type === 'story' && !!a.id && mentions(notes.body, a.id));
   const veutTag = git && !opts.sansTag;
@@ -271,7 +273,7 @@ export async function runRelease(versionArg: string, opts: ReleaseOptions = {}):
   const ids = arts.filter((a) => a.type === 'story' && a.id).map((a) => a.id!);
   const commits = (await gitCommitsSince(root, last?.tag)).map((c) => parseCommit(c, ids));
   const enCours = arts.filter(
-    (a) => a.type === 'story' && !!a.id && storyStatus(a) !== 'Terminée' && commits.some((c) => c.us.includes(a.id!)),
+    (a) => a.type === 'story' && !!a.id && !['Terminée', 'Abandonnée'].includes(storyStatus(a)) && commits.some((c) => c.us.includes(a.id!) && sujetLivreCode(c.subject)),
   );
   if (enCours.length > 0) {
     ui.avert(

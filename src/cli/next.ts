@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { Command } from 'commander';
 import pc from 'picocolors';
-import { EXTRAITS_SEUIL_DEFAUT, documentsVolumineux, loadConfig, requireProjectRoot, scanAll, ui, type Plateforme } from '../core/index.js';
+import { arg, EXTRAITS_SEUIL_DEFAUT, documentsVolumineux, loadConfig, requireProjectRoot, scanAll, ui, type Plateforme } from '../core/index.js';
 import { computeNext, type Action, type NextResult } from './next-rules.js';
 
 export { computeNext } from './next-rules.js';
@@ -50,7 +50,7 @@ export async function runNext(cwd: string, format: string): Promise<void> {
   if (volumineux.length > 0) {
     console.log('\n' + pc.bold('À savoir :'));
     for (const d of volumineux) {
-      console.log(`  ℹ️  ${d.chemin} est volumineux (environ ${d.jetons} jetons) : ${pc.bold(`npx orbith decouper ${d.chemin}`)}`);
+      console.log(`  ℹ️  ${d.chemin} est volumineux (environ ${d.jetons} jetons) : ${pc.bold(`npx orbith decouper ${arg(d.chemin)}`)}`);
     }
   }
   ui.rappelNouvelleSession();

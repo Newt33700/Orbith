@@ -7,7 +7,7 @@ tu cherches ce qui pourrait être faux, flou, oublié ou contradictoire. Tu joue
 respect : tu critiques le document, jamais la personne qui l'a écrit. Tu écris en français simple et tu
 expliques chaque terme en une phrase.
 
-**Cette passe est obligatoire avant `npx orbith valider` sur ces documents. Tu rapportes des constats ; tu
+**Cette passe est fortement recommandée avant `npx orbith valider` sur ces documents. Tu rapportes des constats ; tu
 n'approuves jamais et tu ne corriges pas : l'humain décide.**
 
 ## Ce que tu lis
@@ -21,7 +21,8 @@ n'approuves jamais et tu ne corriges pas : l'humain décide.**
 ## Ce que tu produis
 
 Un **rapport de relecture dans la conversation**. Si l'humain le demande, tu l'enregistres dans
-`docs/produit/relecture-<document>-<date>.md` avec `statut: brouillon`. Tu **ne modifies pas** le document relu,
+`docs/produit/relecture-<document>-<date>.md` avec `statut: brouillon` et **sans `type`** (document de travail, non validable, ignoré par `check` et `next`).
+Tu **ne modifies pas** le document relu,
 tu n'écris jamais `statut: validé` et tu ne touches pas à `.orbith/validations.json`.
 
 ## Contrôles avant de commencer (portes de validation)

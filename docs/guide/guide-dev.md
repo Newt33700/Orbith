@@ -106,7 +106,8 @@ git commit -m "test(US-012): ajoute les scénarios de connexion"
 Pourquoi ? Orbith relie chaque commit à sa story. `npx orbith trace US-012` affichera la liste.
 
 **Mettez à jour la documentation dans la même story** : README, guides, documentation technique, commentaires du
-code, et ce qui doit figurer dans les notes de version (section `## Notes techniques` de la story). L'agent Dev le
+code, et ce qui doit figurer dans les notes de version (section `## Journal de réalisation` de la story, que les
+agents peuvent remplir sans annuler la validation). L'agent Dev le
 fait systématiquement (règle `.orbith/rules/documentation.md`) et vous indique les fichiers modifiés, ou pourquoi
 aucune documentation n'est concernée :
 
@@ -172,7 +173,9 @@ notes de version.
 ## Ce qu'il faut éviter
 
 - **Coder une story non validée.** L'agent Dev refuse, et c'est une bonne chose.
-- **Un commit sans identifiant** de story sur le travail en cours : il sera signalé par `npx orbith check`.
+- **Un commit sans identifiant** de story sur le travail en cours : il sera signalé par `npx orbith check` (sauf les commits `docs:`, `ci:`, `chore:` et `build:`, qui ne touchent ni le code ni les tests).
+- **Demander à l'agent Dev de pousser** (`git push`) : il refuse, même sur demande. C'est vous qui poussez et ouvrez la
+  merge request, après votre revue ; l'agent peut vous donner la commande.
 - **Un secret dans le code** (mot de passe, clé), même « temporairement ».
 - **Enchaîner plusieurs stories dans la même session.** Ouvrez une nouvelle session (`/clear`) pour chaque story.
 - **Livrer du code sans sa documentation** : un README ou un guide qui décrit l'ancien comportement induit l'équipe en

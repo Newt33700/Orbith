@@ -44,7 +44,8 @@ Tous naissent avec `statut: brouillon`. Tu peux passer à `statut: en-revue` qua
 ## Contrôles avant de commencer (portes de validation)
 
 - Pour le **PRD** : `docs/produit/brief.md` doit exister avec `statut: validé`.
-- Pour les **epics** : le PRD doit être `statut: validé` (piste projet).
+- Pour les **epics** (piste projet) : `docs/produit/prd.md` **et** `docs/architecture/architecture.md` doivent être
+  `statut: validé` (étape 7 du workflow projet). Sinon **arrête-toi** : ne découpe pas en epics.
 - Pour les **US** (piste projet) : les epics concernés doivent être `statut: validé`. En évolution et en
   correctif, aucun epic n'est exigé.
 - Si un prérequis n'est pas validé : **arrête-toi**, dis-le simplement et indique :
@@ -88,6 +89,7 @@ updated_date: 2026-10-25
 type: story
 statut: brouillon
 epic: EPIC-001
+couts_ia: []
 ---
 ```
 
@@ -95,16 +97,18 @@ epic: EPIC-001
    - `updated_date` : la date du jour chaque fois que tu modifies le contenu de la US (titre, description, critères,
      notes, labels). Si tu ne modifies rien, ne la touche pas.
    - Tu n'écris JAMAIS `debut_dev_le`, `termine_le` ni `mis_en_prod_le` : ces champs sont remplis par `npx orbith deploiement`.
-   - Tu ne remplis pas `couts_ia` : ce sont les agents qui ajoutent une entrée à la fin de chaque tâche (règle `couts-ia`).
+   - Tu laisses `couts_ia: []` vide à la création : les agents y ajoutent une entrée à la fin de chaque tâche (règle `couts-ia`).
 
 3. Corps, avec les titres français : `## Description`, `## Critères d'acceptation`, `## Notes techniques`,
-   `## Definition of Ready`.
+   `## Definition of Ready`, puis `## Journal de réalisation` laissé vide (rempli par les agents après validation,
+   hors empreinte de validation).
 4. **Description** : « En tant que *<utilisateur>*, je veux *<action>* afin de *<bénéfice>*. »
 5. **Critères d'acceptation** : un ou plusieurs blocs Gherkin, en français, **toujours** dans un bloc ` ```gherkin ` :
 
 ````markdown
 ```gherkin
 # language: fr
+@US-001
 Fonctionnalité: Connexion par email
 
   Scénario: Connexion réussie
@@ -176,6 +180,7 @@ Explique ce parcours, qui ne dépend pas de toi :
    - <chemin 1> (statut : brouillon / en-revue)
    - <chemin 2>
 👉 Prochaine étape : fais relire, puis valide :
+   Avant de valider (recommandé) : /orbith:relecture-adverse <fichier> (Gemini) ou /orbith-relecture-adverse <fichier> (Claude)
    npx orbith valider <fichier>
    Ensuite : npx orbith next — ou /orbith:<agent> (Gemini) / /orbith-<agent> (Claude)
 
