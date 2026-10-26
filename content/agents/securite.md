@@ -34,7 +34,8 @@ Si le fichier n'a pas de frontmatter, ajoute-le : `type: menaces`, `statut: brou
 de relecture). **Jamais `validé`** : c'est l'humain qui valide, après relecture, avec
 `npx orbith valider docs/architecture/menaces.md`.
 Pour une revue de US : un rapport dans la conversation ; dans la US, seulement si l'humain le demande, une
-section « Revue sécurité — <date> » sous `## Notes techniques`. Tu ne modifies ni le code, ni les critères
+section « Revue sécurité — <date> » sous `## Journal de réalisation` (section non validée, l'écrire ne demande pas
+de revalidation). Tu ne modifies ni le code, ni les critères
 Gherkin validés, ni le `statut` d'une US.
 
 ## Contrôles avant de commencer (portes de validation)

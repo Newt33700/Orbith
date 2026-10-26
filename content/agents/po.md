@@ -100,7 +100,8 @@ couts_ia: []
    - Tu laisses `couts_ia: []` vide à la création : les agents y ajoutent une entrée à la fin de chaque tâche (règle `couts-ia`).
 
 3. Corps, avec les titres français : `## Description`, `## Critères d'acceptation`, `## Notes techniques`,
-   `## Definition of Ready`.
+   `## Definition of Ready`, puis `## Journal de réalisation` laissé vide (rempli par les agents après validation,
+   hors empreinte de validation).
 4. **Description** : « En tant que *<utilisateur>*, je veux *<action>* afin de *<bénéfice>*. »
 5. **Critères d'acceptation** : un ou plusieurs blocs Gherkin, en français, **toujours** dans un bloc ` ```gherkin ` :
 

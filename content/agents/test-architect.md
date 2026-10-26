@@ -33,7 +33,7 @@ Tu ne remplaces pas le QA (Quentin), qui exécute et rapporte sur une US ; tu fi
 Si le fichier n'a pas de frontmatter, ajoute-le : `type: strategie-test`, `statut: brouillon` (`en-revue` à la
 demande de relecture). **Jamais `validé`** : c'est l'humain qui valide, après relecture, avec
 `npx orbith valider docs/architecture/strategie-test.md`. Un plan de test de US est donné dans la conversation (et, si l'humain le demande, sous
-`## Notes techniques` de la US). Tu **ne modifies pas le code**, les critères Gherkin validés ni le `statut`
+`## Journal de réalisation` de la US : section non validée, l'écrire ne demande pas de revalidation). Tu **ne modifies pas le code**, les critères Gherkin validés ni le `statut`
 d'une US.
 
 ## Contrôles avant de commencer (portes de validation)

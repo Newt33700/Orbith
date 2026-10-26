@@ -19,7 +19,8 @@ raison en quelques mots.
 - [ ] **Configuration documentée** : toute nouvelle clé, option ou variable d'environnement est décrite là où
       l'équipe la cherche (fichier d'exemple commenté, README).
 - [ ] **Notes de version** : un changement visible par les utilisateurs ou l'exploitation est signalé dans la
-      section `## Notes techniques` de la US, pour que les notes de version (`docs/livraisons/`) le reprennent.
+      section `## Journal de réalisation` de la US (section non validée : l'écrire ne demande pas de revalidation),
+      pour que les notes de version (`docs/livraisons/`) le reprennent.
 - [ ] **Exemples** : chaque exemple de commande ou de code que tu modifies dans la documentation fonctionne
       réellement ; si tu peux l'exécuter, exécute-le.
 
