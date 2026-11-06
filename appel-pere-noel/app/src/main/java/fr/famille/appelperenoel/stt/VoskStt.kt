@@ -183,6 +183,6 @@ class VoskStt(private val models: ModelRepository) : Engine {
     }
 
     private companion object {
-        const val LOUD_RMS = 1500.0
+        const val LOUD_RMS = 2500.0
     }
 }

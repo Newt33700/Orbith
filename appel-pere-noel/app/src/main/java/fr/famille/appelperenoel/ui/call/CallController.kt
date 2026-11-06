@@ -9,6 +9,7 @@ import fr.famille.appelperenoel.audio.ToneSynth
 import fr.famille.appelperenoel.engine.Engine
 import fr.famille.appelperenoel.engine.EnginePreloader
 import fr.famille.appelperenoel.engine.LoadResult
+import fr.famille.appelperenoel.llm.GeminiLlm
 import fr.famille.appelperenoel.llm.GemmaLlm
 import fr.famille.appelperenoel.models.ModelRepository
 import fr.famille.appelperenoel.scenario.CallIo
@@ -100,7 +101,14 @@ class CallController(
     @Volatile
     private var activeSynth: SpeechSynth? = null
     private val voice = SantaVoice(context, { activeSynth }, settings.papyVoice(), speechPlayer)
-    private val brain = SantaBrain(llm) { settings.llmManualTemplate }
+    private val gemini = GeminiLlm(apiKey = { settings.geminiKey }, model = { settings.geminiModel })
+    private val brain = SantaBrain(
+        llm,
+        gemini,
+        useOnline = { settings.onlineBrain },
+        manualTemplate = { settings.llmManualTemplate },
+        log = { log(it) },
+    )
 
     private val children = settings.children.filter { it.name.isNotBlank() }
     private val greeting = when (children.size) {
@@ -139,7 +147,9 @@ class CallController(
             piper.release()
         }
     }
-    private val engines: List<Engine> = listOf(stt, voiceEngine, llm)
+    /** Avec le cerveau en ligne, Gemma ne sert que de secours : il se charge après le décroché, sans faire attendre. */
+    private val onlineFirst = settings.onlineBrain && settings.geminiKey.isNotBlank()
+    private val engines: List<Engine> = if (onlineFirst) listOf(stt, voiceEngine) else listOf(stt, voiceEngine, llm)
 
     @Volatile
     private var segmentStart = 0L
@@ -147,6 +157,7 @@ class CallController(
     private var clockJob: Job? = null
     private var started = false
     private var ended = false
+    @Volatile
     private var released = false
 
     fun start() {
@@ -199,6 +210,13 @@ class CallController(
         _state.update { it.copy(loadResults = results, ringMillis = SystemClock.elapsedRealtime() - t0) }
         results.forEach { r -> log("Chargement ${r.label} : ${r.millis} ms" + (r.error?.let { e -> " — $e" } ?: "")) }
 
+        if (onlineFirst) {
+            launch(Dispatchers.IO) {
+                runCatching { llm.load() }.onFailure { log("Gemma (secours) non chargé : ${it.message}") }
+                if (released) runCatching { llm.release() } // appel fini pendant le chargement
+            }
+        }
+
         // 2. Décroché.
         fx.play(ToneSynth.pickupClick(), ToneSynth.RATE, FX_VOLUME * loudness())
         onConnected()
@@ -211,6 +229,7 @@ class CallController(
                 io = this@CallController,
                 llmTimeoutMs = { settings.llmTimeoutMs.toLong() },
                 askSiblings = settings.askSiblings,
+                followUps = { settings.followUps },
             ).run()
         } catch (e: CancellationException) {
             throw e
@@ -262,13 +281,17 @@ class CallController(
     }
 
     override suspend fun sayFiller() {
-        val filler = Phrases.fillers.random()
+        val filler = Phrases.pick(Phrases.fillers)
         _state.update { it.copy(subtitle = filler, santaSpeaking = true) }
         try {
             voice.speak(filler, voiceVolume())
         } finally {
             _state.update { it.copy(santaSpeaking = false) }
         }
+    }
+
+    override fun prefetch(text: String) {
+        voice.prefetch(scope, text)
     }
 
     override fun startChildSegment() {
@@ -359,7 +382,7 @@ class CallController(
         // Les moteurs (plusieurs centaines de Mo) sont libérés hors du fil principal,
         // une fois la génération en cours éventuellement terminée.
         CoroutineScope(Dispatchers.IO).launch {
-            engines.forEach { runCatching { it.release() } }
+            (engines + llm).distinct().forEach { runCatching { it.release() } }
         }
     }
 }

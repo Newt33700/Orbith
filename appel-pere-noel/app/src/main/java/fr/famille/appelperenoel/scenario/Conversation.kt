@@ -41,6 +41,8 @@ interface CallIo {
     fun onChildIdentified(child: Child?)
     fun onTurn(metrics: TurnMetrics)
     fun log(line: String)
+    /** Prépare la voix d'une phrase à l'avance (pendant que l'enfant parle ou que le Père Noël parle). */
+    fun prefetch(text: String) {}
 }
 
 /**
@@ -57,8 +59,17 @@ class Conversation(
     private val llmTimeoutMs: () -> Long,
     /** Demander à parler aux frères et sœurs après le premier enfant. */
     private val askSiblings: Boolean = true,
+    /** Le Père Noël rebondit sur les réponses par une petite question de relance. */
+    private val followUps: () -> Boolean = { true },
 ) {
-    private val history = ArrayList<Exchange>()
+    /** Fil de l'appel avec l'enfant en cours (donné au cerveau pour qu'il ne se répète pas). */
+    private val transcript = ArrayList<Line>()
+
+    /** Le Père Noël parle, et on garde la réplique pour le cerveau. */
+    private suspend fun santa(text: String, goodbye: Boolean = false): SpeechTiming {
+        transcript += Line(true, text)
+        return io.say(text, goodbye)
+    }
 
     suspend fun run() {
         io.startChildSegment()
@@ -67,7 +78,7 @@ class Conversation(
 
         while (true) {
             io.onChildIdentified(child)
-            history.clear()
+            transcript.clear()
             interview(child)
             child?.let { spoken += it }
 
@@ -95,11 +106,15 @@ class Conversation(
         }
     }
 
-    /** Les trois questions pour un enfant. */
+    /** Les questions pour un enfant. */
     private suspend fun interview(child: Child?) {
-        for (step in listOf(CallStep.BEEN_GOOD, CallStep.GOOD_DEEDS, CallStep.WISH)) {
+        val steps = listOf(CallStep.BEEN_GOOD, CallStep.GOOD_DEEDS, CallStep.CHAT, CallStep.WISH)
+        // Questions tirées d'avance : leur voix se prépare pendant que l'enfant répond.
+        val questions = steps.associateWith { Phrases.question(it, child) }
+        questions.values.forEach { io.prefetch(it) }
+        for (step in steps) {
             if (io.endingSoon()) break
-            askAndReact(step, child)
+            askAndReact(step, child, questions.getValue(step))
         }
         if (io.endingSoon()) io.say(Phrases.WRAP_UP)
     }
@@ -171,9 +186,9 @@ class Conversation(
 
     // ---------------------------------------------------------------- Questions
 
-    private suspend fun askAndReact(step: CallStep, child: Child?) {
-        var question = Phrases.question(step, child)
-        io.say(question)
+    private suspend fun askAndReact(step: CallStep, child: Child?, firstQuestion: String) {
+        var question = firstQuestion
+        santa(question)
         var misses = 0
         var broughtBack = false
         while (true) {
@@ -183,51 +198,72 @@ class Conversation(
                 misses++
                 when (misses) {
                     1 -> {
-                        question = Phrases.notUnderstood.random()
-                        io.say(question)
+                        question = Phrases.pick(Phrases.notUnderstood)
+                        santa(question)
                     }
                     2 -> {
                         // Deux fois rien compris : on reformule plus simplement.
                         question = Phrases.simplified(step)
-                        io.say(question)
+                        santa(question)
                     }
                     else -> {
-                        io.say(Phrases.noAnswer(step, child))
+                        santa(Phrases.noAnswer(step, child))
                         return
                     }
                 }
                 continue
             }
+            transcript += Line(false, r.text)
             val offTopic = step == CallStep.BEEN_GOOD && !TextUtils.looksLikeYesNo(r.text) && !broughtBack
-            react(step, child, question, r, offTopic)
-            history += Exchange(question, r.text)
             if (offTopic) {
-                // Réponse hors sujet : on a répondu brièvement, on ramène doucement à la question.
+                // Réponse hors sujet : on répond brièvement, puis on ramène doucement à la question.
+                react(step, child, r, ReplyMode.OFF_TOPIC)
                 broughtBack = true
                 question = Phrases.bringBack(step)
-                io.say(question)
+                santa(question)
                 continue
+            }
+            val relance = followUps() && step != CallStep.BEEN_GOOD && !io.endingSoon()
+            val reply = react(step, child, r, if (relance) ReplyMode.REACT_AND_ASK else ReplyMode.REACT)
+            if (relance && reply.trimEnd().endsWith("?")) {
+                // Le Père Noël a rebondi par une question : on écoute la réponse et il conclut.
+                val r2 = io.listen()
+                if (r2.text.isBlank()) {
+                    santa(Phrases.followUpNoAnswer())
+                } else {
+                    transcript += Line(false, r2.text)
+                    react(step, child, r2, ReplyMode.CLOSE)
+                }
             }
             return
         }
     }
 
-    private suspend fun react(step: CallStep, child: Child?, question: String, heard: SttResult, offTopic: Boolean) {
+    /** Fait réagir le Père Noël ; renvoie ce qu'il a dit. */
+    private suspend fun react(step: CallStep, child: Child?, heard: SttResult, mode: ReplyMode): String {
         val t0 = SystemClock.elapsedRealtime()
-        val fallbackText = if (offTopic) Phrases.offTopicFallback() else Phrases.fallbackReaction(step, child)
-
-        if (!brain.ready) {
-            val timing = io.say(fallbackText)
-            io.onTurn(TurnMetrics(step, heard.text, heard.typed, heard.finalizeMs, -1, timing.synthMs, timing.startedAt - t0, false, true, fallbackText))
-            return
+        val fallbackText = when (mode) {
+            ReplyMode.OFF_TOPIC -> Phrases.offTopicFallback()
+            ReplyMode.CLOSE -> Phrases.closeFallback()
+            else -> Phrases.fallbackReaction(step, child)
         }
 
-        val prompt = brain.buildPrompt(child, step, question, heard.text, history, offTopic)
+        if (!brain.ready) {
+            val timing = santa(fallbackText)
+            io.onTurn(TurnMetrics(step, heard.text, heard.typed, heard.finalizeMs, -1, timing.synthMs, timing.startedAt - t0, false, true, fallbackText))
+            return fallbackText
+        }
+
+        val snapshot = transcript.toList()
         val sentences = Channel<String>(Channel.UNLIMITED)
+        val said = StringBuilder()
         coroutineScope {
             val generation = launch(Dispatchers.Default) {
                 try {
-                    brain.react(prompt, maxSentences = if (offTopic) 1 else 2) { sentences.trySend(it) }
+                    brain.react(child, step, snapshot, mode) { s ->
+                        io.prefetch(s) // la voix se calcule dès que la phrase est prête
+                        sentences.trySend(s)
+                    }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -238,7 +274,7 @@ class Conversation(
             }
             val first = async { sentences.receiveCatching().getOrNull() }
 
-            // Si le cerveau tarde, un petit « Hmm, voyons voir… » masque l'attente.
+            // Si le cerveau tarde, un petit « Hmm… » masque l'attente.
             var filler = false
             withTimeoutOrNull(FILLER_DELAY_MS) { first.await() }
             if (!first.isCompleted) {
@@ -253,21 +289,28 @@ class Conversation(
                 generation.cancel()
                 first.cancel()
                 io.log("Phrase de secours (cerveau ${if (first.isCompleted) "hors sujet / refusé" else "trop lent"}) — brut : ${brain.lastRaw.take(160)}")
-                val timing = io.say(fallbackText)
+                val timing = santa(fallbackText)
+                said.append(fallbackText)
                 io.onTurn(TurnMetrics(step, heard.text, heard.typed, heard.finalizeMs, -1, timing.synthMs, timing.startedAt - t0, filler, true, fallbackText))
                 return@coroutineScope
             }
 
-            val timing = io.say(s1)
+            io.log("Cerveau : ${brain.lastSource} (${llmMs} ms)")
+            val timing = santa(s1)
+            said.append(s1)
             io.onTurn(TurnMetrics(step, heard.text, heard.typed, heard.finalizeMs, llmMs, timing.synthMs, timing.startedAt - t0, filler, false, s1))
-            val s2 = withTimeoutOrNull(SECOND_SENTENCE_WAIT_MS) { sentences.receiveCatching().getOrNull() }
-            if (s2 != null) io.say(s2)
+            while (true) {
+                val next = withTimeoutOrNull(NEXT_SENTENCE_WAIT_MS) { sentences.receiveCatching().getOrNull() } ?: break
+                santa(next)
+                said.append(' ').append(next)
+            }
             generation.cancel()
         }
+        return said.toString()
     }
 
     private companion object {
-        const val FILLER_DELAY_MS = 900L
-        const val SECOND_SENTENCE_WAIT_MS = 2500L
+        const val FILLER_DELAY_MS = 1200L
+        const val NEXT_SENTENCE_WAIT_MS = 2500L
     }
 }

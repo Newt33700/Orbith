@@ -65,6 +65,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import fr.famille.appelperenoel.llm.GeminiLlm
 import androidx.compose.ui.unit.dp
 import fr.famille.appelperenoel.BuildConfig
 import fr.famille.appelperenoel.app
@@ -184,6 +186,103 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                 }
                 SwitchRow("Demander à parler aux frères et sœurs", s.askSiblings) { v -> update { it.copy(askSiblings = v) } }
                 SwitchRow("Haut-parleur activé au décroché", s.speakerByDefault) { v -> update { it.copy(speakerByDefault = v) } }
+                LabeledSlider(
+                    "Attente quand l'enfant se tait : %.1f s".format(s.silenceMs / 1000f),
+                    s.silenceMs.toFloat(),
+                    600f..2500f,
+                    steps = 18,
+                ) { v -> update { it.copy(silenceMs = (v / 100).roundToInt() * 100) } }
+                Text(
+                    "Plus court = le Père Noël répond plus vite, mais risque de couper un enfant qui hésite.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                SwitchRow("Le Père Noël rebondit sur les réponses (petites questions de relance)", s.followUps) { v ->
+                    update { it.copy(followUps = v) }
+                }
+            }
+
+            Section("Cerveau du Père Noël") {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FilterChip(
+                        selected = !s.onlineBrain,
+                        onClick = { update { it.copy(onlineBrain = false) } },
+                        label = { Text("Local (Gemma)") },
+                    )
+                    FilterChip(
+                        selected = s.onlineBrain,
+                        onClick = { update { it.copy(onlineBrain = true) } },
+                        label = { Text("En ligne (Gemini, gratuit)") },
+                    )
+                }
+                if (!s.onlineBrain) {
+                    Text(
+                        "Le petit cerveau local fonctionne sans internet, mais il est lent et se répète souvent. " +
+                            "Le cerveau en ligne répond en général en moins d'une seconde, avec des réponses bien plus variées.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                } else {
+                    Text(
+                        "Clé gratuite : sur aistudio.google.com/apikey, connecte-toi avec ton compte Google, " +
+                            "touche « Create API key », copie-la et colle-la ici. Pas de carte bancaire : " +
+                            "sans facturation activée, rien ne peut être payant.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    var keyDraft by remember { mutableStateOf(s.geminiKey) }
+                    OutlinedTextField(
+                        keyDraft,
+                        { v ->
+                            keyDraft = v.trim()
+                            update { it.copy(geminiKey = keyDraft) }
+                        },
+                        label = { Text("Clé API Gemini") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    var testing by remember { mutableStateOf(false) }
+                    var testResult by remember { mutableStateOf<String?>(null) }
+                    Button(
+                        enabled = !testing && s.geminiKey.isNotBlank(),
+                        onClick = {
+                            testing = true
+                            testResult = null
+                            scope.launch {
+                                val t0 = System.currentTimeMillis()
+                                val gemini = GeminiLlm(apiKey = { s.geminiKey }, model = { s.geminiModel })
+                                testResult = try {
+                                    val r = gemini.generate(
+                                        "Tu es le Père Noël. Réponds en français, en une phrase courte.",
+                                        "Un enfant te dit : « Bonjour Père Noël ! »",
+                                    )
+                                    "✓ ${System.currentTimeMillis() - t0} ms : ${r.trim()}"
+                                } catch (e: Exception) {
+                                    "✗ ${e.message}"
+                                }
+                                testing = false
+                            }
+                        },
+                    ) { Text(if (testing) "Test en cours…" else "Tester le cerveau en ligne") }
+                    testResult?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    Text(
+                        "Les phrases des enfants (texte seulement, jamais leur voix) sont envoyées à Google pendant l'appel. " +
+                            "Avec la clé gratuite, Google peut s'en servir pour améliorer ses services. " +
+                            "Sans internet, le Père Noël repasse tout seul sur le cerveau local.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    if (s.debugUnlocked) {
+                        var modelDraft by remember { mutableStateOf(s.geminiModel) }
+                        OutlinedTextField(
+                            modelDraft,
+                            { v ->
+                                modelDraft = v.trim()
+                                update { it.copy(geminiModel = modelDraft.ifBlank { GeminiLlm.DEFAULT_MODEL }) }
+                            },
+                            label = { Text("Modèle Gemini (debug)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
             }
 
             Section("Son") {
@@ -392,9 +491,6 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                 Section("Mode debug") {
                     SwitchRow("Mode debug (sous-titres, latences, transcription, saisie au clavier)", s.debugMode) { v ->
                         update { it.copy(debugMode = v) }
-                    }
-                    LabeledSlider("Silence de fin de phrase : ${s.silenceMs} ms", s.silenceMs.toFloat(), 800f..3000f, steps = 21) { v ->
-                        update { it.copy(silenceMs = (v / 100).roundToInt() * 100) }
                     }
                     LabeledSlider(
                         "Délai max du cerveau : %.1f s (sinon phrase de secours)".format(s.llmTimeoutMs / 1000f),

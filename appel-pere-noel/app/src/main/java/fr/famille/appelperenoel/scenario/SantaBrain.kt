@@ -1,29 +1,49 @@
 package fr.famille.appelperenoel.scenario
 
+import fr.famille.appelperenoel.llm.GeminiLlm
 import fr.famille.appelperenoel.llm.GemmaLlm
 import fr.famille.appelperenoel.settings.Child
 import fr.famille.appelperenoel.settings.Gender
 
-/** Un échange de la conversation, gardé pour donner un peu de contexte au cerveau. */
-data class Exchange(val santa: String, val child: String)
+/** Une réplique de l'appel (Père Noël ou enfant), gardée pour donner le fil au cerveau. */
+data class Line(val santa: Boolean, val text: String)
+
+/** Ce qu'on attend du cerveau pour ce tour. */
+enum class ReplyMode {
+    /** Réagir, sans question. */
+    REACT,
+    /** Réagir puis poser UNE petite question de relance. */
+    REACT_AND_ASK,
+    /** Réagir à la réponse à la relance, puis conclure (sans question). */
+    CLOSE,
+    /** Réponse hors sujet : une phrase brève. */
+    OFF_TOPIC,
+}
 
 /**
- * Le « cerveau » du Père Noël : fabrique le prompt, appelle Gemma,
- * puis nettoie et vérifie chaque phrase avant qu'elle soit dite.
+ * Le « cerveau » du Père Noël : fabrique le prompt, appelle Gemini (en ligne, si activé)
+ * ou Gemma (local), puis nettoie et vérifie chaque phrase avant qu'elle soit dite.
  *
- * Le cerveau ne fait que RÉAGIR aux réponses de l'enfant : les questions
- * sont posées par l'appli (voir [Conversation]).
+ * Les grandes questions sont posées par l'appli (voir [Conversation]) ; le cerveau réagit,
+ * et peut poser une petite question de relance.
  */
 class SantaBrain(
     private val llm: GemmaLlm,
+    private val online: GeminiLlm,
+    private val useOnline: () -> Boolean,
     private val manualTemplate: () -> Boolean,
+    private val log: (String) -> Unit = {},
 ) {
-    val ready: Boolean get() = llm.ready
+    private val onlineOn: Boolean get() = useOnline() && online.configured
 
-    /** Dernier prompt envoyé et dernière réponse brute (pour le mode debug). */
+    val ready: Boolean get() = llm.ready || onlineOn
+
+    /** Dernier prompt envoyé, dernière réponse brute et cerveau utilisé (pour le mode debug). */
     @Volatile var lastPrompt: String = ""
         private set
     @Volatile var lastRaw: String = ""
+        private set
+    @Volatile var lastSource: String = ""
         private set
 
     fun systemPrompt(child: Child?): String = buildString {
@@ -33,96 +53,141 @@ class SantaBrain(
             Gender.GIRL -> "une fille"
             else -> "un enfant"
         }
-        appendLine("Tu es le Père Noël. Tu es très vieux, chaleureux et rieur, et tu parles lentement.")
+        appendLine("Tu es le Père Noël. Tu es très vieux, chaleureux, malicieux et rieur.")
         if (child != null) {
             appendLine("Tu parles au téléphone avec $name, $who de ${child.age} ans.")
             if (child.interests.isNotBlank()) appendLine("$name aime : ${child.interests}.")
         } else {
             appendLine("Tu parles au téléphone avec un enfant.")
         }
+        appendLine("Tu vis au pôle Nord avec la Mère Noël, tes lutins et tes rennes (Rodolphe, Tonnerre, Éclair…).")
         appendLine()
         appendLine("Règles :")
-        appendLine("- Réponds en français, en 1 ou 2 phrases courtes, avec des mots simples d'enfant. Tutoie l'enfant.")
+        appendLine("- Réponds en français, en phrases courtes, avec des mots simples d'enfant. Tutoie l'enfant.")
+        appendLine("- Reprends un détail précis de ce que l'enfant vient de dire, pour qu'il sente que tu l'écoutes.")
+        appendLine("- Varie tes mots : ne répète jamais une phrase ou une formule que tu as déjà dite pendant l'appel.")
+        appendLine("- Tu peux glisser un petit détail magique du pôle Nord (un lutin, un renne, la neige, l'atelier).")
         appendLine("- Ne demande jamais d'information personnelle : ni adresse, ni école, ni nom de famille, ni téléphone.")
-        appendLine("- Aucun sujet effrayant, violent, triste ou d'adulte. Si l'enfant en parle, parle gentiment d'autre chose : les rennes, les lutins, la neige.")
+        appendLine("- Aucun sujet effrayant, violent, triste ou d'adulte. Si l'enfant en parle, parle gentiment d'autre chose.")
         appendLine("- Ne promets jamais un cadeau précis. Dis plutôt que tes lutins vont faire de leur mieux.")
         appendLine("- Ne critique jamais l'enfant. S'il dit qu'il n'a pas été sage, encourage-le avec douceur.")
-        appendLine("- Tu es le vrai Père Noël. Ne dis jamais que tu es une IA, un robot ou un programme. Si on te demande si tu es vraiment le Père Noël, réponds avec magie et malice.")
-        appendLine("- N'utilise ni emoji, ni liste, ni astérisque, ni indication de mise en scène : tes mots sont lus à voix haute.")
-        append("- Ne pose pas de nouvelle question.")
+        appendLine("- Tu es le vrai Père Noël. Ne dis jamais que tu es une IA, un robot ou un programme.")
+        append("- N'utilise ni emoji, ni liste, ni astérisque, ni indication de mise en scène : tes mots sont lus à voix haute.")
     }
 
-    private fun stepInstruction(step: CallStep, offTopic: Boolean): String {
-        val base = when (step) {
-            CallStep.BEEN_GOOD ->
-                "Réagis avec joie à sa réponse. S'il dit non ou « pas toujours », rassure-le et encourage-le gentiment."
-            CallStep.GOOD_DEEDS ->
-                "Félicite-le chaleureusement pour ce qu'il a fait de bien, en reprenant ses mots."
-            CallStep.WISH ->
-                "Réagis avec enthousiasme à son souhait, sans jamais promettre de l'apporter. Tu peux dire que tes lutins feront de leur mieux."
-            CallStep.IDENTIFY, CallStep.GOODBYE ->
-                "Réagis gentiment à ce qu'il dit."
-        }
-        return if (offTopic) {
-            "Sa réponse n'a pas de rapport avec ta question : réponds-lui très brièvement et gentiment, en une seule phrase."
-        } else {
-            base
-        }
+    private fun stepInstruction(step: CallStep): String = when (step) {
+        CallStep.BEEN_GOOD ->
+            "Réagis avec joie à sa réponse. S'il dit non ou « pas toujours », rassure-le et encourage-le gentiment."
+        CallStep.GOOD_DEEDS ->
+            "Félicite-le chaleureusement pour ce qu'il a fait de bien, en reprenant ses mots."
+        CallStep.CHAT ->
+            "Réagis avec joie et malice, en faisant un petit lien avec ta vie au pôle Nord."
+        CallStep.WISH ->
+            "Réagis avec enthousiasme à son souhait, sans jamais promettre de l'apporter. Tu peux dire que tes lutins feront de leur mieux."
+        CallStep.IDENTIFY, CallStep.GOODBYE ->
+            "Réagis gentiment à ce qu'il dit."
     }
 
-    fun buildPrompt(
-        child: Child?,
-        step: CallStep,
-        question: String,
-        answer: String,
-        history: List<Exchange>,
-        offTopic: Boolean,
-    ): String {
+    private fun modeInstruction(step: CallStep, mode: ReplyMode): String = when (mode) {
+        ReplyMode.REACT -> stepInstruction(step) + " Une ou deux phrases courtes, sans poser de question."
+        ReplyMode.REACT_AND_ASK -> stepInstruction(step) +
+            " Une phrase courte, puis pose-lui UNE seule petite question de relance, très simple, " +
+            "sur un détail de ce qu'il vient de dire. Termine par cette question."
+        ReplyMode.CLOSE ->
+            "Réagis chaleureusement à sa réponse, en une ou deux phrases courtes. Ne pose pas de question."
+        ReplyMode.OFF_TOPIC ->
+            "Sa réponse n'a pas de rapport avec ta question : réponds-lui très brièvement et gentiment, en une seule phrase, sans question."
+    }
+
+    /** Partie « conversation » du prompt (le rôle est dans [systemPrompt]). */
+    fun buildPrompt(child: Child?, step: CallStep, transcript: List<Line>, mode: ReplyMode, maxLines: Int): String {
         val name = child?.name ?: "L'enfant"
-        val body = buildString {
-            appendLine(systemPrompt(child))
+        return buildString {
+            appendLine("Voici l'appel jusqu'ici :")
+            transcript.takeLast(maxLines).forEach { appendLine(if (it.santa) "Père Noël : ${it.text}" else "$name : ${it.text}") }
             appendLine()
-            if (history.isNotEmpty()) {
-                appendLine("Ce que vous vous êtes dit juste avant :")
-                history.takeLast(2).forEach {
-                    appendLine("Père Noël : ${it.santa}")
-                    appendLine("$name : ${it.child}")
-                }
-                appendLine()
-            }
-            appendLine("Le Père Noël vient de demander : « $question »")
-            appendLine("$name répond : « $answer »")
-            appendLine()
-            appendLine(stepInstruction(step, offTopic))
+            appendLine(modeInstruction(step, mode))
             append("Réponds maintenant, uniquement avec les mots du Père Noël.")
-        }
-        return if (manualTemplate()) {
-            "<start_of_turn>user\n$body<end_of_turn>\n<start_of_turn>model\n"
-        } else {
-            body
         }
     }
 
     /**
      * Fait réagir le Père Noël. La génération se fait en flux : chaque phrase valide est
      * transmise à [onSentence] dès qu'elle est complète, pour que le Père Noël commence à parler
-     * pendant que la suite se calcule. Au maximum [maxSentences] phrases ; une phrase douteuse
-     * arrête tout (la suite serait incohérente).
+     * pendant que la suite se calcule. Une phrase douteuse arrête tout (la suite serait incohérente).
      */
     suspend fun react(
-        prompt: String,
-        maxSentences: Int = 2,
+        child: Child?,
+        step: CallStep,
+        transcript: List<Line>,
+        mode: ReplyMode,
         onSentence: (String) -> Unit,
     ) {
-        lastPrompt = prompt
+        val maxSentences = when (mode) {
+            ReplyMode.OFF_TOPIC -> 1
+            ReplyMode.REACT_AND_ASK -> 3
+            else -> 2
+        }
+        val allowQuestion = mode == ReplyMode.REACT_AND_ASK
+        val system = systemPrompt(child)
         lastRaw = ""
         var emitted = 0
-        var consumed = 0
-        var blocked = false
-        val regex = Regex("[^.!?…]*[.!?…]+[»\"]?")
 
-        fun handle(text: String, final: Boolean) {
-            if (blocked || emitted >= maxSentences) return
+
+        if (onlineOn) {
+            val prompt = buildPrompt(child, step, transcript, mode, maxLines = 16)
+            lastPrompt = system + "\n\n" + prompt
+            lastSource = "Gemini"
+            val c = SentenceCollector(maxSentences, allowQuestion) { emitted++; onSentence(it) }
+            try {
+                val full = online.generate(
+                    system,
+                    prompt,
+                    onText = { lastRaw = it; c.feed(it, final = false) },
+                    stopWhen = { c.done },
+                )
+                lastRaw = full
+                c.feed(full, final = true)
+                return
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log("Cerveau en ligne indisponible : ${e.message}")
+                if (emitted > 0 || !llm.ready) return
+            }
+        }
+        if (!llm.ready) return
+
+        val body = system + "\n\n" + buildPrompt(child, step, transcript, mode, maxLines = 6)
+        val prompt = if (manualTemplate()) "<start_of_turn>user\n$body<end_of_turn>\n<start_of_turn>model\n" else body
+        lastPrompt = prompt
+        lastSource = "Gemma"
+        val c = SentenceCollector(maxSentences, allowQuestion) { emitted++; onSentence(it) }
+        val full = llm.generate(
+            prompt,
+            temperature = 0.8f,
+            onText = { lastRaw = it; c.feed(it, final = false) },
+            stopWhen = { text -> c.done || cleanup(text).length > 300 || looksLikeNewSpeaker(text) },
+        )
+        lastRaw = full
+        c.feed(full, final = true)
+    }
+
+    /** Découpe le texte reçu en flux en phrases complètes, vérifiées une par une. */
+    private class SentenceCollector(
+        private val maxSentences: Int,
+        private val allowQuestion: Boolean,
+        private val emit: (String) -> Unit,
+    ) {
+        private var consumed = 0
+        private var emitted = 0
+        @Volatile var done = false
+            private set
+        private val regex = Regex("[^.!?…]*[.!?…]+[»\"]?")
+
+        @Synchronized
+        fun feed(text: String, final: Boolean) {
+            if (done) return
             val clean = cleanup(text)
             if (consumed > clean.length) consumed = clean.length
             val rest = clean.substring(consumed)
@@ -142,34 +207,27 @@ class SantaBrain(
             consumed += offset
             for (s in found) {
                 if (s.isBlank()) continue
-                if (emitted >= maxSentences) return
                 if (!isSafe(s)) {
-                    blocked = true
+                    done = true
+                    return
+                }
+                val question = s.trimEnd().endsWith("?")
+                if (question && !allowQuestion) {
+                    // Une question en trop laisserait l'enfant sans réponse : on s'arrête là.
+                    done = true
                     return
                 }
                 emitted++
-                onSentence(s)
+                emit(s)
+                if (question || emitted >= maxSentences) {
+                    done = true
+                    return
+                }
             }
         }
-
-        val full = llm.generate(
-            prompt,
-            onText = { text ->
-                lastRaw = text
-                handle(text, final = false)
-            },
-            stopWhen = { text ->
-                val clean = cleanup(text)
-                sentenceCount(clean) >= maxSentences || clean.length > 260 || looksLikeNewSpeaker(text)
-            },
-        )
-        lastRaw = full
-        handle(full, final = true)
     }
 
     companion object {
-        private fun sentenceCount(s: String) = Regex("[.!?…]+").findAll(s).count()
-
         /** Le modèle se met à écrire la réplique de l'enfant : il faut s'arrêter. */
         private fun looksLikeNewSpeaker(raw: String): Boolean =
             Regex("\\n\\s*[A-ZÉÈa-zéè' ]{2,20}\\s*:").containsMatchIn(raw) || raw.contains("<end_of_turn>") ||

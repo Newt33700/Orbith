@@ -7,7 +7,7 @@ Tout tourne **sur le téléphone, sans internet** une fois les modèles install�
 |---|---|---|
 | Oreilles (reconnaissance vocale) | [Vosk](https://alphacephei.com/vosk/) `vosk-model-small-fr-0.22` | ~41 Mo |
 | Voix | [Piper](https://github.com/rhasspy/piper) via [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | ~65 Mo / voix |
-| Cerveau | MediaPipe LLM Inference + Gemma 3 1B int4 | ~550 Mo |
+| Cerveau | MediaPipe LLM Inference + Gemma 3 1B int4 (local) ou Gemini Flash-Lite (en ligne, clé gratuite) | ~550 Mo |
 
 > Usage familial uniquement, pas de publication sur le Play Store.
 
@@ -39,7 +39,7 @@ Garde-fous :
 - micro ouvert **uniquement** quand c'est à l'enfant de parler ;
 - rien compris → « tu peux répéter ? », puis question reformulée simplement, puis on passe à la suite ;
 - réponse hors sujet à « as-tu été sage ? » → réponse courte puis retour à la question ;
-- cerveau trop lent (> 0,9 s) → « Hmm, voyons voir… » ; au-delà du délai max (5 s) → phrase de secours ;
+- cerveau trop lent (> 1,2 s) → « Hmm… » ; au-delà du délai max (5 s) → phrase de secours ;
 - chaque phrase du cerveau est nettoyée puis **filtrée** (hors personnage, IA, infos personnelles,
   sujets sombres, promesses de cadeau, critiques, anglais) : une phrase refusée → phrase de secours ;
 - 30 s avant la durée max (par enfant), il conclut gentiment.
@@ -178,3 +178,16 @@ app/src/main/java/fr/famille/appelperenoel/
 ├── settings/              réglages (enfants, durée, volumes…)
 └── ui/                    écrans Compose : accueil, appel, parents, installation
 ```
+
+## Cerveau en ligne et relances
+
+- *Espace parents → Cerveau du Père Noël → En ligne (Gemini, gratuit)* : coller une clé créée sur
+  aistudio.google.com/apikey (sans facturation, donc gratuite). Seul le texte transcrit part chez Google.
+  Sans réseau, le Père Noël repasse sur Gemma (chargé après le décroché, en secours).
+- Déroulé : sage ? → bonne action → petite discussion (sapin, gâteau, rennes, centres d'intérêt) → souhait.
+  Après la bonne action, la discussion et le souhait, le cerveau peut poser **une** question de relance,
+  puis conclut après la réponse (réglage « rebondit sur les réponses »).
+- Anti-redites : questions et phrases de secours tirées parmi plusieurs variantes sans répétition,
+  tout le fil de l'appel est donné au cerveau avec la consigne de ne jamais se répéter.
+- Latence : silence de fin de phrase 1,0 s par défaut (réglable dans « Appel »), voix des questions et
+  des phrases du cerveau calculée à l'avance pendant que l'enfant parle / que le Père Noël parle.

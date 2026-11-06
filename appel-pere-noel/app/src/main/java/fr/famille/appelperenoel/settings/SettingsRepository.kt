@@ -47,7 +47,11 @@ class SettingsRepository(context: Context) {
         put("ambienceVolume", s.ambienceVolume.toDouble())
         put("speakerByDefault", s.speakerByDefault)
         put("ringSeconds", s.ringSeconds.toDouble())
-        put("silenceMs", s.silenceMs)
+        put("silenceMs2", s.silenceMs)
+        put("followUps", s.followUps)
+        put("onlineBrain", s.onlineBrain)
+        put("geminiKey", s.geminiKey)
+        put("geminiModel", s.geminiModel)
         put("debugUnlocked", s.debugUnlocked)
         put("debugMode", s.debugMode)
         put("setupDone", s.setupDone)
@@ -89,7 +93,12 @@ class SettingsRepository(context: Context) {
             ambienceVolume = o.optDouble("ambienceVolume", d.ambienceVolume.toDouble()).toFloat(),
             speakerByDefault = o.optBoolean("speakerByDefault", d.speakerByDefault),
             ringSeconds = o.optDouble("ringSeconds", d.ringSeconds.toDouble()).toFloat(),
-            silenceMs = o.optInt("silenceMs", d.silenceMs),
+            // « silenceMs2 » : l'ancien réglage (1,5 s, trop lent) est ignoré.
+            silenceMs = o.optInt("silenceMs2", d.silenceMs),
+            followUps = o.optBoolean("followUps", d.followUps),
+            onlineBrain = o.optBoolean("onlineBrain", d.onlineBrain),
+            geminiKey = o.optString("geminiKey", d.geminiKey),
+            geminiModel = o.optString("geminiModel", d.geminiModel).ifBlank { d.geminiModel },
             debugUnlocked = o.optBoolean("debugUnlocked", d.debugUnlocked),
             debugMode = o.optBoolean("debugMode", d.debugMode),
             setupDone = o.optBoolean("setupDone", d.setupDone),

@@ -8,6 +8,10 @@ import fr.famille.appelperenoel.audio.PapyVoice
 import fr.famille.appelperenoel.audio.PapyVoiceSettings
 import fr.famille.appelperenoel.audio.PcmPlayer
 import fr.famille.appelperenoel.audio.PlayableSpeech
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import java.util.concurrent.ConcurrentHashMap
 
@@ -40,13 +44,33 @@ class SantaVoice(
         for (t in texts) runCatching { prepare(t) }
     }
 
+    /** Synthèses lancées à l'avance ([prefetch]) et pas encore utilisées. */
+    private val inflight = ConcurrentHashMap<String, Deferred<PlayableSpeech>>()
+
+    private suspend fun synthNow(text: String): PlayableSpeech {
+        val engine = synth() ?: throw IllegalStateException("aucune voix")
+        val speech = render(engine, text, papy)
+        if (cache.size < 96) cache[text] = speech
+        return speech
+    }
+
     private suspend fun prepare(text: String): Pair<PlayableSpeech, Long> {
         cache[text]?.let { return it to 0L }
         val t0 = SystemClock.elapsedRealtime()
-        val engine = synth() ?: throw IllegalStateException("aucune voix")
-        val speech = render(engine, text, papy)
-        if (cache.size < 64) cache[text] = speech
+        val early = inflight.remove(text)
+        val speech = early?.let { runCatching { it.await() }.getOrNull() } ?: synthNow(text)
         return speech to SystemClock.elapsedRealtime() - t0
+    }
+
+    /** Lance la synthèse d'une phrase en arrière-plan, pour qu'elle parte sans attendre le moment venu. */
+    fun prefetch(scope: CoroutineScope, text: String) {
+        if (!ready) return
+        val withHo = HomeRecordings.file(context, HomeRecording.HOHOHO) != null
+        val segments = if (withHo) splitHoHoHo(text).filter { !it.first }.map { it.second } else listOf(text)
+        for (seg in segments) {
+            if (seg.isBlank() || cache.containsKey(seg) || inflight.containsKey(seg)) continue
+            inflight[seg] = scope.async(Dispatchers.IO) { synthNow(seg) }
+        }
     }
 
     /**

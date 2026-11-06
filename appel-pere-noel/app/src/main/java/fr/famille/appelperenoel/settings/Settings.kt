@@ -32,7 +32,15 @@ data class AppSettings(
     /** Durée de la sonnerie avant que le Père Noël décroche. */
     val ringSeconds: Float = 4.5f,
     /** Silence (ms) qui marque la fin d'une phrase de l'enfant. */
-    val silenceMs: Int = 1500,
+    val silenceMs: Int = 1000,
+    /** Le Père Noël rebondit sur les réponses par une petite question de relance. */
+    val followUps: Boolean = true,
+    /** Cerveau en ligne (Gemini, clé gratuite) à la place du petit modèle local. */
+    val onlineBrain: Boolean = false,
+    /** Clé API Gemini (aistudio.google.com/apikey). */
+    val geminiKey: String = "",
+    /** Modèle Gemini (alias tenu à jour par Google). */
+    val geminiModel: String = fr.famille.appelperenoel.llm.GeminiLlm.DEFAULT_MODEL,
     /** Le mode debug est caché : 7 appuis sur le numéro de version dans l'écran Parents. */
     val debugUnlocked: Boolean = false,
     val debugMode: Boolean = false,
