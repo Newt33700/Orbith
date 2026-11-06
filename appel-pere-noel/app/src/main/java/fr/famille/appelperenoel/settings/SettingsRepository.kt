@@ -55,7 +55,9 @@ class SettingsRepository(context: Context) {
         s.voiceName?.let { put("voiceName", it) }
         put("pitchSemitones", s.pitchSemitones.toDouble())
         put("slowness", s.slowness.toDouble())
-        put("reverb", s.reverb.toDouble())
+        put("reverb2", s.reverb.toDouble())
+        put("voiceSpeaker", s.voiceSpeaker)
+        put("expressiveness", s.expressiveness.toDouble())
         put("llmTimeoutMs", s.llmTimeoutMs)
         put("llmGpu", s.llmGpu)
         put("llmManualTemplate", s.llmManualTemplate)
@@ -93,7 +95,9 @@ class SettingsRepository(context: Context) {
             voiceName = o.optString("voiceName").ifBlank { null },
             pitchSemitones = o.optDouble("pitchSemitones", d.pitchSemitones.toDouble()).toFloat(),
             slowness = o.optDouble("slowness", d.slowness.toDouble()).toFloat(),
-            reverb = o.optDouble("reverb", d.reverb.toDouble()).toFloat(),
+            reverb = o.optDouble("reverb2", d.reverb.toDouble()).toFloat(),
+            voiceSpeaker = o.optInt("voiceSpeaker", d.voiceSpeaker),
+            expressiveness = o.optDouble("expressiveness", d.expressiveness.toDouble()).toFloat(),
             llmTimeoutMs = o.optInt("llmTimeoutMs", d.llmTimeoutMs),
             llmGpu = o.optBoolean("llmGpu", d.llmGpu),
             llmManualTemplate = o.optBoolean("llmManualTemplate", d.llmManualTemplate),

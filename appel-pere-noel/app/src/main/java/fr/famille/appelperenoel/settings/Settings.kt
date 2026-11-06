@@ -45,7 +45,11 @@ data class AppSettings(
     /** Lenteur : 1.15 = 15 % plus lent. */
     val slowness: Float = 1.15f,
     /** Écho / réverbération (0 = aucun). */
-    val reverb: Float = 0.15f,
+    val reverb: Float = 0f,
+    /** Locuteur dans les voix qui en ont plusieurs (UPMC : 0 = Jessica, 1 = Pierre). */
+    val voiceSpeaker: Int = 0,
+    /** Expressivité de la voix (0 = monotone, 1 = très variée). */
+    val expressiveness: Float = 0.5f,
     /** Délai max (ms) pour que le cerveau trouve sa première phrase, sinon phrase de secours. */
     val llmTimeoutMs: Int = 5000,
     /** Cerveau sur la carte graphique (sinon processeur). */

@@ -85,7 +85,12 @@ class CallController(
     private val ambience = AmbiencePlayer(context)
 
     private val stt = VoskStt(models)
-    private val piper = PiperTts(models) { settings.voiceName }
+    private val piper = PiperTts(
+        models,
+        voiceName = { settings.voiceName },
+        speaker = { settings.voiceSpeaker },
+        expressiveness = { settings.expressiveness },
+    )
     private val llm = GemmaLlm(context, models) { settings.llmGpu }
     private val voice = SantaVoice(context, piper, settings.papyVoice(), speechPlayer)
     private val brain = SantaBrain(llm) { settings.llmManualTemplate }

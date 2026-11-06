@@ -21,6 +21,10 @@ class RawSpeech(val samples: FloatArray, val sampleRate: Int)
 class PiperTts(
     private val models: ModelRepository,
     private val voiceName: () -> String?,
+    /** Numéro du locuteur pour les voix qui en ont plusieurs. */
+    private val speaker: () -> Int = { 0 },
+    /** 0..1 : variations d'intonation et de rythme (noise_scale / noise_w de Piper). */
+    private val expressiveness: () -> Float = { 0.5f },
 ) : Engine {
 
     override val label = "Voix (Piper)"
@@ -30,6 +34,10 @@ class PiperTts(
     private val mutex = Mutex()
 
     var voice: PiperVoice? = null
+        private set
+
+    /** Nombre de locuteurs de la voix chargée (1 pour la plupart). */
+    var speakers: Int = 1
         private set
 
     val ready: Boolean get() = tts != null
@@ -49,8 +57,8 @@ class PiperTts(
                         tokens = File(chosen.dir, "tokens.txt").absolutePath,
                         dataDir = if (espeak.isDirectory) espeak.absolutePath else "",
                         dictDir = "",
-                        noiseScale = 0.667f,
-                        noiseScaleW = 0.8f,
+                        noiseScale = 0.45f + 0.5f * expressiveness().coerceIn(0f, 1f),
+                        noiseScaleW = 0.6f + 0.6f * expressiveness().coerceIn(0f, 1f),
                         lengthScale = 1.0f,
                     ),
                     numThreads = 2,
@@ -62,8 +70,10 @@ class PiperTts(
                 maxNumSentences = 1,
                 silenceScale = 0.2f,
             )
-            tts = OfflineTts(null, config)
+            val engine = OfflineTts(null, config)
+            tts = engine
             voice = chosen
+            speakers = runCatching { engine.numSpeakers() }.getOrDefault(1).coerceAtLeast(1)
         }
     }
 
@@ -71,7 +81,8 @@ class PiperTts(
     suspend fun synthesize(text: String, speed: Float): RawSpeech = withContext(Dispatchers.Default) {
         mutex.withLock {
             val engine = tts ?: throw IllegalStateException("voix non chargée")
-            val audio = engine.generate(text, 0, speed)
+            val sid = speaker().coerceIn(0, speakers - 1)
+            val audio = engine.generate(text, sid, speed)
             RawSpeech(audio.samples, audio.sampleRate)
         }
     }

@@ -92,6 +92,7 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
     var versionTaps by remember { mutableIntStateOf(0) }
 
     var previewing by remember { mutableStateOf(false) }
+    var previewSpeakers by remember { mutableIntStateOf(1) }
     val preview = remember { VoicePreview(app.models) }
     DisposableEffect(preview) { onDispose { preview.release() } }
     var recordingsVersion by remember { mutableIntStateOf(0) }
@@ -192,11 +193,29 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                         voices.forEach { v ->
                             FilterChip(
                                 selected = v.name == selected,
-                                onClick = { update { it.copy(voiceName = v.name) } },
+                                onClick = {
+                                    update { it.copy(voiceName = v.name, voiceSpeaker = 0) }
+                                    previewSpeakers = 1
+                                },
                                 label = { Text(v.name) },
                             )
                         }
                     }
+                }
+                if (previewSpeakers > 1) {
+                    Text("Locuteur (UPMC : 1 = Jessica, 2 = Pierre) :", style = MaterialTheme.typography.bodySmall)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        (0 until previewSpeakers.coerceAtMost(12)).forEach { i ->
+                            FilterChip(
+                                selected = s.voiceSpeaker == i,
+                                onClick = { update { it.copy(voiceSpeaker = i) } },
+                                label = { Text("${i + 1}") },
+                            )
+                        }
+                    }
+                }
+                LabeledSlider("Expressivité : ${(s.expressiveness * 100).roundToInt()} %", s.expressiveness, 0f..1f, steps = 9) { v ->
+                    update { it.copy(expressiveness = (v * 10).roundToInt() / 10f) }
                 }
                 LabeledSlider("Voix plus grave : %.1f demi-tons".format(s.pitchSemitones), s.pitchSemitones, 0f..4f, steps = 7) { v ->
                     update { it.copy(pitchSemitones = (v * 2).roundToInt() / 2f) }
@@ -216,6 +235,7 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                                 app.settings.current,
                                 "Ho ho ho ! Bonjour $name, ici le Père Noël. Est-ce que tu as été bien sage cette année ?",
                             )
+                            previewSpeakers = preview.speakers
                         } catch (e: Exception) {
                             Toast.makeText(context, "Voix : ${e.message}", Toast.LENGTH_LONG).show()
                         } finally {
