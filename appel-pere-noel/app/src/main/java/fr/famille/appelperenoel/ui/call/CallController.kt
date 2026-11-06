@@ -108,6 +108,8 @@ class CallController(
     }
     private val engines: List<Engine> = listOf(stt, voiceEngine, llm)
 
+    @Volatile
+    private var segmentStart = 0L
     private var mainJob: Job? = null
     private var clockJob: Job? = null
     private var started = false
@@ -170,7 +172,13 @@ class CallController(
 
         // 3. Conversation.
         try {
-            Conversation(children, brain, this@CallController) { settings.llmTimeoutMs.toLong() }.run()
+            Conversation(
+                children = children,
+                brain = brain,
+                io = this@CallController,
+                llmTimeoutMs = { settings.llmTimeoutMs.toLong() },
+                askSiblings = settings.askSiblings,
+            ).run()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -185,14 +193,18 @@ class CallController(
 
     private suspend fun onConnected() {
         val connectedAt = SystemClock.elapsedRealtime()
+        segmentStart = connectedAt
         _state.update { it.copy(phase = CallPhase.CONNECTED) }
+        // Durée max PAR ENFANT : le compteur repart quand le téléphone passe au frère ou à la sœur.
         val maxSeconds = settings.maxCallMinutes * 60
         clockJob = scope.launch {
             while (isActive) {
-                val elapsed = ((SystemClock.elapsedRealtime() - connectedAt) / 1000).toInt()
-                _state.update { it.copy(elapsedSeconds = elapsed, endingSoon = elapsed >= maxSeconds - 30) }
+                val now = SystemClock.elapsedRealtime()
+                val elapsed = ((now - connectedAt) / 1000).toInt()
+                val segment = ((now - segmentStart) / 1000).toInt()
+                _state.update { it.copy(elapsedSeconds = elapsed, endingSoon = segment >= maxSeconds - 30) }
                 // Filet de sécurité : si la conclusion déborde trop, on raccroche.
-                if (elapsed >= maxSeconds + 30) {
+                if (segment >= maxSeconds + 45) {
                     end(playBusyTone = true)
                     break
                 }
@@ -226,7 +238,12 @@ class CallController(
         }
     }
 
-    override suspend fun listen(): SttResult {
+    override fun startChildSegment() {
+        segmentStart = SystemClock.elapsedRealtime()
+        _state.update { it.copy(endingSoon = false) }
+    }
+
+    override suspend fun listen(maxWaitMs: Long): SttResult {
         // Le micro ne s'ouvre qu'ici, jamais pendant que le Père Noël parle.
         _state.update { it.copy(listening = true, partial = "") }
         ambience.setVolume(ambienceVolume(listening = true))
@@ -234,13 +251,14 @@ class CallController(
             val r = try {
                 stt.listen(
                     silenceMs = settings.silenceMs,
+                    maxWaitMs = maxWaitMs,
                     onPartial = { p -> _state.update { it.copy(partial = p) } },
                 )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 log("Micro : ${e.message}")
-                withContext(Dispatchers.Default) { delay(4000) }
+                withContext(Dispatchers.Default) { delay(minOf(4000L, maxWaitMs)) }
                 SttResult("")
             }
             log("Enfant${if (r.typed) " (clavier)" else ""} : « ${r.text} »")

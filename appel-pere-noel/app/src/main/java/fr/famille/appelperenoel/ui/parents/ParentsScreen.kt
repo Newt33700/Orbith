@@ -160,12 +160,13 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
             }
 
             Section("Appel") {
-                LabeledSlider("Durée maximale : ${s.maxCallMinutes} min", s.maxCallMinutes.toFloat(), 2f..10f, steps = 7) { v ->
+                LabeledSlider("Durée maximale par enfant : ${s.maxCallMinutes} min", s.maxCallMinutes.toFloat(), 2f..10f, steps = 7) { v ->
                     update { it.copy(maxCallMinutes = v.roundToInt()) }
                 }
                 LabeledSlider("Durée de la sonnerie : %.1f s".format(s.ringSeconds), s.ringSeconds, 3f..6f, steps = 5) { v ->
                     update { it.copy(ringSeconds = (v * 2).roundToInt() / 2f) }
                 }
+                SwitchRow("Demander à parler aux frères et sœurs", s.askSiblings) { v -> update { it.copy(askSiblings = v) } }
                 SwitchRow("Haut-parleur activé au décroché", s.speakerByDefault) { v -> update { it.copy(speakerByDefault = v) } }
             }
 

@@ -29,7 +29,11 @@ Tout tourne **sur le téléphone, sans internet** une fois les modèles install�
    Le prénom est reconnu même mal transcrit ; sinon il redemande, puis demande l'âge.
 3. **Sage ?** → **Qu'as-tu fait de bien ?** → **Que voudrais-tu pour Noël ?**
    Les questions sont écrites à l'avance ; le cerveau ne fait que **réagir** (1 à 2 phrases).
-4. **Au revoir**, puis il raccroche tout seul (tonalité « occupé »).
+4. **Frères et sœurs** (réglable) : « Dis-moi Lilian, est-ce qu'Alicia est à côté de toi ? Passe-lui
+   le téléphone ! », quelques secondes pour passer le téléphone, « Allô ? C'est toi, Alicia ? », puis
+   les mêmes questions avec elle. Personne ne répond → « Fais-lui un gros bisou de ma part ! ».
+   La **durée max s'applique à chaque enfant**.
+5. **Au revoir** (« Joyeux Noël à tous les deux ! »), puis il raccroche tout seul (tonalité « occupé »).
 
 Garde-fous :
 - micro ouvert **uniquement** quand c'est à l'enfant de parler ;
@@ -38,7 +42,7 @@ Garde-fous :
 - cerveau trop lent (> 0,9 s) → « Hmm, voyons voir… » ; au-delà du délai max (5 s) → phrase de secours ;
 - chaque phrase du cerveau est nettoyée puis **filtrée** (hors personnage, IA, infos personnelles,
   sujets sombres, promesses de cadeau, critiques, anglais) : une phrase refusée → phrase de secours ;
-- 30 s avant la durée max, il conclut gentiment.
+- 30 s avant la durée max (par enfant), il conclut gentiment.
 
 ## Prompt du cerveau
 

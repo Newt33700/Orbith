@@ -34,7 +34,9 @@ data class TurnMetrics(
 interface CallIo {
     suspend fun say(text: String, goodbye: Boolean = false): SpeechTiming
     suspend fun sayFiller()
-    suspend fun listen(): SttResult
+    suspend fun listen(maxWaitMs: Long = 8_000): SttResult
+    /** Démarre le compteur de durée max pour un nouvel enfant. */
+    fun startChildSegment()
     fun endingSoon(): Boolean
     fun onChildIdentified(child: Child?)
     fun onTurn(metrics: TurnMetrics)
@@ -53,19 +55,75 @@ class Conversation(
     private val brain: SantaBrain,
     private val io: CallIo,
     private val llmTimeoutMs: () -> Long,
+    /** Demander à parler aux frères et sœurs après le premier enfant. */
+    private val askSiblings: Boolean = true,
 ) {
     private val history = ArrayList<Exchange>()
 
     suspend fun run() {
-        val child = identify()
-        io.onChildIdentified(child)
+        io.startChildSegment()
+        var child = identify()
+        val spoken = ArrayList<Child>()
 
+        while (true) {
+            io.onChildIdentified(child)
+            history.clear()
+            interview(child)
+            child?.let { spoken += it }
+
+            // Frère ou sœur qui n'a pas encore parlé ?
+            val kids = children.filter { it.name.isNotBlank() }
+            val next = if (askSiblings && child != null) kids.firstOrNull { k -> spoken.none { it.id == k.id } } else null
+            if (child == null || next == null) break
+
+            io.say(Phrases.encourage(child))
+            io.say(Phrases.askSibling(child, next))
+            val sibling = handOver(next, kids, spoken)
+            if (sibling == null) {
+                io.say(Phrases.siblingMissing(next))
+                break
+            }
+            io.startChildSegment() // la durée max repart pour chaque enfant
+            child = sibling
+        }
+
+        if (spoken.size >= 2) {
+            io.say(Phrases.encourage(child))
+            io.say(Phrases.goodbyeAll(spoken.size), goodbye = true)
+        } else {
+            io.say(Phrases.goodbye(child), goodbye = true)
+        }
+    }
+
+    /** Les trois questions pour un enfant. */
+    private suspend fun interview(child: Child?) {
         for (step in listOf(CallStep.BEEN_GOOD, CallStep.GOOD_DEEDS, CallStep.WISH)) {
             if (io.endingSoon()) break
             askAndReact(step, child)
         }
         if (io.endingSoon()) io.say(Phrases.WRAP_UP)
-        io.say(Phrases.goodbye(child), goodbye = true)
+    }
+
+    /**
+     * Le téléphone passe de main en main : on laisse le temps, puis on vérifie qui parle.
+     * Renvoie l'enfant qui a pris le téléphone, ou null si personne n'a répondu.
+     */
+    private suspend fun handOver(expected: Child, kids: List<Child>, spoken: List<Child>): Child? {
+        // Temps de passer le téléphone (ce qui est dit pendant ce temps est ignoré).
+        io.listen(maxWaitMs = 6_000)
+        io.say(Phrases.siblingHello(expected))
+        for (attempt in 0 until 2) {
+            val r = io.listen(maxWaitMs = 8_000)
+            if (r.text.isBlank()) {
+                if (attempt == 0) io.say(Phrases.ALLO_RETRY)
+                continue
+            }
+            val remaining = kids.filter { k -> spoken.none { it.id == k.id } }
+            val who = TextUtils.matchChild(r.text, remaining) ?: expected
+            io.say(Phrases.siblingIdentified(who))
+            return who
+        }
+        return null
     }
 
     // ---------------------------------------------------------------- Identification

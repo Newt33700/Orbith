@@ -20,7 +20,10 @@ data class AppSettings(
         Child(name = "Lilian", age = 9),
         Child(name = "Alicia", age = 6),
     ),
+    /** Durée max de la conversation avec CHAQUE enfant. */
     val maxCallMinutes: Int = 4,
+    /** Après le premier enfant, le Père Noël demande à parler aux frères et sœurs. */
+    val askSiblings: Boolean = true,
     /** Volume de la voix du Père Noël (0..1, appliqué en plus du volume du téléphone). */
     val santaVolume: Float = 1f,
     val ambienceEnabled: Boolean = true,

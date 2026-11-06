@@ -41,16 +41,37 @@ object Phrases {
         else -> "Ho ho ho !"
     }
 
-    fun goodbye(child: Child?): String {
+    fun goodbye(child: Child?): String =
+        encourage(child) + " Allez, je dois retourner à l'atelier. Joyeux Noël ! Ho ho ho !"
+
+    /** Encouragement de fin d'échange avec un enfant. */
+    fun encourage(child: Child?): String {
         val kind = when (child?.gender) {
             Gender.BOY -> "gentil"
             Gender.GIRL -> "gentille"
             else -> "sage"
         }
         val name = child?.name?.let { ", $it" } ?: ""
-        return "Continue d'être aussi $kind$name, je te surveille avec mes lutins ! " +
-            "Allez, je dois retourner à l'atelier. Joyeux Noël ! Ho ho ho !"
+        return "Continue d'être aussi $kind$name, je te surveille avec mes lutins !"
     }
+
+    /** Au revoir final quand plusieurs enfants ont parlé. */
+    fun goodbyeAll(count: Int): String {
+        val all = if (count == 2) "à tous les deux" else "à tous"
+        return "Allez, je dois retourner à l'atelier. Joyeux Noël $all ! Ho ho ho !"
+    }
+
+    /** Demande à parler au frère ou à la sœur. */
+    fun askSibling(current: Child, next: Child) =
+        "Dis-moi ${current.name}, est-ce que ${next.name} est à côté de toi ? " +
+            "Passe-lui le téléphone, j'aimerais beaucoup lui parler !"
+
+    fun siblingHello(next: Child) = "Allô ? C'est toi, ${next.name} ?"
+
+    fun siblingIdentified(next: Child) = "Ho ho ho ! Bonjour ${next.name}, quelle joie de t'entendre !"
+
+    fun siblingMissing(next: Child) =
+        "Ce n'est pas grave ! Fais un gros bisou à ${next.name} de ma part."
 
     fun identifiedNobody(heard: Boolean) =
         if (heard) "Ho ho ho ! Quelle joie de t'entendre !" else "Ho ho ho ! Je t'entends un tout petit peu, ça me fait très plaisir !"

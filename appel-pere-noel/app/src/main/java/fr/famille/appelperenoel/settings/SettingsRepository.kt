@@ -41,6 +41,7 @@ class SettingsRepository(context: Context) {
             }
         })
         put("maxCallMinutes", s.maxCallMinutes)
+        put("askSiblings", s.askSiblings)
         put("santaVolume", s.santaVolume.toDouble())
         put("ambienceEnabled", s.ambienceEnabled)
         put("ambienceVolume", s.ambienceVolume.toDouble())
@@ -78,6 +79,7 @@ class SettingsRepository(context: Context) {
         return AppSettings(
             children = children,
             maxCallMinutes = o.optInt("maxCallMinutes", d.maxCallMinutes),
+            askSiblings = o.optBoolean("askSiblings", d.askSiblings),
             santaVolume = o.optDouble("santaVolume", d.santaVolume.toDouble()).toFloat(),
             ambienceEnabled = o.optBoolean("ambienceEnabled", d.ambienceEnabled),
             ambienceVolume = o.optDouble("ambienceVolume", d.ambienceVolume.toDouble()).toFloat(),
