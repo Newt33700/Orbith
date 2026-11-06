@@ -23,6 +23,7 @@ import fr.famille.appelperenoel.settings.papyVoice
 import fr.famille.appelperenoel.stt.SttResult
 import fr.famille.appelperenoel.stt.VoskStt
 import fr.famille.appelperenoel.tts.AndroidTts
+import fr.famille.appelperenoel.tts.ElevenLabsTts
 import fr.famille.appelperenoel.tts.PiperTts
 import fr.famille.appelperenoel.tts.SpeechSynth
 import fr.famille.appelperenoel.tts.SantaVoice
@@ -96,6 +97,14 @@ class CallController(
     )
     private val llm = GemmaLlm(context, models) { settings.llmGpu }
     private val androidTts = AndroidTts(context) { settings.androidVoice }
+    private val eleven = ElevenLabsTts(
+        context,
+        apiKey = { settings.elevenKey },
+        voiceId = { settings.elevenVoiceId },
+        model = { settings.elevenModel },
+        fallback = { androidTts.takeIf { it.ready } ?: piper.takeIf { it.ready } },
+        onError = { log(it) },
+    )
 
     /** Moteur de voix effectivement chargé (Android ou Piper). */
     @Volatile
@@ -122,9 +131,11 @@ class CallController(
         override val label = "Voix"
         override suspend fun load() {
             // Moteur choisi par les parents ; s'il échoue (pas de voix française, etc.), on essaie l'autre.
-            val order: List<Pair<Engine, SpeechSynth>> =
-                if (settings.voiceEngine == "piper") listOf(piper to piper, androidTts to androidTts)
-                else listOf(androidTts to androidTts, piper to piper)
+            val order: List<Pair<Engine, SpeechSynth>> = when (settings.voiceEngine) {
+                "piper" -> listOf(piper to piper, androidTts to androidTts)
+                "eleven" -> listOf(eleven to eleven, androidTts to androidTts, piper to piper)
+                else -> listOf(androidTts to androidTts, piper to piper)
+            }
             var lastError: Exception? = null
             for ((engine, synth) in order) {
                 try {
@@ -140,9 +151,14 @@ class CallController(
                 }
             }
             if (activeSynth == null) throw lastError ?: IllegalStateException("aucune voix")
+            if (activeSynth === eleven) {
+                // Voix de secours si ElevenLabs échoue en cours d'appel (quota épuisé, réseau).
+                runCatching { androidTts.load() }.onFailure { log("Voix de secours indisponible : ${it.message}") }
+            }
             voice.warmUp(listOf(greeting) + Phrases.fillers)
         }
         override fun release() {
+            eleven.release()
             androidTts.release()
             piper.release()
         }

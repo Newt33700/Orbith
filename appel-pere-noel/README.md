@@ -191,3 +191,12 @@ app/src/main/java/fr/famille/appelperenoel/
   tout le fil de l'appel est donné au cerveau avec la consigne de ne jamais se répéter.
 - Latence : silence de fin de phrase 1,0 s par défaut (réglable dans « Appel »), voix des questions et
   des phrases du cerveau calculée à l'avance pendant que l'enfant parle / que le Père Noël parle.
+
+## Voix ElevenLabs (très naturelle)
+
+*Espace parents → Voix du Père Noël → ElevenLabs* : compte gratuit sans carte sur elevenlabs.io,
+clé API (Profil → API Keys), puis « Chercher des voix de papy français » (bibliothèque publique,
+filtrée sur les voix utilisables avec un compte gratuit). Mode « Rapide » (eleven_flash_v2_5, ½ crédit
+par caractère) ou « Meilleure qualité » (eleven_multilingual_v2). Chaque phrase synthétisée est gardée
+dans `filesDir/voix_elevenlabs` (80 Mo max) : les phrases fixes ne consomment le quota qu'une fois.
+Si ElevenLabs échoue en cours d'appel (quota, réseau), la phrase est dite par la voix Google.

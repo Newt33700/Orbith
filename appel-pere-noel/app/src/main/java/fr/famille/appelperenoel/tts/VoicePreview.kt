@@ -1,6 +1,8 @@
 package fr.famille.appelperenoel.tts
 
 import android.content.Context
+import android.media.MediaPlayer
+import fr.famille.appelperenoel.audio.CallAudioSession
 import fr.famille.appelperenoel.audio.PcmPlayer
 import fr.famille.appelperenoel.models.ModelRepository
 import fr.famille.appelperenoel.settings.AppSettings
@@ -63,12 +65,41 @@ class VoicePreview(private val context: Context, private val models: ModelReposi
 
     suspend fun play(settings: AppSettings, text: String) {
         current = settings
-        val engine: SpeechSynth = if (settings.voiceEngine == "piper") loadPiper(settings) else loadAndroid(settings)
+        val engine: SpeechSynth = when (settings.voiceEngine) {
+            "piper" -> loadPiper(settings)
+            "eleven" -> ElevenLabsTts(
+                context,
+                apiKey = { settings.elevenKey },
+                voiceId = { settings.elevenVoiceId },
+                model = { settings.elevenModel },
+            ).also { it.load() }
+            else -> loadAndroid(settings)
+        }
         val speech = SantaVoice.render(engine, text, settings.papyVoice())
         player.play(speech.samples, speech.sampleRate, settings.santaVolume)
     }
 
+    /** Écoute l'extrait d'une voix de la bibliothèque ElevenLabs (mp3 en ligne, ne consomme pas de quota). */
+    fun playUrl(url: String) {
+        stopUrl()
+        urlPlayer = MediaPlayer().apply {
+            setAudioAttributes(CallAudioSession.ATTRIBUTES)
+            setDataSource(url)
+            setOnPreparedListener { it.start() }
+            setOnErrorListener { _, _, _ -> true }
+            prepareAsync()
+        }
+    }
+
+    private var urlPlayer: MediaPlayer? = null
+
+    private fun stopUrl() {
+        urlPlayer?.let { runCatching { it.stop() }; it.release() }
+        urlPlayer = null
+    }
+
     fun release() {
+        stopUrl()
         player.stop()
         piper?.release()
         piper = null

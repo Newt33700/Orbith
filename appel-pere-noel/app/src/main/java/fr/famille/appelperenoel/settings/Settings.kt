@@ -46,8 +46,13 @@ data class AppSettings(
     val debugMode: Boolean = false,
     /** Vrai une fois l'écran d'installation des modèles passé au premier lancement. */
     val setupDone: Boolean = false,
-    /** Moteur de voix : « android » (voix Google du téléphone, naturelle) ou « piper » (hors-ligne). */
+    /** Moteur de voix : « eleven » (ElevenLabs, en ligne), « android » (voix Google du téléphone) ou « piper » (hors-ligne). */
     val voiceEngine: String = "android",
+    /** ElevenLabs : clé API, voix choisie et modèle (rapide/économe ou meilleure qualité). */
+    val elevenKey: String = "",
+    val elevenVoiceId: String = "",
+    val elevenVoiceName: String = "",
+    val elevenModel: String = fr.famille.appelperenoel.tts.ElevenLabsTts.MODEL_FAST,
     /** Voix Android choisie (ex. « fr-fr-x-frd-network ») ; null = voix française par défaut. */
     val androidVoice: String? = null,
     /** Voix Piper choisie (nom court, ex. « tom-medium ») ; null = la première installée. */

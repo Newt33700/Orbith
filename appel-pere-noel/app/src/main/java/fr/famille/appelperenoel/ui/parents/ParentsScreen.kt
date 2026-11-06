@@ -12,6 +12,8 @@ import androidx.compose.runtime.DisposableEffect
 import fr.famille.appelperenoel.audio.HomeRecording
 import fr.famille.appelperenoel.audio.HomeRecordings
 import fr.famille.appelperenoel.tts.AndroidTts
+import fr.famille.appelperenoel.tts.ElevenLabsTts
+import fr.famille.appelperenoel.tts.ElevenVoice
 import fr.famille.appelperenoel.tts.AndroidVoiceInfo
 import fr.famille.appelperenoel.tts.VoicePreview
 import androidx.compose.runtime.LaunchedEffect
@@ -102,7 +104,7 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
     var androidVoices by remember { mutableStateOf<List<AndroidVoiceInfo>?>(null) }
     var androidError by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(s.voiceEngine) {
-        if (s.voiceEngine != "piper" && androidVoices == null) {
+        if (s.voiceEngine == "android" && androidVoices == null) {
             try {
                 androidVoices = preview.androidVoices(app.settings.current)
             } catch (e: Exception) {
@@ -298,11 +300,16 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
             }
 
             Section("Voix du Père Noël") {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FilterChip(
-                        selected = s.voiceEngine != "piper",
+                        selected = s.voiceEngine == "eleven",
+                        onClick = { update { it.copy(voiceEngine = "eleven") } },
+                        label = { Text("ElevenLabs (très naturelle)") },
+                    )
+                    FilterChip(
+                        selected = s.voiceEngine == "android",
                         onClick = { update { it.copy(voiceEngine = "android") } },
-                        label = { Text("Voix Google (naturelle)") },
+                        label = { Text("Voix Google") },
                     )
                     FilterChip(
                         selected = s.voiceEngine == "piper",
@@ -311,7 +318,9 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                     )
                 }
                 val voices = remember(modelsVersion) { app.models.piperVoices() }
-                if (s.voiceEngine != "piper") {
+                if (s.voiceEngine == "eleven") {
+                    ElevenLabsSettings(s, preview, ::update)
+                } else if (s.voiceEngine == "android") {
                     val list = androidVoices
                     when {
                         list == null -> Text("Recherche des voix…", style = MaterialTheme.typography.bodySmall)
@@ -393,8 +402,10 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                 if (s.voiceEngine == "piper") LabeledSlider("Expressivité : ${(s.expressiveness * 100).roundToInt()} %", s.expressiveness, 0f..1f, steps = 9) { v ->
                     update { it.copy(expressiveness = (v * 10).roundToInt() / 10f) }
                 }
-                LabeledSlider("Voix plus grave : %.1f demi-tons".format(s.pitchSemitones), s.pitchSemitones, 0f..6f, steps = 11) { v ->
-                    update { it.copy(pitchSemitones = (v * 2).roundToInt() / 2f) }
+                if (s.voiceEngine != "eleven") {
+                    LabeledSlider("Voix plus grave : %.1f demi-tons".format(s.pitchSemitones), s.pitchSemitones, 0f..6f, steps = 11) { v ->
+                        update { it.copy(pitchSemitones = (v * 2).roundToInt() / 2f) }
+                    }
                 }
                 LabeledSlider("Lenteur : +${((s.slowness - 1f) * 100).roundToInt()} %", s.slowness, 1f..1.4f, steps = 7) { v ->
                     update { it.copy(slowness = (v * 20).roundToInt() / 20f) }
@@ -402,7 +413,11 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                 LabeledSlider("Écho : ${(s.reverb * 250).roundToInt()} %", s.reverb, 0f..0.4f, steps = 7) { v ->
                     update { it.copy(reverb = (v * 20).roundToInt() / 20f) }
                 }
-                Button(enabled = !previewing && (s.voiceEngine != "piper" || voices.isNotEmpty()), onClick = {
+                Button(enabled = !previewing && when (s.voiceEngine) {
+                    "piper" -> voices.isNotEmpty()
+                    "eleven" -> s.elevenKey.isNotBlank() && s.elevenVoiceId.isNotBlank()
+                    else -> true
+                }, onClick = {
                     scope.launch {
                         previewing = true
                         try {
@@ -550,6 +565,134 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
             },
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun ElevenLabsSettings(s: AppSettings, preview: VoicePreview, update: ((AppSettings) -> AppSettings) -> Unit) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    Text(
+        "Compte gratuit, sans carte bancaire : crée-le sur elevenlabs.io, puis Profil → API Keys → " +
+            "« Create API key » (laisse toutes les autorisations), copie la clé et colle-la ici. " +
+            "Le quota gratuit est limité (environ 10 000 caractères par mois, le double en mode rapide) : " +
+            "chaque phrase est gardée dans le téléphone et ne coûte qu'une fois.",
+        style = MaterialTheme.typography.bodySmall,
+    )
+    var keyDraft by remember { mutableStateOf(s.elevenKey) }
+    OutlinedTextField(
+        keyDraft,
+        { v ->
+            keyDraft = v.trim()
+            update { it.copy(elevenKey = keyDraft) }
+        },
+        label = { Text("Clé API ElevenLabs") },
+        singleLine = true,
+        visualTransformation = PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    if (s.elevenKey.isBlank()) return
+
+    var quota by remember { mutableStateOf<String?>(null) }
+    var mine by remember { mutableStateOf<List<ElevenVoice>>(emptyList()) }
+    var library by remember { mutableStateOf<List<ElevenVoice>?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(s.elevenKey) {
+        error = null
+        try {
+            val q = ElevenLabsTts.quota(s.elevenKey)
+            quota = "Quota du mois : ${q.used} / ${q.limit} caractères utilisés"
+        } catch (e: Exception) {
+            quota = null
+            error = "Clé refusée ou pas d'internet (${e.message})"
+        }
+        runCatching { mine = ElevenLabsTts.myVoices(s.elevenKey) }
+    }
+    quota?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+    error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFFFFAB40)) }
+
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        FilterChip(
+            selected = s.elevenModel != ElevenLabsTts.MODEL_QUALITY,
+            onClick = { update { it.copy(elevenModel = ElevenLabsTts.MODEL_FAST) } },
+            label = { Text("Rapide (2× plus de quota)") },
+        )
+        FilterChip(
+            selected = s.elevenModel == ElevenLabsTts.MODEL_QUALITY,
+            onClick = { update { it.copy(elevenModel = ElevenLabsTts.MODEL_QUALITY) } },
+            label = { Text("Meilleure qualité") },
+        )
+    }
+
+    Text(
+        if (s.elevenVoiceId.isBlank()) "Aucune voix choisie." else "Voix choisie : ${s.elevenVoiceName.ifBlank { s.elevenVoiceId }}",
+        fontWeight = FontWeight.Bold,
+    )
+    if (mine.isNotEmpty()) {
+        Text("Voix de ton compte :", style = MaterialTheme.typography.bodySmall)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            mine.forEach { v ->
+                FilterChip(
+                    selected = v.voiceId == s.elevenVoiceId,
+                    onClick = { update { it.copy(elevenVoiceId = v.voiceId, elevenVoiceName = v.name) } },
+                    label = { Text(v.name) },
+                )
+            }
+        }
+    }
+    Button(enabled = !busy, onClick = {
+        busy = true
+        scope.launch {
+            try {
+                library = ElevenLabsTts.searchLibrary(s.elevenKey)
+                error = null
+            } catch (e: Exception) {
+                error = "Recherche impossible : ${e.message}"
+            } finally {
+                busy = false
+            }
+        }
+    }) { Text(if (busy) "Recherche…" else "Chercher des voix de papy français") }
+    library?.let { list ->
+        if (list.isEmpty()) Text("Aucune voix trouvée.", style = MaterialTheme.typography.bodySmall)
+        Text(
+            "« Extrait » ne consomme pas de quota. « Choisir » ajoute la voix à ton compte " +
+                "(3 voix maximum avec le compte gratuit).",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        list.forEach { v ->
+            Column {
+                Text(v.name, fontWeight = FontWeight.Bold)
+                if (v.description.isNotBlank()) Text(v.description, style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    v.previewUrl?.let { url ->
+                        OutlinedButton(onClick = { runCatching { preview.playUrl(url) } }) { Text("Extrait") }
+                    }
+                    OutlinedButton(enabled = !busy, onClick = {
+                        busy = true
+                        scope.launch {
+                            try {
+                                val id = ElevenLabsTts.addLibraryVoice(s.elevenKey, v)
+                                update { it.copy(elevenVoiceId = id, elevenVoiceName = v.name) }
+                                runCatching { mine = ElevenLabsTts.myVoices(s.elevenKey) }
+                                Toast.makeText(context, "Voix « ${v.name} » choisie", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Impossible : ${e.message}", Toast.LENGTH_LONG).show()
+                            } finally {
+                                busy = false
+                            }
+                        }
+                    }) { Text("Choisir") }
+                }
+            }
+        }
+    }
+    Text(
+        "La hauteur de voix ne se règle pas ici : choisis directement une voix de papy. " +
+            "Si le quota est épuisé pendant un appel, le Père Noël continue avec la voix Google.",
+        style = MaterialTheme.typography.bodySmall,
+    )
 }
 
 @Composable
