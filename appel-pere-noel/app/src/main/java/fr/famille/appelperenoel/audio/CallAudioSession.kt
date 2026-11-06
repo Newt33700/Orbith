@@ -2,34 +2,31 @@ package fr.famille.appelperenoel.audio
 
 import android.content.Context
 import android.media.AudioAttributes
-import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
-import android.os.Build
 
 /**
- * Prépare le téléphone comme pour un vrai appel : mode « communication »,
- * focus audio (la musique se coupe), haut-parleur ou écouteur.
- * Tout est remis comme avant dans stop().
+ * Prépare le son de l'appel.
+ *
+ * On passe par le canal « média » (comme une vidéo) et non par le canal « appel téléphonique » :
+ * sur HyperOS/MIUI, ce dernier peut rester muet pour une appli qui n'est pas un vrai téléphone,
+ * et il dépend du mode silencieux. Les touches de volume règlent donc le volume média.
+ *
+ * - Focus audio : la musique ou les vidéos en cours se mettent en pause.
+ * - Si le volume média est presque à zéro, on le remonte pendant l'appel (puis on le remet).
  */
 class CallAudioSession(context: Context, private val onInterrupted: () -> Unit) {
 
     private val am = context.getSystemService(AudioManager::class.java)
     private var focusRequest: AudioFocusRequest? = null
-    private var previousMode = AudioManager.MODE_NORMAL
+    private var previousVolume = -1
     private var active = false
 
-    fun start(speaker: Boolean) {
+    fun start() {
         if (active) return
         active = true
-        previousMode = am.mode
         val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build(),
-            )
+            .setAudioAttributes(ATTRIBUTES)
             .setOnAudioFocusChangeListener { change ->
                 // Un vrai appel ou une autre appli prend la main : le Père Noël raccroche.
                 if (change == AudioManager.AUDIOFOCUS_LOSS || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
@@ -39,23 +36,14 @@ class CallAudioSession(context: Context, private val onInterrupted: () -> Unit) 
             .build()
         focusRequest = request
         am.requestAudioFocus(request)
-        runCatching { am.mode = AudioManager.MODE_IN_COMMUNICATION }
-        setSpeaker(speaker)
-    }
 
-    fun setSpeaker(on: Boolean) {
         runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (on) {
-                    am.availableCommunicationDevices
-                        .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
-                        ?.let { am.setCommunicationDevice(it) }
-                } else {
-                    am.clearCommunicationDevice()
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                am.isSpeakerphoneOn = on
+            val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val current = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val minimum = (max * 0.5f).toInt().coerceAtLeast(1)
+            if (current < minimum) {
+                previousVolume = current
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, minimum, 0)
             }
         }
     }
@@ -63,16 +51,18 @@ class CallAudioSession(context: Context, private val onInterrupted: () -> Unit) 
     fun stop() {
         if (!active) return
         active = false
-        runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                am.clearCommunicationDevice()
-            } else {
-                @Suppress("DEPRECATION")
-                am.isSpeakerphoneOn = false
-            }
+        if (previousVolume >= 0) {
+            runCatching { am.setStreamVolume(AudioManager.STREAM_MUSIC, previousVolume, 0) }
+            previousVolume = -1
         }
-        runCatching { am.mode = previousMode }
         focusRequest?.let { am.abandonAudioFocusRequest(it) }
         focusRequest = null
+    }
+
+    companion object {
+        val ATTRIBUTES: AudioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+            .build()
     }
 }

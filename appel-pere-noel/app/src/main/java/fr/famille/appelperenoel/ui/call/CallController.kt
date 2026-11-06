@@ -33,6 +33,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.random.Random
 
+private const val FX_VOLUME = 0.8f
+private const val QUIET = 0.3f
+
 enum class CallPhase { RINGING, CONNECTED, ENDED }
 
 data class CallUiState(
@@ -84,14 +87,15 @@ class CallController(
     fun start() {
         if (started) return
         started = true
-        audio.start(_state.value.speakerOn)
+        audio.start()
         mainJob = scope.launch { runCall() }
     }
 
     fun toggleSpeaker() {
         val on = !_state.value.speakerOn
         _state.update { it.copy(speakerOn = on) }
-        audio.setSpeaker(on)
+        fx.setVolume(FX_VOLUME * loudness())
+        ambience.setVolume(settings.ambienceVolume * loudness())
     }
 
     /** L'enfant raccroche. */
@@ -109,7 +113,7 @@ class CallController(
         val ring = launch {
             val tone = ToneSynth.ringbackBurst()
             while (isActive) {
-                fx.play(tone, ToneSynth.RATE, 0.8f)
+                fx.play(tone, ToneSynth.RATE, FX_VOLUME * loudness())
                 delay(3500)
             }
         }
@@ -130,7 +134,7 @@ class CallController(
         }
 
         // 2. Décroché.
-        fx.play(ToneSynth.pickupClick(), ToneSynth.RATE, 0.7f)
+        fx.play(ToneSynth.pickupClick(), ToneSynth.RATE, FX_VOLUME * loudness())
         onConnected()
 
         // 3. Conversation.
@@ -158,7 +162,7 @@ class CallController(
             }
         }
         if (settings.ambienceEnabled && settings.ambienceVolume > 0f) {
-            runCatching { ambience.start(settings.ambienceVolume) }
+            runCatching { ambience.start(settings.ambienceVolume * loudness()) }
         }
     }
 
@@ -219,13 +223,19 @@ class CallController(
         _state.update { it.copy(phase = CallPhase.ENDED, santaSpeaking = false, listening = false) }
         if (playBusyTone) {
             scope.launch {
-                runCatching { fx.play(ToneSynth.busyTone(), ToneSynth.RATE, 0.6f) }
+                runCatching { fx.play(ToneSynth.busyTone(), ToneSynth.RATE, 0.7f * loudness()) }
                 releaseResources()
             }
         } else {
             releaseResources()
         }
     }
+
+    /**
+     * Haut-parleur coupé = son plus doux, comme si on tenait le téléphone à l'oreille.
+     * (Le vrai écouteur n'est accessible qu'en mode « appel téléphonique », muet sur HyperOS.)
+     */
+    private fun loudness() = if (_state.value.speakerOn) 1f else QUIET
 
     private fun releaseResources() {
         if (released) return

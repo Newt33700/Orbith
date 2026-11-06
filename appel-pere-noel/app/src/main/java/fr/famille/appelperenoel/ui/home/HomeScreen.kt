@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -106,11 +107,8 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom,
             ) {
-                Text(
-                    if (modelsReady) "" else "mode démo",
-                    color = Color.White.copy(alpha = 0.35f),
-                    style = MaterialTheme.typography.labelSmall,
-                )
+                // Rien d'écrit ici exprès : les enfants ne doivent voir aucun indice « technique ».
+                Spacer(Modifier.width(1.dp))
                 ParentsLongPress(onUnlocked = { showGate = true })
             }
         }

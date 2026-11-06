@@ -145,7 +145,6 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                     update { it.copy(ringSeconds = (v * 2).roundToInt() / 2f) }
                 }
                 SwitchRow("Haut-parleur activé au décroché", s.speakerByDefault) { v -> update { it.copy(speakerByDefault = v) } }
-                SwitchRow("Afficher les sous-titres pendant l'appel", s.showSubtitles) { v -> update { it.copy(showSubtitles = v) } }
             }
 
             Section("Son") {
@@ -198,7 +197,7 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
 
             if (s.debugUnlocked) {
                 Section("Mode debug") {
-                    SwitchRow("Mode debug (latences, transcription, saisie au clavier)", s.debugMode) { v ->
+                    SwitchRow("Mode debug (sous-titres, latences, transcription, saisie au clavier)", s.debugMode) { v ->
                         update { it.copy(debugMode = v) }
                     }
                     LabeledSlider("Silence de fin de phrase : ${s.silenceMs} ms", s.silenceMs.toFloat(), 800f..3000f, steps = 21) { v ->

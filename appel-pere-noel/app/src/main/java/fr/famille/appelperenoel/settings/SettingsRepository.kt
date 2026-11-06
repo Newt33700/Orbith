@@ -47,7 +47,6 @@ class SettingsRepository(context: Context) {
         put("speakerByDefault", s.speakerByDefault)
         put("ringSeconds", s.ringSeconds.toDouble())
         put("silenceMs", s.silenceMs)
-        put("showSubtitles", s.showSubtitles)
         put("debugUnlocked", s.debugUnlocked)
         put("debugMode", s.debugMode)
         put("setupDone", s.setupDone)
@@ -78,7 +77,6 @@ class SettingsRepository(context: Context) {
             speakerByDefault = o.optBoolean("speakerByDefault", d.speakerByDefault),
             ringSeconds = o.optDouble("ringSeconds", d.ringSeconds.toDouble()).toFloat(),
             silenceMs = o.optInt("silenceMs", d.silenceMs),
-            showSubtitles = o.optBoolean("showSubtitles", d.showSubtitles),
             debugUnlocked = o.optBoolean("debugUnlocked", d.debugUnlocked),
             debugMode = o.optBoolean("debugMode", d.debugMode),
             setupDone = o.optBoolean("setupDone", d.setupDone),

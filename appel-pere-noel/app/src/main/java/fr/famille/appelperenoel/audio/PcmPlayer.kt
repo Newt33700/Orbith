@@ -13,7 +13,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /** Joue un tampon PCM 16 bits mono et rend la main quand le son est fini (ou annulé). */
-class PcmPlayer(private val usage: Int = AudioAttributes.USAGE_VOICE_COMMUNICATION) {
+class PcmPlayer(private val attributes: AudioAttributes = CallAudioSession.ATTRIBUTES) {
 
     @Volatile
     private var track: AudioTrack? = null
@@ -22,12 +22,7 @@ class PcmPlayer(private val usage: Int = AudioAttributes.USAGE_VOICE_COMMUNICATI
         if (samples.isEmpty()) return@withContext
         val minBuf = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
         val t = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(usage)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build(),
-            )
+            .setAudioAttributes(attributes)
             .setAudioFormat(
                 AudioFormat.Builder()
                     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -60,6 +55,11 @@ class PcmPlayer(private val usage: Int = AudioAttributes.USAGE_VOICE_COMMUNICATI
             t.release()
             if (track === t) track = null
         }
+    }
+
+    /** Change le volume du son en cours (ex. bouton haut-parleur). */
+    fun setVolume(volume: Float) {
+        track?.let { runCatching { it.setVolume(volume.coerceIn(0f, 1f)) } }
     }
 
     /** Coupe net le son en cours (la coroutine de play() doit aussi être annulée). */

@@ -1,5 +1,6 @@
 package fr.famille.appelperenoel
 
+import android.media.AudioManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -23,6 +24,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Les touches de volume règlent le volume média, celui qu'utilise l'appel.
+        volumeControlStream = AudioManager.STREAM_MUSIC
         setContent {
             PereNoelTheme { AppRoot() }
         }

@@ -30,7 +30,6 @@ data class AppSettings(
     val ringSeconds: Float = 4.5f,
     /** Silence (ms) qui marque la fin d'une phrase de l'enfant. */
     val silenceMs: Int = 1500,
-    val showSubtitles: Boolean = true,
     /** Le mode debug est caché : 7 appuis sur le numéro de version dans l'écran Parents. */
     val debugUnlocked: Boolean = false,
     val debugMode: Boolean = false,

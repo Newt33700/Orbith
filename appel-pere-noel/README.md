@@ -64,7 +64,11 @@ Les modèles sont rangés dans le dossier privé de l'appli (`/data/data/fr.fami
 - **Espace parents** : garder le doigt **3 s** sur « Parents » (en bas à droite), puis résoudre
   un petit calcul. On y règle les enfants (prénom, âge, centres d'intérêt, cadeau souhaité),
   la durée max d'appel, les volumes, l'ambiance, la photo du Père Noël.
-- **Mode debug** (caché) : dans l'espace parents, toucher **7 fois** le numéro de version.
+- **Son** : l'appel passe par le volume **média** (touches de volume pendant l'appel), y compris en mode silencieux.
+  Le bouton haut-parleur bascule entre son fort et son doux « à l'oreille ».
+- **Sous-titres** : visibles uniquement en mode debug, pour ne rien dévoiler aux enfants.
+- **Mode debug** (caché) : dans l'espace parents, toucher **7 fois** le numéro de version, puis activer l'interrupteur.
+  Il affiche les sous-titres et les temps de chargement pendant l'appel.
 
 ## Sons
 

@@ -111,7 +111,7 @@ fun CallScreen(settings: AppSettings, onFinished: () -> Unit) {
                 ListeningHint(st.listening)
                 Spacer(Modifier.height(12.dp))
                 val subtitle = st.subtitle
-                if (settings.showSubtitles && subtitle != null) {
+                if (settings.debugMode && subtitle != null) {
                     Text(
                         subtitle,
                         color = Color.White,

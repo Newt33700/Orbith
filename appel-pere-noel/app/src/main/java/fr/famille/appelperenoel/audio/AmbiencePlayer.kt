@@ -18,7 +18,7 @@ class AmbiencePlayer(private val context: Context) {
     private var media: MediaPlayer? = null
 
     private val attributes = AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+        .setUsage(AudioAttributes.USAGE_MEDIA)
         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
         .build()
 
@@ -61,6 +61,12 @@ class AmbiencePlayer(private val context: Context) {
             media = player
             true
         }.getOrDefault(false)
+    }
+
+    fun setVolume(volume: Float) {
+        val v = volume.coerceIn(0f, 1f)
+        track?.let { runCatching { it.setVolume(v) } }
+        media?.let { runCatching { it.setVolume(v, v) } }
     }
 
     fun stop() {
