@@ -6,6 +6,12 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.runtime.DisposableEffect
+import fr.famille.appelperenoel.audio.HomeRecording
+import fr.famille.appelperenoel.audio.HomeRecordings
+import fr.famille.appelperenoel.tts.VoicePreview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -70,7 +76,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
     val context = LocalContext.current
@@ -84,6 +90,22 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
     var editing by remember { mutableStateOf<Child?>(null) }
     var creating by remember { mutableStateOf(false) }
     var versionTaps by remember { mutableIntStateOf(0) }
+
+    var previewing by remember { mutableStateOf(false) }
+    val preview = remember { VoicePreview(app.models) }
+    DisposableEffect(preview) { onDispose { preview.release() } }
+    var recordingsVersion by remember { mutableIntStateOf(0) }
+    var pendingRecording by remember { mutableStateOf<HomeRecording?>(null) }
+    val recordingPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val r = pendingRecording
+        if (uri != null && r != null) {
+            scope.launch {
+                val ok = withContext(Dispatchers.IO) { HomeRecordings.import(context, r, uri) }
+                recordingsVersion++
+                Toast.makeText(context, if (ok) "Enregistrement importé" else "Import impossible", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -159,6 +181,79 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                 }
             }
 
+            Section("Voix du Père Noël") {
+                val voices = remember(modelsVersion) { app.models.piperVoices() }
+                if (voices.isEmpty()) {
+                    Text("Aucune voix installée : voir « Modèles » plus bas.", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    val selected = voices.firstOrNull { it.name == s.voiceName }?.name ?: voices.first().name
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        voices.forEach { v ->
+                            FilterChip(
+                                selected = v.name == selected,
+                                onClick = { update { it.copy(voiceName = v.name) } },
+                                label = { Text(v.name) },
+                            )
+                        }
+                    }
+                }
+                LabeledSlider("Voix plus grave : %.1f demi-tons".format(s.pitchSemitones), s.pitchSemitones, 0f..4f, steps = 7) { v ->
+                    update { it.copy(pitchSemitones = (v * 2).roundToInt() / 2f) }
+                }
+                LabeledSlider("Lenteur : +${((s.slowness - 1f) * 100).roundToInt()} %", s.slowness, 1f..1.4f, steps = 7) { v ->
+                    update { it.copy(slowness = (v * 20).roundToInt() / 20f) }
+                }
+                LabeledSlider("Écho : ${(s.reverb * 250).roundToInt()} %", s.reverb, 0f..0.4f, steps = 7) { v ->
+                    update { it.copy(reverb = (v * 20).roundToInt() / 20f) }
+                }
+                Button(enabled = !previewing && voices.isNotEmpty(), onClick = {
+                    scope.launch {
+                        previewing = true
+                        try {
+                            val name = s.children.firstOrNull()?.name ?: "mon petit"
+                            preview.play(
+                                app.settings.current,
+                                "Ho ho ho ! Bonjour $name, ici le Père Noël. Est-ce que tu as été bien sage cette année ?",
+                            )
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Voix : ${e.message}", Toast.LENGTH_LONG).show()
+                        } finally {
+                            previewing = false
+                        }
+                    }
+                }) { Text(if (previewing) "Écoute en cours…" else "Écouter") }
+            }
+
+            Section("Enregistrements faits maison") {
+                Text(
+                    "Enregistre-toi avec l'appli Dictaphone (ogg, m4a ou mp3), puis importe le fichier : " +
+                        "il sera joué à la place de la voix de synthèse.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                HomeRecording.entries.forEach { r ->
+                    val present = remember(recordingsVersion) { HomeRecordings.file(context, r) != null }
+                    Column {
+                        Text("${r.title} : ${if (present) "présent" else "aucun"}", fontWeight = FontWeight.Bold)
+                        Text(r.hint, style = MaterialTheme.typography.bodySmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            OutlinedButton(onClick = {
+                                pendingRecording = r
+                                recordingPicker.launch(arrayOf("audio/*"))
+                            }) { Text("Importer") }
+                            if (present) {
+                                OutlinedButton(onClick = {
+                                    scope.launch { HomeRecordings.file(context, r)?.let { HomeRecordings.play(it, s.santaVolume) } }
+                                }) { Text("Écouter") }
+                                TextButton(onClick = {
+                                    HomeRecordings.delete(context, r)
+                                    recordingsVersion++
+                                }) { Text("Supprimer") }
+                            }
+                        }
+                    }
+                }
+            }
+
             Section("Photo du Père Noël") {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     SantaPortrait(Modifier.size(80.dp), s.photoStamp)
@@ -203,8 +298,19 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                     LabeledSlider("Silence de fin de phrase : ${s.silenceMs} ms", s.silenceMs.toFloat(), 800f..3000f, steps = 21) { v ->
                         update { it.copy(silenceMs = (v / 100).roundToInt() * 100) }
                     }
+                    LabeledSlider(
+                        "Délai max du cerveau : %.1f s (sinon phrase de secours)".format(s.llmTimeoutMs / 1000f),
+                        s.llmTimeoutMs.toFloat(),
+                        2000f..9000f,
+                        steps = 13,
+                    ) { v -> update { it.copy(llmTimeoutMs = (v / 500).roundToInt() * 500) } }
+                    SwitchRow("Cerveau sur la carte graphique (GPU)", s.llmGpu) { v -> update { it.copy(llmGpu = v) } }
+                    SwitchRow("Format de dialogue Gemma manuel (si réponses incohérentes)", s.llmManualTemplate) { v ->
+                        update { it.copy(llmManualTemplate = v) }
+                    }
                     Text(
-                        "Le réglage du silence servira à partir du jalon (b) (reconnaissance vocale).",
+                        "En mode debug, l'écran d'appel affiche les sous-titres, la transcription, les latences " +
+                            "et un champ pour taper les réponses au clavier.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }

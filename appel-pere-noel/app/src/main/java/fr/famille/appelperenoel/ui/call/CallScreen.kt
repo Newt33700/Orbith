@@ -38,6 +38,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,9 +93,14 @@ fun CallScreen(settings: AppSettings, onFinished: () -> Unit) {
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (settings.debugMode) DebugPanel(st)
-            Spacer(Modifier.height(24.dp))
-            SpeakingPortrait(st.santaSpeaking, settings.photoStamp)
+            if (settings.debugMode) {
+                DebugPanel(st, onSend = controller::submitTyped)
+                Spacer(Modifier.height(8.dp))
+                SpeakingPortrait(st.santaSpeaking, settings.photoStamp, size = 110)
+            } else {
+                Spacer(Modifier.height(24.dp))
+                SpeakingPortrait(st.santaSpeaking, settings.photoStamp)
+            }
             Spacer(Modifier.height(20.dp))
             Text("Père Noël", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
             Text("Pôle Nord", color = Color.White.copy(alpha = 0.6f), fontSize = 16.sp)
@@ -160,7 +171,7 @@ fun CallScreen(settings: AppSettings, onFinished: () -> Unit) {
 }
 
 @Composable
-private fun SpeakingPortrait(speaking: Boolean, photoStamp: Long) {
+private fun SpeakingPortrait(speaking: Boolean, photoStamp: Long, size: Int = 180) {
     val transition = rememberInfiniteTransition(label = "speak")
     val pulse by transition.animateFloat(
         initialValue = 1f,
@@ -172,13 +183,13 @@ private fun SpeakingPortrait(speaking: Boolean, photoStamp: Long) {
         if (speaking) {
             Box(
                 Modifier
-                    .size(200.dp)
+                    .size((size * 1.1f).dp)
                     .scale(pulse * 1.04f)
                     .clip(CircleShape)
                     .background(Gold.copy(alpha = 0.25f)),
             )
         }
-        SantaPortrait(Modifier.size(180.dp).scale(if (speaking) pulse else 1f), photoStamp)
+        SantaPortrait(Modifier.size(size.dp).scale(if (speaking) pulse else 1f), photoStamp)
     }
 }
 
@@ -233,24 +244,51 @@ private fun RoundAction(
 }
 
 @Composable
-private fun DebugPanel(st: CallUiState) {
+private fun DebugPanel(st: CallUiState, onSend: (String) -> Unit) {
+    var typed by remember { mutableStateOf("") }
     Column(
         Modifier
             .fillMaxWidth()
+            .heightIn(max = 300.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.Black.copy(alpha = 0.55f))
+            .background(Color.Black.copy(alpha = 0.6f))
             .padding(10.dp),
     ) {
-        Text("DEBUG · ${st.phase} · ${if (st.demoMode) "démo" else "réel"}", color = Gold, style = MaterialTheme.typography.labelMedium)
-        if (st.ringMillis > 0) {
-            Text("Sonnerie : ${st.ringMillis} ms", color = Color.White, style = MaterialTheme.typography.labelSmall)
-        }
-        st.loadResults.forEach { r ->
+        Text(
+            "DEBUG · ${st.phase} · sonnerie ${st.ringMillis} ms" + (st.childName?.let { " · $it" } ?: ""),
+            color = Gold,
+            style = MaterialTheme.typography.labelMedium,
+        )
+        st.lastTurn?.let { t ->
             Text(
-                "Chargement ${r.label} : ${r.millis} ms" + (r.error?.let { " — $it" } ?: ""),
-                color = if (r.error == null) Color.White else Color(0xFFFFAB91),
+                "STT ${t.sttMs} · cerveau ${if (t.llmMs >= 0) t.llmMs else "secours"} · voix ${t.ttsMs} · réponse ${t.responseMs} ms",
+                color = if (t.responseMs <= 4000) Color(0xFFA5D6A7) else Color(0xFFFFAB91),
                 style = MaterialTheme.typography.labelSmall,
             )
+        }
+        if (st.listening) {
+            Text("🎤 ${st.partial}", color = Color.White, style = MaterialTheme.typography.bodySmall)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = typed,
+                onValueChange = { typed = it },
+                modifier = Modifier.weight(1f),
+                textStyle = MaterialTheme.typography.bodySmall,
+                singleLine = true,
+                placeholder = { Text("Taper la réponse de l'enfant", style = MaterialTheme.typography.bodySmall) },
+            )
+            TextButton(enabled = st.listening && typed.isNotBlank(), onClick = {
+                onSend(typed)
+                typed = ""
+            }) { Text("Envoyer") }
+        }
+        val scroll = rememberScrollState()
+        LaunchedEffect(st.log.size) { scroll.animateScrollTo(scroll.maxValue) }
+        Column(Modifier.verticalScroll(scroll)) {
+            st.log.forEach { line ->
+                Text(line, color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
+            }
         }
     }
 }

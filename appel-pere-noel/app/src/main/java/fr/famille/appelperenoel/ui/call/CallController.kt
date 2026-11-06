@@ -9,12 +9,22 @@ import fr.famille.appelperenoel.audio.ToneSynth
 import fr.famille.appelperenoel.engine.Engine
 import fr.famille.appelperenoel.engine.EnginePreloader
 import fr.famille.appelperenoel.engine.LoadResult
-import fr.famille.appelperenoel.engine.PlaceholderEngine
+import fr.famille.appelperenoel.llm.GemmaLlm
 import fr.famille.appelperenoel.models.ModelRepository
-import fr.famille.appelperenoel.scenario.CallStep
+import fr.famille.appelperenoel.scenario.CallIo
+import fr.famille.appelperenoel.scenario.Conversation
 import fr.famille.appelperenoel.scenario.Phrases
+import fr.famille.appelperenoel.scenario.SantaBrain
+import fr.famille.appelperenoel.scenario.TurnMetrics
 import fr.famille.appelperenoel.settings.AppSettings
 import fr.famille.appelperenoel.settings.Child
+import fr.famille.appelperenoel.settings.papyVoice
+import fr.famille.appelperenoel.stt.SttResult
+import fr.famille.appelperenoel.stt.VoskStt
+import fr.famille.appelperenoel.tts.PiperTts
+import fr.famille.appelperenoel.tts.SantaVoice
+import fr.famille.appelperenoel.tts.SpeechTiming
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.random.Random
 
@@ -48,35 +59,54 @@ data class CallUiState(
     val endingSoon: Boolean = false,
     val loadResults: List<LoadResult> = emptyList(),
     val ringMillis: Long = 0,
-    val demoMode: Boolean = true,
     val childName: String? = null,
+    /** Transcription en cours (mode debug). */
+    val partial: String = "",
+    val lastTurn: TurnMetrics? = null,
+    val log: List<String> = emptyList(),
 )
 
 /**
  * Pilote un appel du début à la fin : sonnerie (avec chargement des moteurs en parallèle),
- * décroché, conversation, durée maximale, raccrochage et libération des ressources.
- *
- * Jalon (a) : la conversation est simulée (sous-titres, pauses d'écoute) ;
- * la voix, l'écoute et le cerveau arrivent aux jalons suivants.
+ * décroché, conversation, durée maximale, raccrochage et libération de la mémoire.
  */
 class CallController(
-    context: Context,
+    private val context: Context,
     private val settings: AppSettings,
     models: ModelRepository,
-) {
+) : CallIo {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val _state = MutableStateFlow(CallUiState(speakerOn = settings.speakerByDefault))
     val state: StateFlow<CallUiState> = _state.asStateFlow()
 
     private val audio = CallAudioSession(context) { scope.launch { end(playBusyTone = false) } }
     private val fx = PcmPlayer()
+    private val speechPlayer = PcmPlayer()
     private val ambience = AmbiencePlayer(context)
 
-    private val engines: List<Engine> = listOf(
-        PlaceholderEngine("Oreilles (Vosk)") { models.voskModelDir() != null },
-        PlaceholderEngine("Voix (Piper)") { models.piperVoices().isNotEmpty() },
-        PlaceholderEngine("Cerveau (Gemma)") { models.llmModelFile() != null },
-    )
+    private val stt = VoskStt(models)
+    private val piper = PiperTts(models) { settings.voiceName }
+    private val llm = GemmaLlm(context, models) { settings.llmGpu }
+    private val voice = SantaVoice(context, piper, settings.papyVoice(), speechPlayer)
+    private val brain = SantaBrain(llm) { settings.llmManualTemplate }
+
+    private val children = settings.children.filter { it.name.isNotBlank() }
+    private val greeting = when (children.size) {
+        0 -> Phrases.GREETING_NOBODY
+        1 -> Phrases.greetingOne(children[0].name)
+        else -> Phrases.greetingMany(children.map { it.name })
+    }
+
+    /** La voix + le pré-calcul des phrases qui doivent partir instantanément. */
+    private val voiceEngine = object : Engine {
+        override val label = "Voix (Piper)"
+        override suspend fun load() {
+            piper.load()
+            voice.warmUp(listOf(greeting) + Phrases.fillers)
+        }
+        override fun release() = piper.release()
+    }
+    private val engines: List<Engine> = listOf(stt, voiceEngine, llm)
 
     private var mainJob: Job? = null
     private var clockJob: Job? = null
@@ -95,11 +125,17 @@ class CallController(
         val on = !_state.value.speakerOn
         _state.update { it.copy(speakerOn = on) }
         fx.setVolume(FX_VOLUME * loudness())
-        ambience.setVolume(settings.ambienceVolume * loudness())
+        speechPlayer.setVolume(voiceVolume())
+        ambience.setVolume(ambienceVolume(listening = _state.value.listening))
     }
 
     /** L'enfant raccroche. */
     fun hangUp() = end(playBusyTone = false)
+
+    /** Mode debug : phrase tapée au clavier à la place du micro. */
+    fun submitTyped(text: String) {
+        if (text.isNotBlank()) stt.submitTyped(text.trim())
+    }
 
     /** À appeler quand l'écran disparaît : garantit que tout est libéré. */
     fun dispose() {
@@ -109,7 +145,7 @@ class CallController(
     }
 
     private suspend fun runCall() = coroutineScope {
-        // 1. Sonnerie + chargement des moteurs en parallèle.
+        // 1. Sonnerie + chargement des moteurs en parallèle (le démarrage devient invisible).
         val ring = launch {
             val tone = ToneSynth.ringbackBurst()
             while (isActive) {
@@ -121,24 +157,26 @@ class CallController(
         val loading = async { EnginePreloader.loadAll(engines) }
         val ringMs = (settings.ringSeconds * 1000).toLong() + Random.nextLong(-500, 501)
         delay(ringMs.coerceIn(3000, 6500))
-        // Si les moteurs ne sont pas prêts, on laisse sonner un peu plus (20 s maximum).
-        val results = withTimeoutOrNull(20_000) { loading.await() } ?: emptyList<LoadResult>().also { loading.cancel() }
+        // Pas encore prêts : on laisse sonner un peu plus (25 s maximum, puis on décroche quand même).
+        val results = withTimeoutOrNull(25_000) { loading.await() } ?: emptyList<LoadResult>().also { loading.cancel() }
         ring.cancelAndJoin()
         fx.stop()
-        _state.update {
-            it.copy(
-                loadResults = results,
-                ringMillis = SystemClock.elapsedRealtime() - t0,
-                demoMode = results.isEmpty() || results.any { r -> r.error != null },
-            )
-        }
+        _state.update { it.copy(loadResults = results, ringMillis = SystemClock.elapsedRealtime() - t0) }
+        results.forEach { r -> log("Chargement ${r.label} : ${r.millis} ms" + (r.error?.let { e -> " — $e" } ?: "")) }
 
         // 2. Décroché.
         fx.play(ToneSynth.pickupClick(), ToneSynth.RATE, FX_VOLUME * loudness())
         onConnected()
 
         // 3. Conversation.
-        runDemoScript()
+        try {
+            Conversation(children, brain, this@CallController) { settings.llmTimeoutMs.toLong() }.run()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log("Erreur pendant la conversation : ${e.message}")
+            runCatching { say(Phrases.goodbye(null), goodbye = true) }
+        }
 
         // 4. Le Père Noël raccroche tout seul.
         delay(600)
@@ -152,9 +190,9 @@ class CallController(
         clockJob = scope.launch {
             while (isActive) {
                 val elapsed = ((SystemClock.elapsedRealtime() - connectedAt) / 1000).toInt()
-                _state.update { it.copy(elapsedSeconds = elapsed, endingSoon = elapsed >= maxSeconds - 25) }
+                _state.update { it.copy(elapsedSeconds = elapsed, endingSoon = elapsed >= maxSeconds - 30) }
                 // Filet de sécurité : si la conclusion déborde trop, on raccroche.
-                if (elapsed >= maxSeconds + 20) {
+                if (elapsed >= maxSeconds + 30) {
                     end(playBusyTone = true)
                     break
                 }
@@ -162,56 +200,84 @@ class CallController(
             }
         }
         if (settings.ambienceEnabled && settings.ambienceVolume > 0f) {
-            runCatching { ambience.start(settings.ambienceVolume * loudness()) }
+            runCatching { ambience.start(ambienceVolume(listening = false)) }
         }
     }
 
-    /** Déroulé simulé du jalon (a). */
-    private suspend fun runDemoScript() {
-        val kids = settings.children.filter { it.name.isNotBlank() }
-        val child: Child? = kids.firstOrNull()
-        when {
-            kids.isEmpty() -> {
-                say(Phrases.GREETING_NOBODY)
-                listen()
-            }
-            kids.size == 1 -> {
-                say(Phrases.greetingOne(kids[0].name))
-                listen()
-            }
-            else -> {
-                say(Phrases.greetingMany(kids.map { it.name }))
-                listen()
-                // En démo, on ne peut pas encore entendre : on suppose que c'est le premier enfant.
-                say(Phrases.identified(kids[0].name))
-            }
-        }
-        _state.update { it.copy(childName = child?.name) }
+    // ------------------------------------------------------------------ CallIo
 
-        for (step in listOf(CallStep.BEEN_GOOD, CallStep.GOOD_DEEDS, CallStep.WISH)) {
-            if (_state.value.endingSoon) break
-            say(Phrases.question(step, child))
-            listen()
-            say(Phrases.fallbackReaction(step, child))
-        }
-        if (_state.value.endingSoon) say(Phrases.WRAP_UP)
-        say(Phrases.goodbye(child))
-    }
-
-    /** Jalon (a) : affiche la phrase le temps qu'il faudrait pour la dire lentement. */
-    private suspend fun say(text: String) {
+    override suspend fun say(text: String, goodbye: Boolean): SpeechTiming {
         _state.update { it.copy(subtitle = text, santaSpeaking = true, listening = false) }
-        delay(700L + text.length * 65L)
-        _state.update { it.copy(santaSpeaking = false) }
-        delay(250)
+        log("Père Noël : $text")
+        try {
+            return voice.speak(text, voiceVolume(), goodbye)
+        } finally {
+            _state.update { it.copy(santaSpeaking = false) }
+        }
     }
 
-    /** Jalon (a) : simple pause pendant laquelle l'enfant peut répondre (personne n'écoute encore). */
-    private suspend fun listen() {
-        _state.update { it.copy(listening = true) }
-        delay(4000)
-        _state.update { it.copy(listening = false) }
+    override suspend fun sayFiller() {
+        val filler = Phrases.fillers.random()
+        _state.update { it.copy(subtitle = filler, santaSpeaking = true) }
+        try {
+            voice.speak(filler, voiceVolume())
+        } finally {
+            _state.update { it.copy(santaSpeaking = false) }
+        }
     }
+
+    override suspend fun listen(): SttResult {
+        // Le micro ne s'ouvre qu'ici, jamais pendant que le Père Noël parle.
+        _state.update { it.copy(listening = true, partial = "") }
+        ambience.setVolume(ambienceVolume(listening = true))
+        return try {
+            val r = try {
+                stt.listen(
+                    silenceMs = settings.silenceMs,
+                    onPartial = { p -> _state.update { it.copy(partial = p) } },
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log("Micro : ${e.message}")
+                withContext(Dispatchers.Default) { delay(4000) }
+                SttResult("")
+            }
+            log("Enfant${if (r.typed) " (clavier)" else ""} : « ${r.text} »")
+            r
+        } finally {
+            _state.update { it.copy(listening = false) }
+            ambience.setVolume(ambienceVolume(listening = false))
+        }
+    }
+
+    override fun endingSoon(): Boolean = _state.value.endingSoon
+
+    override fun onChildIdentified(child: Child?) {
+        _state.update { it.copy(childName = child?.name) }
+    }
+
+    override fun onTurn(metrics: TurnMetrics) {
+        _state.update { it.copy(lastTurn = metrics) }
+        log(
+            "⏱ STT ${metrics.sttMs} ms · cerveau ${if (metrics.llmMs >= 0) "${metrics.llmMs} ms" else "secours"} · " +
+                "voix ${metrics.ttsMs} ms · réponse ${metrics.responseMs} ms" + if (metrics.filler) " (avec « hmm »)" else "",
+        )
+    }
+
+    override fun log(line: String) {
+        _state.update { it.copy(log = (it.log + line).takeLast(80)) }
+    }
+
+    // ------------------------------------------------------------------ Volumes
+
+    /** Haut-parleur coupé = son plus doux, comme si on tenait le téléphone à l'oreille. */
+    private fun loudness() = if (_state.value.speakerOn) 1f else QUIET
+    private fun voiceVolume() = settings.santaVolume * loudness()
+    private fun ambienceVolume(listening: Boolean) =
+        settings.ambienceVolume * loudness() * if (listening) 0.5f else 1f
+
+    // ------------------------------------------------------------------ Fin d'appel
 
     private fun end(playBusyTone: Boolean) {
         if (ended) return
@@ -219,6 +285,7 @@ class CallController(
         clockJob?.cancel()
         mainJob?.cancel()
         fx.stop()
+        speechPlayer.stop()
         ambience.stop()
         _state.update { it.copy(phase = CallPhase.ENDED, santaSpeaking = false, listening = false) }
         if (playBusyTone) {
@@ -231,18 +298,17 @@ class CallController(
         }
     }
 
-    /**
-     * Haut-parleur coupé = son plus doux, comme si on tenait le téléphone à l'oreille.
-     * (Le vrai écouteur n'est accessible qu'en mode « appel téléphonique », muet sur HyperOS.)
-     */
-    private fun loudness() = if (_state.value.speakerOn) 1f else QUIET
-
     private fun releaseResources() {
         if (released) return
         released = true
         fx.stop()
+        speechPlayer.stop()
         ambience.stop()
-        engines.forEach { runCatching { it.release() } }
         audio.stop()
+        // Les moteurs (plusieurs centaines de Mo) sont libérés hors du fil principal,
+        // une fois la génération en cours éventuellement terminée.
+        CoroutineScope(Dispatchers.IO).launch {
+            engines.forEach { runCatching { it.release() } }
+        }
     }
 }

@@ -51,6 +51,13 @@ class SettingsRepository(context: Context) {
         put("debugMode", s.debugMode)
         put("setupDone", s.setupDone)
         put("photoStamp", s.photoStamp)
+        s.voiceName?.let { put("voiceName", it) }
+        put("pitchSemitones", s.pitchSemitones.toDouble())
+        put("slowness", s.slowness.toDouble())
+        put("reverb", s.reverb.toDouble())
+        put("llmTimeoutMs", s.llmTimeoutMs)
+        put("llmGpu", s.llmGpu)
+        put("llmManualTemplate", s.llmManualTemplate)
     }
 
     private fun fromJson(o: JSONObject): AppSettings {
@@ -81,6 +88,13 @@ class SettingsRepository(context: Context) {
             debugMode = o.optBoolean("debugMode", d.debugMode),
             setupDone = o.optBoolean("setupDone", d.setupDone),
             photoStamp = o.optLong("photoStamp", d.photoStamp),
+            voiceName = o.optString("voiceName").ifBlank { null },
+            pitchSemitones = o.optDouble("pitchSemitones", d.pitchSemitones.toDouble()).toFloat(),
+            slowness = o.optDouble("slowness", d.slowness.toDouble()).toFloat(),
+            reverb = o.optDouble("reverb", d.reverb.toDouble()).toFloat(),
+            llmTimeoutMs = o.optInt("llmTimeoutMs", d.llmTimeoutMs),
+            llmGpu = o.optBoolean("llmGpu", d.llmGpu),
+            llmManualTemplate = o.optBoolean("llmManualTemplate", d.llmManualTemplate),
         )
     }
 
