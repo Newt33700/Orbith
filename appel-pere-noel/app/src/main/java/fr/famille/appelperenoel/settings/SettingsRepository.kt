@@ -1,0 +1,92 @@
+package fr.famille.appelperenoel.settings
+
+import android.content.Context
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import org.json.JSONArray
+import org.json.JSONObject
+
+/** Réglages stockés en JSON dans les SharedPreferences (pas besoin de plus pour un usage familial). */
+class SettingsRepository(context: Context) {
+
+    private val prefs = context.getSharedPreferences("reglages", Context.MODE_PRIVATE)
+    private val _state = MutableStateFlow(load())
+    val state: StateFlow<AppSettings> = _state.asStateFlow()
+
+    val current: AppSettings get() = _state.value
+
+    fun update(transform: (AppSettings) -> AppSettings) {
+        val next = transform(_state.value)
+        _state.value = next
+        prefs.edit().putString(KEY, toJson(next).toString()).apply()
+    }
+
+    private fun load(): AppSettings {
+        val raw = prefs.getString(KEY, null) ?: return AppSettings()
+        return runCatching { fromJson(JSONObject(raw)) }.getOrElse { AppSettings() }
+    }
+
+    private fun toJson(s: AppSettings) = JSONObject().apply {
+        put("children", JSONArray().apply {
+            s.children.forEach { c ->
+                put(JSONObject().apply {
+                    put("id", c.id)
+                    put("name", c.name)
+                    put("age", c.age)
+                    put("gender", c.gender.name)
+                    put("interests", c.interests)
+                    put("wish", c.wish)
+                })
+            }
+        })
+        put("maxCallMinutes", s.maxCallMinutes)
+        put("santaVolume", s.santaVolume.toDouble())
+        put("ambienceEnabled", s.ambienceEnabled)
+        put("ambienceVolume", s.ambienceVolume.toDouble())
+        put("speakerByDefault", s.speakerByDefault)
+        put("ringSeconds", s.ringSeconds.toDouble())
+        put("silenceMs", s.silenceMs)
+        put("showSubtitles", s.showSubtitles)
+        put("debugUnlocked", s.debugUnlocked)
+        put("debugMode", s.debugMode)
+        put("setupDone", s.setupDone)
+        put("photoStamp", s.photoStamp)
+    }
+
+    private fun fromJson(o: JSONObject): AppSettings {
+        val d = AppSettings()
+        val children = o.optJSONArray("children")?.let { arr ->
+            (0 until arr.length()).map { i ->
+                val c = arr.getJSONObject(i)
+                Child(
+                    id = c.optString("id").ifBlank { java.util.UUID.randomUUID().toString() },
+                    name = c.optString("name"),
+                    age = c.optInt("age", 6),
+                    gender = runCatching { Gender.valueOf(c.optString("gender")) }.getOrDefault(Gender.UNSPECIFIED),
+                    interests = c.optString("interests"),
+                    wish = c.optString("wish"),
+                )
+            }
+        } ?: d.children
+        return AppSettings(
+            children = children,
+            maxCallMinutes = o.optInt("maxCallMinutes", d.maxCallMinutes),
+            santaVolume = o.optDouble("santaVolume", d.santaVolume.toDouble()).toFloat(),
+            ambienceEnabled = o.optBoolean("ambienceEnabled", d.ambienceEnabled),
+            ambienceVolume = o.optDouble("ambienceVolume", d.ambienceVolume.toDouble()).toFloat(),
+            speakerByDefault = o.optBoolean("speakerByDefault", d.speakerByDefault),
+            ringSeconds = o.optDouble("ringSeconds", d.ringSeconds.toDouble()).toFloat(),
+            silenceMs = o.optInt("silenceMs", d.silenceMs),
+            showSubtitles = o.optBoolean("showSubtitles", d.showSubtitles),
+            debugUnlocked = o.optBoolean("debugUnlocked", d.debugUnlocked),
+            debugMode = o.optBoolean("debugMode", d.debugMode),
+            setupDone = o.optBoolean("setupDone", d.setupDone),
+            photoStamp = o.optLong("photoStamp", d.photoStamp),
+        )
+    }
+
+    private companion object {
+        const val KEY = "json"
+    }
+}

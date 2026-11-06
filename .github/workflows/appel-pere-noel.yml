@@ -1,0 +1,58 @@
+# Compile l'appli Android « Appel du Père Noël » (dossier appel-pere-noel/)
+# et publie l'APK dans la pré-version GitHub « appel-pere-noel » (toujours la dernière compilation),
+# pour pouvoir l'installer directement depuis le téléphone.
+
+name: Appel Père Noël (APK)
+
+on:
+  push:
+    paths:
+      - 'appel-pere-noel/**'
+      - '.github/workflows/appel-pere-noel.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: appel-pere-noel-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Compiler l'APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: appel-pere-noel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Compiler
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk appel-pere-noel.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appel-pere-noel-apk
+          path: appel-pere-noel/appel-pere-noel.apk
+
+      - name: Publier l'APK (pré-version « appel-pere-noel »)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete appel-pere-noel --yes --cleanup-tag || true
+          gh release create appel-pere-noel appel-pere-noel.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Appel du Père Noël (dernière compilation)" \
+            --notes "APK compilé automatiquement depuis la branche ${GITHUB_REF_NAME} (commit ${GITHUB_SHA::7}, compilation n° ${GITHUB_RUN_NUMBER}). Sur le téléphone : télécharger appel-pere-noel.apk puis l'ouvrir pour l'installer."

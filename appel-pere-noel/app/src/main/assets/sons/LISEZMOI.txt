@@ -1,0 +1,7 @@
+Sons facultatifs (libres de droits) à placer dans ce dossier avant de compiler :
+
+  ambiance.ogg   boucle d'ambiance (cheminée + grelots). Si absent, l'appli
+                 génère elle-même un crépitement et des grelots.
+
+Les enregistrements « faits maison » de la voix du Père Noël (Ho ho ho, au revoir...)
+pourront être importés directement depuis l'écran Parents (jalon c).
