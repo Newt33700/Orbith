@@ -1,0 +1,26 @@
+# Temporaire : inspection de l'API MediaPipe tasks-genai (sera supprimé).
+name: tmp inspect mediapipe
+on:
+  push:
+    paths: ['.github/workflows/tmp-inspect-mediapipe.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - run: |
+          set -x
+          B=https://dl.google.com/dl/android/maven2/com/google/mediapipe/tasks-genai
+          curl -sS $B/maven-metadata.xml | grep -E '<version>' | tail -8
+          V=$(curl -sS $B/maven-metadata.xml | grep -oE '<release>[^<]+' | cut -d'>' -f2)
+          echo "RELEASE=$V"
+          for v in 0.10.24 0.10.25 0.10.26 0.10.27 $V; do echo "VER $v $(curl -s -o /dev/null -w '%{http_code}' $B/$v/tasks-genai-$v.aar)"; done
+          curl -sS $B/$V/tasks-genai-$V.pom
+          curl -sS -o g.aar $B/$V/tasks-genai-$V.aar && mkdir g && cd g && unzip -q ../g.aar && ls -R jni | head
+          unzip -l classes.jar | grep -E 'genai/llminference/[A-Za-z$]+\.class' | awk '{print $4}'
+          for c in LlmInference 'LlmInference$LlmInferenceOptions$Builder' 'LlmInference$Backend' LlmInferenceSession 'LlmInferenceSession$LlmInferenceSessionOptions$Builder' 'LlmInferenceSession$LlmInferenceSessionOptions'; do
+            javap -cp classes.jar "com.google.mediapipe.tasks.genai.llminference.$c" || true
+          done
