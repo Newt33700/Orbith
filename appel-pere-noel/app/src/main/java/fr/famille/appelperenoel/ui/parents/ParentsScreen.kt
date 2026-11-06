@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.runtime.DisposableEffect
 import fr.famille.appelperenoel.audio.HomeRecording
 import fr.famille.appelperenoel.audio.HomeRecordings
+import fr.famille.appelperenoel.tts.AndroidTts
 import fr.famille.appelperenoel.tts.AndroidVoiceInfo
 import fr.famille.appelperenoel.tts.VoicePreview
 import androidx.compose.runtime.LaunchedEffect
@@ -223,16 +224,39 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                         )
                         else -> {
                             Text(
-                                "Voix françaises du téléphone (☁ = nécessite internet, souvent plus naturelle). " +
+                                "Moteur : ${preview.androidEngine.ifBlank { "?" }} · ${list.size} voix. " +
+                                    "♂ = voix d'homme (d'après les noms Google), ☁ = nécessite internet. " +
                                     "Écoute-les une par une :",
                                 style = MaterialTheme.typography.bodySmall,
                             )
+                            if (preview.androidEngine != AndroidTts.GOOGLE_TTS) {
+                                Text(
+                                    "Ce moteur n'est pas celui de Google : il n'a souvent que des voix de femme. " +
+                                        "Installe « Services de reconnaissance et synthèse vocale de Google » " +
+                                        "depuis le Play Store, puis reviens ici.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFFFAB40),
+                                )
+                            } else if (list.none { AndroidTts.probablyMale(it.name) }) {
+                                Text(
+                                    "Aucune voix d'homme n'est installée : ouvre Paramètres → Accessibilité → " +
+                                        "Synthèse vocale → ⚙ du moteur Google → Installer les données vocales → " +
+                                        "Français (France), et télécharge les voix proposées.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFFFAB40),
+                                )
+                            }
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                list.forEach { v ->
+                                list.sortedByDescending { AndroidTts.probablyMale(it.name) }.forEach { v ->
                                     FilterChip(
                                         selected = v.name == s.androidVoice,
                                         onClick = { update { it.copy(androidVoice = v.name) } },
-                                        label = { Text((if (v.needsInternet) "☁ " else "") + v.name) },
+                                        label = {
+                                            Text(
+                                                (if (AndroidTts.probablyMale(v.name)) "♂ " else "") +
+                                                    (if (v.needsInternet) "☁ " else "") + v.name,
+                                            )
+                                        },
                                     )
                                 }
                             }
@@ -270,7 +294,7 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                 if (s.voiceEngine == "piper") LabeledSlider("Expressivité : ${(s.expressiveness * 100).roundToInt()} %", s.expressiveness, 0f..1f, steps = 9) { v ->
                     update { it.copy(expressiveness = (v * 10).roundToInt() / 10f) }
                 }
-                LabeledSlider("Voix plus grave : %.1f demi-tons".format(s.pitchSemitones), s.pitchSemitones, 0f..4f, steps = 7) { v ->
+                LabeledSlider("Voix plus grave : %.1f demi-tons".format(s.pitchSemitones), s.pitchSemitones, 0f..6f, steps = 11) { v ->
                     update { it.copy(pitchSemitones = (v * 2).roundToInt() / 2f) }
                 }
                 LabeledSlider("Lenteur : +${((s.slowness - 1f) * 100).roundToInt()} %", s.slowness, 1f..1.4f, steps = 7) { v ->

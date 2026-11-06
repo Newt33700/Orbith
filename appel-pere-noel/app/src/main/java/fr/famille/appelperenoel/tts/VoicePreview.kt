@@ -23,6 +23,9 @@ class VoicePreview(private val context: Context, private val models: ModelReposi
     @Volatile
     private var current: AppSettings? = null
 
+    /** Moteur de synthèse Android utilisé (ex. com.google.android.tts). */
+    val androidEngine: String get() = android?.engineName ?: ""
+
     /** Voix françaises proposées par Android (charge le moteur si besoin). */
     suspend fun androidVoices(settings: AppSettings): List<AndroidVoiceInfo> = loadAndroid(settings).voices()
 

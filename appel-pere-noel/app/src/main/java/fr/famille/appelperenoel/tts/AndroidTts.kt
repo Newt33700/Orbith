@@ -57,7 +57,9 @@ class AndroidTts(
             withTimeout(10_000) {
                 suspendCancellableCoroutine<TextToSpeech> { cont ->
                     var created: TextToSpeech? = null
-                    created = TextToSpeech(context.applicationContext) { status ->
+                    // On préfère le moteur Google quand il est installé : c'est lui qui propose
+                    // des voix d'homme en français (le moteur par défaut de Xiaomi n'a souvent qu'une voix de femme).
+                    val listener = TextToSpeech.OnInitListener { status ->
                         val t = created
                         if (status == TextToSpeech.SUCCESS && t != null) {
                             if (cont.isActive) cont.resume(t)
@@ -65,6 +67,11 @@ class AndroidTts(
                             t?.shutdown()
                             if (cont.isActive) cont.cancel(IllegalStateException("synthèse vocale d'Android indisponible"))
                         }
+                    }
+                    created = if (googleInstalled()) {
+                        TextToSpeech(context.applicationContext, listener, GOOGLE_TTS)
+                    } else {
+                        TextToSpeech(context.applicationContext, listener)
                     }
                     cont.invokeOnCancellation { created?.shutdown() }
                 }
@@ -91,7 +98,7 @@ class AndroidTts(
                 utteranceId?.let { pending.remove(it)?.complete(false) }
             }
         })
-        engineName = engine.defaultEngine ?: ""
+        engineName = if (googleInstalled()) GOOGLE_TTS else engine.defaultEngine ?: ""
         tts = engine
     }
 
@@ -134,7 +141,15 @@ class AndroidTts(
         tts = null
     }
 
+    private fun googleInstalled(): Boolean =
+        runCatching { context.packageManager.getPackageInfo(GOOGLE_TTS, 0); true }.getOrDefault(false)
+
     companion object {
+        const val GOOGLE_TTS = "com.google.android.tts"
+
+        /** D'après les voix Google connues, « frb » et « frd » sont des voix d'homme. */
+        fun probablyMale(name: String): Boolean = Regex("fr-fr-x-fr[bd]").containsMatchIn(name.lowercase())
+
         /** Lit un WAV PCM 16 bits (mono ou stéréo) en flottants mono. */
         fun readWav(file: File): RawSpeech {
             RandomAccessFile(file, "r").use { raf ->
