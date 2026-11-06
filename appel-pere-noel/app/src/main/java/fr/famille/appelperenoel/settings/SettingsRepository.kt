@@ -57,6 +57,8 @@ class SettingsRepository(context: Context) {
         put("slowness", s.slowness.toDouble())
         put("reverb2", s.reverb.toDouble())
         put("voiceSpeaker", s.voiceSpeaker)
+        put("voiceEngine", s.voiceEngine)
+        s.androidVoice?.let { put("androidVoice", it) }
         put("expressiveness", s.expressiveness.toDouble())
         put("llmTimeoutMs", s.llmTimeoutMs)
         put("llmGpu", s.llmGpu)
@@ -97,6 +99,8 @@ class SettingsRepository(context: Context) {
             slowness = o.optDouble("slowness", d.slowness.toDouble()).toFloat(),
             reverb = o.optDouble("reverb2", d.reverb.toDouble()).toFloat(),
             voiceSpeaker = o.optInt("voiceSpeaker", d.voiceSpeaker),
+            voiceEngine = o.optString("voiceEngine", d.voiceEngine).ifBlank { d.voiceEngine },
+            androidVoice = o.optString("androidVoice").ifBlank { null },
             expressiveness = o.optDouble("expressiveness", d.expressiveness.toDouble()).toFloat(),
             llmTimeoutMs = o.optInt("llmTimeoutMs", d.llmTimeoutMs),
             llmGpu = o.optBoolean("llmGpu", d.llmGpu),

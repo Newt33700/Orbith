@@ -35,14 +35,19 @@ object PapyVoice {
     /** Vitesse à demander à Piper pour que, après abaissement, la lenteur soit [PapyVoiceSettings.slowness]. */
     fun synthesisSpeed(s: PapyVoiceSettings): Float = (1f / (s.slowness * playbackFactor(s))).coerceIn(0.5f, 2f)
 
-    fun process(raw: RawSpeech, s: PapyVoiceSettings, volume: Float = 1f): PlayableSpeech {
+    /** Vitesse et hauteur à demander à un moteur qui sait changer la hauteur lui-même. */
+    fun nativeSpeed(s: PapyVoiceSettings): Float = (1f / s.slowness).coerceIn(0.5f, 2f)
+    fun nativePitch(s: PapyVoiceSettings): Float = playbackFactor(s)
+
+    /** @param resample faux si le moteur a déjà abaissé la voix lui-même */
+    fun process(raw: RawSpeech, s: PapyVoiceSettings, volume: Float = 1f, resample: Boolean = true): PlayableSpeech {
         var x = raw.samples
         if (s.reverb > 0f) x = reverb(x, raw.sampleRate, s.reverb)
         // Petit silence à la fin pour que la réverbération s'éteigne doucement.
         val peak = x.maxOfOrNull { abs(it) }?.coerceAtLeast(1e-4f) ?: 1f
         val gain = (0.95f / peak).coerceAtMost(4f) * volume.coerceIn(0f, 1f)
         val out = ShortArray(x.size) { (x[it] * gain * Short.MAX_VALUE).toInt().coerceIn(-32768, 32767).toShort() }
-        val rate = (raw.sampleRate * playbackFactor(s)).toInt().coerceIn(4000, 48000)
+        val rate = if (resample) (raw.sampleRate * playbackFactor(s)).toInt().coerceIn(4000, 48000) else raw.sampleRate
         return PlayableSpeech(out, rate)
     }
 

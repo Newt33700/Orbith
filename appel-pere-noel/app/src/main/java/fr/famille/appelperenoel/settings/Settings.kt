@@ -38,6 +38,10 @@ data class AppSettings(
     val debugMode: Boolean = false,
     /** Vrai une fois l'écran d'installation des modèles passé au premier lancement. */
     val setupDone: Boolean = false,
+    /** Moteur de voix : « android » (voix Google du téléphone, naturelle) ou « piper » (hors-ligne). */
+    val voiceEngine: String = "android",
+    /** Voix Android choisie (ex. « fr-fr-x-frd-network ») ; null = voix française par défaut. */
+    val androidVoice: String? = null,
     /** Voix Piper choisie (nom court, ex. « tom-medium ») ; null = la première installée. */
     val voiceName: String? = null,
     /** Abaissement de la voix en demi-tons. */

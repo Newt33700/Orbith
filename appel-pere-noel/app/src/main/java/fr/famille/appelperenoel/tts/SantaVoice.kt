@@ -20,30 +20,31 @@ data class SpeechTiming(
 )
 
 /**
- * La voix du Père Noël pendant un appel : synthèse Piper + effets « papy »,
+ * La voix du Père Noël pendant un appel : synthèse (Android ou Piper) + effets « papy »,
  * enregistrements faits maison quand ils existent, petit cache pour les phrases fixes.
  */
 class SantaVoice(
     private val context: Context,
-    private val piper: PiperTts,
+    /** Moteur actif (choisi au chargement ; null si aucun). */
+    private val synth: () -> SpeechSynth?,
     private val papy: PapyVoiceSettings,
     private val player: PcmPlayer,
 ) {
     private val cache = ConcurrentHashMap<String, PlayableSpeech>()
 
-    val ready: Boolean get() = piper.ready
+    val ready: Boolean get() = synth()?.ready == true
 
     /** Pré-calcule des phrases (pendant la sonnerie) pour qu'elles partent instantanément. */
     suspend fun warmUp(texts: List<String>) {
-        if (!piper.ready) return
+        if (!ready) return
         for (t in texts) runCatching { prepare(t) }
     }
 
     private suspend fun prepare(text: String): Pair<PlayableSpeech, Long> {
         cache[text]?.let { return it to 0L }
         val t0 = SystemClock.elapsedRealtime()
-        val raw = piper.synthesize(text, PapyVoice.synthesisSpeed(papy))
-        val speech = PapyVoice.process(raw, papy)
+        val engine = synth() ?: throw IllegalStateException("aucune voix")
+        val speech = render(engine, text, papy)
         if (cache.size < 64) cache[text] = speech
         return speech to SystemClock.elapsedRealtime() - t0
     }
@@ -72,7 +73,7 @@ class SantaVoice(
                 continue
             }
             if (segment.isBlank()) continue
-            if (!piper.ready) {
+            if (!ready) {
                 // Pas de voix installée (mode démo) : on laisse juste le temps de « parler ».
                 if (startedAt == 0L) startedAt = SystemClock.elapsedRealtime()
                 delay(700L + segment.length * 65L)
@@ -88,6 +89,16 @@ class SantaVoice(
     }
 
     companion object {
+        /** Synthèse + effets, selon les capacités du moteur. */
+        suspend fun render(engine: SpeechSynth, text: String, papy: PapyVoiceSettings, volume: Float = 1f): PlayableSpeech =
+            if (engine.handlesPitch) {
+                val raw = engine.synthesize(text, PapyVoice.nativeSpeed(papy), PapyVoice.nativePitch(papy))
+                PapyVoice.process(raw, papy, volume, resample = false)
+            } else {
+                val raw = engine.synthesize(text, PapyVoice.synthesisSpeed(papy), 1f)
+                PapyVoice.process(raw, papy, volume, resample = true)
+            }
+
         private val HO = Regex("(?i)ho[ ,-]*ho[ ,-]*ho\\s*!*")
 
         /** Découpe « Allô ? Ho ho ho ! Lilian… » en [texte, HO, texte]. */

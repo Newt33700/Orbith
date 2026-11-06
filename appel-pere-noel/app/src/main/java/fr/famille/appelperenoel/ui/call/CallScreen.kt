@@ -119,7 +119,8 @@ fun CallScreen(settings: AppSettings, onFinished: () -> Unit) {
             Spacer(Modifier.weight(1f))
 
             if (st.phase == CallPhase.CONNECTED) {
-                ListeningHint(st.listening)
+                // Pas d'indication « à toi de parler » pour les enfants : ça casserait la magie.
+                if (settings.debugMode) ListeningHint(st.listening)
                 Spacer(Modifier.height(12.dp))
                 val subtitle = st.subtitle
                 if (settings.debugMode && subtitle != null) {

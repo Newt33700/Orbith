@@ -1,47 +1,67 @@
 package fr.famille.appelperenoel.tts
 
-import fr.famille.appelperenoel.audio.PapyVoice
+import android.content.Context
 import fr.famille.appelperenoel.audio.PcmPlayer
 import fr.famille.appelperenoel.models.ModelRepository
 import fr.famille.appelperenoel.settings.AppSettings
 import fr.famille.appelperenoel.settings.papyVoice
 
 /** Permet aux parents d'écouter et comparer les voix depuis l'espace parents. */
-class VoicePreview(private val models: ModelRepository) {
+class VoicePreview(private val context: Context, private val models: ModelRepository) {
 
     private var piper: PiperTts? = null
-    private var loadedKey: String? = null
+    private var piperKey: String? = null
+    private var android: AndroidTts? = null
+    private var androidVoice: String? = null
+    private val player = PcmPlayer()
 
-    /** Nombre de locuteurs de la dernière voix écoutée. */
+    /** Nombre de locuteurs de la dernière voix Piper écoutée. */
     var speakers: Int = 1
         private set
-    private val player = PcmPlayer()
 
     /** Réglages de la dernière écoute (lus par le moteur à chaque phrase). */
     @Volatile
     private var current: AppSettings? = null
 
-    suspend fun play(settings: AppSettings, text: String) {
-        current = settings
+    /** Voix françaises proposées par Android (charge le moteur si besoin). */
+    suspend fun androidVoices(settings: AppSettings): List<AndroidVoiceInfo> = loadAndroid(settings).voices()
+
+    private suspend fun loadAndroid(settings: AppSettings): AndroidTts {
+        val existing = android
+        if (existing != null && androidVoice == settings.androidVoice) return existing
+        existing?.release()
+        val engine = AndroidTts(context) { settings.androidVoice }
+        engine.load()
+        android = engine
+        androidVoice = settings.androidVoice
+        return engine
+    }
+
+    private suspend fun loadPiper(settings: AppSettings): PiperTts {
         val voices = models.piperVoices()
         val name = voices.firstOrNull { it.name == settings.voiceName }?.name
             ?: voices.firstOrNull()?.name
-            ?: throw IllegalStateException("Aucune voix installée")
+            ?: throw IllegalStateException("Aucune voix Piper installée")
         val key = "$name/${settings.expressiveness}"
-        if (piper == null || loadedKey != key) {
-            piper?.release()
-            piper = PiperTts(
-                models,
-                voiceName = { name },
-                speaker = { current?.voiceSpeaker ?: 0 },
-                expressiveness = { current?.expressiveness ?: 0.5f },
-            ).also { it.load() }
-            loadedKey = key
-        }
-        speakers = piper!!.speakers
-        val papy = settings.papyVoice()
-        val raw = piper!!.synthesize(text, PapyVoice.synthesisSpeed(papy))
-        val speech = PapyVoice.process(raw, papy)
+        piper?.takeIf { piperKey == key }?.let { return it }
+        piper?.release()
+        val engine = PiperTts(
+            models,
+            voiceName = { name },
+            speaker = { current?.voiceSpeaker ?: 0 },
+            expressiveness = { current?.expressiveness ?: 0.5f },
+        )
+        engine.load()
+        piper = engine
+        piperKey = key
+        speakers = engine.speakers
+        return engine
+    }
+
+    suspend fun play(settings: AppSettings, text: String) {
+        current = settings
+        val engine: SpeechSynth = if (settings.voiceEngine == "piper") loadPiper(settings) else loadAndroid(settings)
+        val speech = SantaVoice.render(engine, text, settings.papyVoice())
         player.play(speech.samples, speech.sampleRate, settings.santaVolume)
     }
 
@@ -49,6 +69,8 @@ class VoicePreview(private val models: ModelRepository) {
         player.stop()
         piper?.release()
         piper = null
-        loadedKey = null
+        piperKey = null
+        android?.release()
+        android = null
     }
 }

@@ -25,9 +25,10 @@ class PiperTts(
     private val speaker: () -> Int = { 0 },
     /** 0..1 : variations d'intonation et de rythme (noise_scale / noise_w de Piper). */
     private val expressiveness: () -> Float = { 0.5f },
-) : Engine {
+) : Engine, SpeechSynth {
 
     override val label = "Voix (Piper)"
+    override val handlesPitch = false
 
     @Volatile
     private var tts: OfflineTts? = null
@@ -40,7 +41,7 @@ class PiperTts(
     var speakers: Int = 1
         private set
 
-    val ready: Boolean get() = tts != null
+    override val ready: Boolean get() = tts != null
 
     override suspend fun load() = withContext(Dispatchers.Default) {
         mutex.withLock {
@@ -78,6 +79,8 @@ class PiperTts(
     }
 
     /** @param speed 1 = vitesse normale, < 1 = plus lent (équivaut à length_scale = 1 / speed). */
+    override suspend fun synthesize(text: String, speed: Float, pitch: Float): RawSpeech = synthesize(text, speed)
+
     suspend fun synthesize(text: String, speed: Float): RawSpeech = withContext(Dispatchers.Default) {
         mutex.withLock {
             val engine = tts ?: throw IllegalStateException("voix non chargée")

@@ -6,6 +6,13 @@
     <!-- Utilisé uniquement par l'écran d'installation des modèles. Les appels sont 100 % hors-ligne. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Android 11+ : nécessaire pour voir le moteur de synthèse vocale (voix Google). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".PereNoelApp"
         android:allowBackup="false"

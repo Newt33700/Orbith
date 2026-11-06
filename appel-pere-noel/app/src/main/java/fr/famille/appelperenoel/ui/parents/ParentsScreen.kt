@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.runtime.DisposableEffect
 import fr.famille.appelperenoel.audio.HomeRecording
 import fr.famille.appelperenoel.audio.HomeRecordings
+import fr.famille.appelperenoel.tts.AndroidVoiceInfo
 import fr.famille.appelperenoel.tts.VoicePreview
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -93,7 +95,19 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
 
     var previewing by remember { mutableStateOf(false) }
     var previewSpeakers by remember { mutableIntStateOf(1) }
-    val preview = remember { VoicePreview(app.models) }
+    val preview = remember { VoicePreview(context.applicationContext, app.models) }
+    var androidVoices by remember { mutableStateOf<List<AndroidVoiceInfo>?>(null) }
+    var androidError by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(s.voiceEngine) {
+        if (s.voiceEngine != "piper" && androidVoices == null) {
+            try {
+                androidVoices = preview.androidVoices(app.settings.current)
+            } catch (e: Exception) {
+                androidError = e.message
+                androidVoices = emptyList()
+            }
+        }
+    }
     DisposableEffect(preview) { onDispose { preview.release() } }
     var recordingsVersion by remember { mutableIntStateOf(0) }
     var pendingRecording by remember { mutableStateOf<HomeRecording?>(null) }
@@ -184,8 +198,47 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
             }
 
             Section("Voix du Père Noël") {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FilterChip(
+                        selected = s.voiceEngine != "piper",
+                        onClick = { update { it.copy(voiceEngine = "android") } },
+                        label = { Text("Voix Google (naturelle)") },
+                    )
+                    FilterChip(
+                        selected = s.voiceEngine == "piper",
+                        onClick = { update { it.copy(voiceEngine = "piper") } },
+                        label = { Text("Piper (hors-ligne)") },
+                    )
+                }
                 val voices = remember(modelsVersion) { app.models.piperVoices() }
-                if (voices.isEmpty()) {
+                if (s.voiceEngine != "piper") {
+                    val list = androidVoices
+                    when {
+                        list == null -> Text("Recherche des voix…", style = MaterialTheme.typography.bodySmall)
+                        list.isEmpty() -> Text(
+                            "Aucune voix française trouvée" + (androidError?.let { " ($it)" } ?: "") + ". " +
+                                "Installe « Services de reconnaissance et synthèse vocale de Google » depuis le Play Store, " +
+                                "puis choisis-le dans Paramètres → Accessibilité → Synthèse vocale.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        else -> {
+                            Text(
+                                "Voix françaises du téléphone (☁ = nécessite internet, souvent plus naturelle). " +
+                                    "Écoute-les une par une :",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                list.forEach { v ->
+                                    FilterChip(
+                                        selected = v.name == s.androidVoice,
+                                        onClick = { update { it.copy(androidVoice = v.name) } },
+                                        label = { Text((if (v.needsInternet) "☁ " else "") + v.name) },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else if (voices.isEmpty()) {
                     Text("Aucune voix installée : voir « Modèles » plus bas.", style = MaterialTheme.typography.bodySmall)
                 } else {
                     val selected = voices.firstOrNull { it.name == s.voiceName }?.name ?: voices.first().name
@@ -202,7 +255,7 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                         }
                     }
                 }
-                if (previewSpeakers > 1) {
+                if (s.voiceEngine == "piper" && previewSpeakers > 1) {
                     Text("Locuteur (UPMC : 1 = Jessica, 2 = Pierre) :", style = MaterialTheme.typography.bodySmall)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         (0 until previewSpeakers.coerceAtMost(12)).forEach { i ->
@@ -214,7 +267,7 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                         }
                     }
                 }
-                LabeledSlider("Expressivité : ${(s.expressiveness * 100).roundToInt()} %", s.expressiveness, 0f..1f, steps = 9) { v ->
+                if (s.voiceEngine == "piper") LabeledSlider("Expressivité : ${(s.expressiveness * 100).roundToInt()} %", s.expressiveness, 0f..1f, steps = 9) { v ->
                     update { it.copy(expressiveness = (v * 10).roundToInt() / 10f) }
                 }
                 LabeledSlider("Voix plus grave : %.1f demi-tons".format(s.pitchSemitones), s.pitchSemitones, 0f..4f, steps = 7) { v ->
@@ -226,7 +279,7 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                 LabeledSlider("Écho : ${(s.reverb * 250).roundToInt()} %", s.reverb, 0f..0.4f, steps = 7) { v ->
                     update { it.copy(reverb = (v * 20).roundToInt() / 20f) }
                 }
-                Button(enabled = !previewing && voices.isNotEmpty(), onClick = {
+                Button(enabled = !previewing && (s.voiceEngine != "piper" || voices.isNotEmpty()), onClick = {
                     scope.launch {
                         previewing = true
                         try {

@@ -21,7 +21,9 @@ import fr.famille.appelperenoel.settings.Child
 import fr.famille.appelperenoel.settings.papyVoice
 import fr.famille.appelperenoel.stt.SttResult
 import fr.famille.appelperenoel.stt.VoskStt
+import fr.famille.appelperenoel.tts.AndroidTts
 import fr.famille.appelperenoel.tts.PiperTts
+import fr.famille.appelperenoel.tts.SpeechSynth
 import fr.famille.appelperenoel.tts.SantaVoice
 import fr.famille.appelperenoel.tts.SpeechTiming
 import kotlinx.coroutines.CancellationException
@@ -92,7 +94,12 @@ class CallController(
         expressiveness = { settings.expressiveness },
     )
     private val llm = GemmaLlm(context, models) { settings.llmGpu }
-    private val voice = SantaVoice(context, piper, settings.papyVoice(), speechPlayer)
+    private val androidTts = AndroidTts(context) { settings.androidVoice }
+
+    /** Moteur de voix effectivement chargé (Android ou Piper). */
+    @Volatile
+    private var activeSynth: SpeechSynth? = null
+    private val voice = SantaVoice(context, { activeSynth }, settings.papyVoice(), speechPlayer)
     private val brain = SantaBrain(llm) { settings.llmManualTemplate }
 
     private val children = settings.children.filter { it.name.isNotBlank() }
@@ -104,12 +111,33 @@ class CallController(
 
     /** La voix + le pré-calcul des phrases qui doivent partir instantanément. */
     private val voiceEngine = object : Engine {
-        override val label = "Voix (Piper)"
+        override val label = "Voix"
         override suspend fun load() {
-            piper.load()
+            // Moteur choisi par les parents ; s'il échoue (pas de voix française, etc.), on essaie l'autre.
+            val order: List<Pair<Engine, SpeechSynth>> =
+                if (settings.voiceEngine == "piper") listOf(piper to piper, androidTts to androidTts)
+                else listOf(androidTts to androidTts, piper to piper)
+            var lastError: Exception? = null
+            for ((engine, synth) in order) {
+                try {
+                    engine.load()
+                    activeSynth = synth
+                    log("Voix utilisée : ${engine.label}")
+                    break
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    log("${engine.label} indisponible : ${e.message}")
+                    lastError = e
+                }
+            }
+            if (activeSynth == null) throw lastError ?: IllegalStateException("aucune voix")
             voice.warmUp(listOf(greeting) + Phrases.fillers)
         }
-        override fun release() = piper.release()
+        override fun release() {
+            androidTts.release()
+            piper.release()
+        }
     }
     private val engines: List<Engine> = listOf(stt, voiceEngine, llm)
 

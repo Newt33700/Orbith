@@ -73,9 +73,18 @@ Réponds maintenant, uniquement avec les mots du Père Noël.
 
 ## Voix de papy
 
-Réglable dans l'espace parents (bouton *Écouter* pour comparer) :
-- **voix** : Tom, Gilles, UPMC… (celles installées) ;
-- **plus grave** (1,5 demi-ton par défaut) : obtenu en rejouant le son un peu moins vite ;
+Deux moteurs au choix dans l'espace parents (bouton *Écouter* pour comparer) :
+- **Voix Google (naturelle)**, par défaut : la synthèse vocale intégrée au téléphone, gratuite.
+  Les voix marquées ☁ ont besoin d'internet pendant l'appel et sont souvent les plus naturelles.
+  Si aucune voix n'apparaît : installer *Services de reconnaissance et synthèse vocale de Google*
+  (Play Store) et le choisir dans *Paramètres → Accessibilité → Synthèse vocale*.
+- **Piper (hors-ligne)** : Tom, Gilles, UPMC (locuteur 2 = Pierre). Plus robotique.
+  Si la voix Google échoue pendant un appel, Piper prend le relais automatiquement.
+
+Réglages :
+- **voix** : celles proposées par le moteur choisi ;
+- **plus grave** (1,5 demi-ton par défaut) : demandé directement au moteur Google ; avec Piper,
+  obtenu en rejouant le son un peu moins vite ;
 - **lenteur** (+15 %) : compensée dans la vitesse demandée à Piper ;
 - **écho** : petite réverbération calculée sur le téléphone.
 
