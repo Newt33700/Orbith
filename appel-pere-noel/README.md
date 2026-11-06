@@ -14,11 +14,69 @@ Tout tourne **sur le téléphone, sans internet** une fois les modèles install�
 ## Avancement
 
 - [x] **(a)** Écrans, faux appel, sonnerie, écran de premier lancement (installation des modèles)
-- [ ] **(b)** Reconnaissance vocale Vosk
-- [ ] **(c)** Voix Piper + « voix de papy » + enregistrements maison
-- [ ] **(d)** Cerveau local (Gemma)
-- [ ] **(e)** Scénario complet, garde-fous, écran Parents complet
-- [ ] **(f)** Réglages et finitions
+- [x] **(b)** Reconnaissance vocale Vosk
+- [x] **(c)** Voix Piper + « voix de papy » + enregistrements maison
+- [x] **(d)** Cerveau local (Gemma)
+- [x] **(e)** Scénario complet, garde-fous, écran Parents complet
+- [ ] **(f)** Réglages et finitions (après essais sur le téléphone)
+
+## Comment se passe un appel
+
+1. **Sonnerie** (≈ 4,5 s) : pendant ce temps, les oreilles (Vosk), la voix (Piper) et le cerveau
+   (Gemma) se chargent en parallèle, et la phrase d'accueil est pré-calculée. Si c'est plus long,
+   ça sonne un peu plus.
+2. **Décroché** : « Allô ? Ho ho ho ! Qui m'appelle ? C'est Lilian ou Alicia ? ».
+   Le prénom est reconnu même mal transcrit ; sinon il redemande, puis demande l'âge.
+3. **Sage ?** → **Qu'as-tu fait de bien ?** → **Que voudrais-tu pour Noël ?**
+   Les questions sont écrites à l'avance ; le cerveau ne fait que **réagir** (1 à 2 phrases).
+4. **Au revoir**, puis il raccroche tout seul (tonalité « occupé »).
+
+Garde-fous :
+- micro ouvert **uniquement** quand c'est à l'enfant de parler ;
+- rien compris → « tu peux répéter ? », puis question reformulée simplement, puis on passe à la suite ;
+- réponse hors sujet à « as-tu été sage ? » → réponse courte puis retour à la question ;
+- cerveau trop lent (> 0,9 s) → « Hmm, voyons voir… » ; au-delà du délai max (5 s) → phrase de secours ;
+- chaque phrase du cerveau est nettoyée puis **filtrée** (hors personnage, IA, infos personnelles,
+  sujets sombres, promesses de cadeau, critiques, anglais) : une phrase refusée → phrase de secours ;
+- 30 s avant la durée max, il conclut gentiment.
+
+## Prompt du cerveau
+
+Fabriqué dans `scenario/SantaBrain.kt` :
+
+```
+Tu es le Père Noël. Tu es très vieux, chaleureux et rieur, et tu parles lentement.
+Tu parles au téléphone avec {prénom}, {un garçon|une fille|un enfant} de {âge} ans.
+{prénom} aime : {centres d'intérêt}.
+
+Règles :
+- Réponds en français, en 1 ou 2 phrases courtes, avec des mots simples d'enfant. Tutoie l'enfant.
+- Ne demande jamais d'information personnelle : ni adresse, ni école, ni nom de famille, ni téléphone.
+- Aucun sujet effrayant, violent, triste ou d'adulte. Si l'enfant en parle, parle gentiment d'autre chose : les rennes, les lutins, la neige.
+- Ne promets jamais un cadeau précis. Dis plutôt que tes lutins vont faire de leur mieux.
+- Ne critique jamais l'enfant. S'il dit qu'il n'a pas été sage, encourage-le avec douceur.
+- Tu es le vrai Père Noël. Ne dis jamais que tu es une IA, un robot ou un programme. Si on te demande si tu es vraiment le Père Noël, réponds avec magie et malice.
+- N'utilise ni emoji, ni liste, ni astérisque, ni indication de mise en scène : tes mots sont lus à voix haute.
+- Ne pose pas de nouvelle question.
+
+Ce que vous vous êtes dit juste avant : (2 derniers échanges)
+Le Père Noël vient de demander : « … »
+{prénom} répond : « … »
+
+{consigne de l'étape, ex. « Réagis avec enthousiasme à son souhait, sans jamais promettre de l'apporter. »}
+Réponds maintenant, uniquement avec les mots du Père Noël.
+```
+
+## Voix de papy
+
+Réglable dans l'espace parents (bouton *Écouter* pour comparer) :
+- **voix** : Tom, Gilles, UPMC… (celles installées) ;
+- **plus grave** (1,5 demi-ton par défaut) : obtenu en rejouant le son un peu moins vite ;
+- **lenteur** (+15 %) : compensée dans la vitesse demandée à Piper ;
+- **écho** : petite réverbération calculée sur le téléphone.
+
+Enregistrements maison (*Ho ho ho !*, *Au revoir*) : enregistrer avec le Dictaphone, puis
+*Importer* dans l'espace parents ; ils remplacent la voix de synthèse.
 
 ## Installer l'appli sur le téléphone (sans ordinateur)
 
@@ -68,7 +126,9 @@ Les modèles sont rangés dans le dossier privé de l'appli (`/data/data/fr.fami
   Le bouton haut-parleur bascule entre son fort et son doux « à l'oreille ».
 - **Sous-titres** : visibles uniquement en mode debug, pour ne rien dévoiler aux enfants.
 - **Mode debug** (caché) : dans l'espace parents, toucher **7 fois** le numéro de version, puis activer l'interrupteur.
-  Il affiche les sous-titres et les temps de chargement pendant l'appel.
+  Pendant l'appel : sous-titres, transcription en direct, champ pour **taper** la réponse au lieu de parler,
+  latences de chaque tour (STT, cerveau, voix, réponse totale ; vert si < 4 s) et journal.
+  Réglages debug : silence de fin de phrase, délai max du cerveau, GPU, format de dialogue Gemma.
 
 ## Sons
 
@@ -79,7 +139,8 @@ Les modèles sont rangés dans le dossier privé de l'appli (`/data/data/fr.fami
 
 ## Compiler soi-même (facultatif)
 
-Prérequis : JDK 17 et le SDK Android (ou Android Studio).
+Prérequis : JDK 17 et le SDK Android (ou Android Studio). La première compilation télécharge
+l'AAR de sherpa-onnx (≈ 40 Mo) dans `app/libs/`.
 
 ```bash
 cd appel-pere-noel
