@@ -32,7 +32,7 @@ object HomeRecordings {
     }
 
     /** Joue le fichier (n'importe quel format lisible par Android : ogg, m4a, mp3…) jusqu'au bout. */
-    suspend fun play(file: File, volume: Float) = suspendCancellableCoroutine { cont ->
+    suspend fun play(file: File, volume: Float) = suspendCancellableCoroutine<Unit> { cont ->
         val player = MediaPlayer()
         try {
             player.setAudioAttributes(CallAudioSession.ATTRIBUTES)

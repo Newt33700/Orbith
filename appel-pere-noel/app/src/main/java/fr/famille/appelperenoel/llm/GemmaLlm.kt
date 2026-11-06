@@ -81,7 +81,7 @@ class GemmaLlm(
                 val text = StringBuilder()
                 var future: com.google.common.util.concurrent.ListenableFuture<String>? = null
                 try {
-                    suspendCancellableCoroutine { cont ->
+                    suspendCancellableCoroutine<Unit> { cont ->
                         var finished = false
                         val listener = ProgressListener<String> { partial, done ->
                             synchronized(text) {
