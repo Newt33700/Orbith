@@ -597,6 +597,7 @@ private fun ElevenLabsSettings(s: AppSettings, preview: VoicePreview, update: ((
     var quota by remember { mutableStateOf<String?>(null) }
     var mine by remember { mutableStateOf<List<ElevenVoice>>(emptyList()) }
     var designs by remember { mutableStateOf<List<ElevenDesign>?>(null) }
+    var designStatus by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(s.elevenKey) {
@@ -664,20 +665,28 @@ private fun ElevenLabsSettings(s: AppSettings, preview: VoicePreview, update: ((
     )
     Button(enabled = !busy && description.length >= 20, onClick = {
         busy = true
+        designStatus = "Création en cours… (jusqu'à une minute)"
         scope.launch {
             try {
-                designs = ElevenLabsTts.designVoices(context, s.elevenKey, description)
-                error = null
+                val list = ElevenLabsTts.designVoices(context, s.elevenKey, description)
+                designs = list
+                designStatus = if (list.isEmpty()) "ElevenLabs n'a renvoyé aucune proposition." else "${list.size} propositions : écoute-les puis garde ta préférée."
                 runCatching { quota = ElevenLabsTts.quota(s.elevenKey).let { "Quota du mois : ${it.used} / ${it.limit} caractères utilisés" } }
             } catch (e: Exception) {
-                error = "Création impossible : ${e.message}"
+                designStatus = "Création impossible : ${e.message ?: e.javaClass.simpleName}"
             } finally {
                 busy = false
             }
         }
     }) { Text(if (busy) "Patiente…" else "Créer une voix de Père Noël") }
+    designStatus?.let {
+        Text(
+            it,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (it.startsWith("Création impossible")) Color(0xFFFFAB40) else Color.Unspecified,
+        )
+    }
     designs?.let { list ->
-        if (list.isEmpty()) Text("Aucune proposition reçue.", style = MaterialTheme.typography.bodySmall)
         list.forEachIndexed { i, d ->
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Proposition ${i + 1}", fontWeight = FontWeight.Bold)

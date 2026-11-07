@@ -155,11 +155,11 @@ class ElevenLabsTts(
         }
 
         /** Requête HTTP ; lève une exception lisible en cas d'erreur. */
-        private fun request(method: String, path: String, key: String, json: String? = null): ByteArray {
+        private fun request(method: String, path: String, key: String, json: String? = null, timeoutMs: Int = 15000): ByteArray {
             val conn = (URL(BASE + path).openConnection() as HttpURLConnection).apply {
                 requestMethod = method
                 connectTimeout = 5000
-                readTimeout = 15000
+                readTimeout = timeoutMs
                 setRequestProperty("xi-api-key", key.trim())
                 setRequestProperty("Accept", "*/*")
                 if (json != null) {
@@ -259,7 +259,7 @@ class ElevenLabsTts(
                     .put("model_id", "eleven_multilingual_ttv_v2")
                     .toString()
                 val res = JSONObject(
-                    String(request("POST", "/v1/text-to-voice/design?output_format=mp3_22050_32", key, body), Charsets.UTF_8),
+                    String(request("POST", "/v1/text-to-voice/design?output_format=mp3_22050_32", key, body, timeoutMs = 90000), Charsets.UTF_8),
                 )
                 val arr = res.optJSONArray("previews") ?: return@withContext emptyList()
                 val dir = File(context.cacheDir, "voix_design").apply { mkdirs() }
@@ -281,11 +281,11 @@ class ElevenLabsTts(
                     .put("generated_voice_id", design.generatedVoiceId)
                     .toString()
                 val raw = try {
-                    request("POST", "/v1/text-to-voice", key, body)
+                    request("POST", "/v1/text-to-voice", key, body, timeoutMs = 60000)
                 } catch (e: IllegalStateException) {
                     // Ancienne adresse de l'API, au cas où.
                     if (e.message?.startsWith("HTTP 404") == true || e.message?.startsWith("HTTP 405") == true) {
-                        request("POST", "/v1/text-to-voice/create-voice-from-preview", key, body)
+                        request("POST", "/v1/text-to-voice/create-voice-from-preview", key, body, timeoutMs = 60000)
                     } else {
                         throw e
                     }
