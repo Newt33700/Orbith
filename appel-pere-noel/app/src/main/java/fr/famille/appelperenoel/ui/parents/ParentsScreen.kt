@@ -13,6 +13,7 @@ import fr.famille.appelperenoel.audio.HomeRecording
 import fr.famille.appelperenoel.audio.HomeRecordings
 import fr.famille.appelperenoel.tts.AndroidTts
 import fr.famille.appelperenoel.tts.ElevenLabsTts
+import fr.famille.appelperenoel.tts.ElevenDesign
 import fr.famille.appelperenoel.tts.ElevenVoice
 import fr.famille.appelperenoel.tts.AndroidVoiceInfo
 import fr.famille.appelperenoel.tts.VoicePreview
@@ -595,7 +596,7 @@ private fun ElevenLabsSettings(s: AppSettings, preview: VoicePreview, update: ((
 
     var quota by remember { mutableStateOf<String?>(null) }
     var mine by remember { mutableStateOf<List<ElevenVoice>>(emptyList()) }
-    var library by remember { mutableStateOf<List<ElevenVoice>?>(null) }
+    var designs by remember { mutableStateOf<List<ElevenDesign>?>(null) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(s.elevenKey) {
@@ -608,6 +609,10 @@ private fun ElevenLabsSettings(s: AppSettings, preview: VoicePreview, update: ((
             error = "Clé refusée ou pas d'internet (${e.message})"
         }
         runCatching { mine = ElevenLabsTts.myVoices(s.elevenKey) }
+        // Une voix de la bibliothèque choisie avant : inutilisable avec le compte gratuit.
+        if (mine.any { it.voiceId == s.elevenVoiceId && !it.usableOnFree }) {
+            update { it.copy(elevenVoiceId = "", elevenVoiceName = "") }
+        }
     }
     quota?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
     error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFFFFAB40)) }
@@ -630,61 +635,70 @@ private fun ElevenLabsSettings(s: AppSettings, preview: VoicePreview, update: ((
         fontWeight = FontWeight.Bold,
     )
     if (mine.isNotEmpty()) {
-        Text("Voix de ton compte :", style = MaterialTheme.typography.bodySmall)
+        Text(
+            "Voix de ton compte (✨ = créée par toi, accent français ; les autres ont un accent anglais) :",
+            style = MaterialTheme.typography.bodySmall,
+        )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            mine.forEach { v ->
+            mine.filter { it.usableOnFree }.sortedByDescending { it.category == "generated" }.forEach { v ->
                 FilterChip(
                     selected = v.voiceId == s.elevenVoiceId,
                     onClick = { update { it.copy(elevenVoiceId = v.voiceId, elevenVoiceName = v.name) } },
-                    label = { Text(v.name) },
+                    label = { Text((if (v.category == "generated") "✨ " else "") + v.name) },
                 )
             }
         }
     }
-    Button(enabled = !busy, onClick = {
+    Text(
+        "Le compte gratuit ne peut pas utiliser les voix de la bibliothèque ElevenLabs. " +
+            "La solution : créer ta propre voix de Père Noël à partir d'une description. " +
+            "ElevenLabs propose quelques voix : écoute-les, et garde celle qui te plaît.",
+        style = MaterialTheme.typography.bodySmall,
+    )
+    var description by remember { mutableStateOf(ElevenLabsTts.SANTA_DESCRIPTION) }
+    OutlinedTextField(
+        description,
+        { description = it.take(1000) },
+        label = { Text("Description de la voix (en anglais, c'est mieux)") },
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Button(enabled = !busy && description.length >= 20, onClick = {
         busy = true
         scope.launch {
             try {
-                library = ElevenLabsTts.searchLibrary(s.elevenKey)
+                designs = ElevenLabsTts.designVoices(context, s.elevenKey, description)
                 error = null
+                runCatching { quota = ElevenLabsTts.quota(s.elevenKey).let { "Quota du mois : ${it.used} / ${it.limit} caractères utilisés" } }
             } catch (e: Exception) {
-                error = "Recherche impossible : ${e.message}"
+                error = "Création impossible : ${e.message}"
             } finally {
                 busy = false
             }
         }
-    }) { Text(if (busy) "Recherche…" else "Chercher des voix de papy français") }
-    library?.let { list ->
-        if (list.isEmpty()) Text("Aucune voix trouvée.", style = MaterialTheme.typography.bodySmall)
-        Text(
-            "« Extrait » ne consomme pas de quota. « Choisir » ajoute la voix à ton compte " +
-                "(3 voix maximum avec le compte gratuit).",
-            style = MaterialTheme.typography.bodySmall,
-        )
-        list.forEach { v ->
-            Column {
-                Text(v.name, fontWeight = FontWeight.Bold)
-                if (v.description.isNotBlank()) Text(v.description, style = MaterialTheme.typography.bodySmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    v.previewUrl?.let { url ->
-                        OutlinedButton(onClick = { runCatching { preview.playUrl(url) } }) { Text("Extrait") }
-                    }
-                    OutlinedButton(enabled = !busy, onClick = {
-                        busy = true
-                        scope.launch {
-                            try {
-                                val id = ElevenLabsTts.addLibraryVoice(s.elevenKey, v)
-                                update { it.copy(elevenVoiceId = id, elevenVoiceName = v.name) }
-                                runCatching { mine = ElevenLabsTts.myVoices(s.elevenKey) }
-                                Toast.makeText(context, "Voix « ${v.name} » choisie", Toast.LENGTH_SHORT).show()
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Impossible : ${e.message}", Toast.LENGTH_LONG).show()
-                            } finally {
-                                busy = false
-                            }
+    }) { Text(if (busy) "Patiente…" else "Créer une voix de Père Noël") }
+    designs?.let { list ->
+        if (list.isEmpty()) Text("Aucune proposition reçue.", style = MaterialTheme.typography.bodySmall)
+        list.forEachIndexed { i, d ->
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Proposition ${i + 1}", fontWeight = FontWeight.Bold)
+                OutlinedButton(onClick = { runCatching { preview.playUrl(d.mp3.absolutePath) } }) { Text("Écouter") }
+                OutlinedButton(enabled = !busy, onClick = {
+                    busy = true
+                    scope.launch {
+                        try {
+                            val name = "Père Noël ${i + 1}"
+                            val id = ElevenLabsTts.saveDesign(s.elevenKey, d, name, description)
+                            update { it.copy(elevenVoiceId = id, elevenVoiceName = name) }
+                            runCatching { mine = ElevenLabsTts.myVoices(s.elevenKey) }
+                            designs = null
+                            Toast.makeText(context, "Voix « $name » gardée et choisie", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Impossible : ${e.message}", Toast.LENGTH_LONG).show()
+                        } finally {
+                            busy = false
                         }
-                    }) { Text("Choisir") }
-                }
+                    }
+                }) { Text("Garder") }
             }
         }
     }

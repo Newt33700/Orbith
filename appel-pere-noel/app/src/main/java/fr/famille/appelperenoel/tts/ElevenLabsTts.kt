@@ -21,7 +21,15 @@ data class ElevenVoice(
     val previewUrl: String? = null,
     /** Pour les voix de la bibliothèque : identifiant du créateur (nécessaire pour l'ajouter au compte). */
     val publicOwnerId: String? = null,
-)
+    /** premade (voix de base, accent anglais), generated (créée par description), professional (bibliothèque)… */
+    val category: String = "",
+) {
+    /** Les voix de la bibliothèque ne sont pas utilisables avec un compte gratuit. */
+    val usableOnFree: Boolean get() = category != "professional"
+}
+
+/** Proposition de voix créée à partir d'une description : à écouter, puis à garder. */
+data class ElevenDesign(val generatedVoiceId: String, val mp3: java.io.File)
 
 /** Quota de caractères du mois. */
 data class ElevenQuota(val used: Int, val limit: Int)
@@ -191,7 +199,13 @@ class ElevenLabsTts(
                     labels?.optString("age")?.takeIf { it.isNotBlank() },
                     labels?.optString("accent")?.takeIf { it.isNotBlank() },
                 ).joinToString(", ")
-                ElevenVoice(v.getString("voice_id"), v.optString("name"), desc, v.optString("preview_url").ifBlank { null })
+                ElevenVoice(
+                    v.getString("voice_id"),
+                    v.optString("name"),
+                    desc,
+                    v.optString("preview_url").ifBlank { null },
+                    category = v.optString("category"),
+                )
             }
         }
 
@@ -225,6 +239,59 @@ class ElevenLabsTts(
             val res = JSONObject(String(request("POST", "/v1/voices/add/${enc(owner)}/${enc(voice.voiceId)}", key, body)))
             res.optString("voice_id").ifBlank { voice.voiceId }
         }
+
+        const val SANTA_DESCRIPTION =
+            "A very old French man from France, speaking French with a native Parisian accent. " +
+                "Warm, deep, slightly husky and jolly voice, kind and gentle like a loving grandfather. " +
+                "He speaks slowly and calmly, with a smile in his voice. Studio quality recording."
+
+        private const val SANTA_SAMPLE =
+            "Ho ho ho ! Bonsoir mon petit, ici le Père Noël. Je t'appelle depuis le pôle Nord, " +
+                "où mes lutins préparent les cadeaux et où mes rennes se reposent au chaud. " +
+                "Alors dis-moi, est-ce que tu as été bien sage cette année ?"
+
+        /** Crée des propositions de voix d'après une description (consomme un peu de quota). */
+        suspend fun designVoices(context: Context, key: String, description: String): List<ElevenDesign> =
+            withContext(Dispatchers.IO) {
+                val body = JSONObject()
+                    .put("voice_description", description)
+                    .put("text", SANTA_SAMPLE)
+                    .put("model_id", "eleven_multilingual_ttv_v2")
+                    .toString()
+                val res = JSONObject(
+                    String(request("POST", "/v1/text-to-voice/design?output_format=mp3_22050_32", key, body), Charsets.UTF_8),
+                )
+                val arr = res.optJSONArray("previews") ?: return@withContext emptyList()
+                val dir = File(context.cacheDir, "voix_design").apply { mkdirs() }
+                dir.listFiles()?.forEach { it.delete() }
+                (0 until arr.length()).map { i ->
+                    val p = arr.getJSONObject(i)
+                    val file = File(dir, "proposition_$i.mp3")
+                    file.writeBytes(android.util.Base64.decode(p.getString("audio_base_64"), android.util.Base64.DEFAULT))
+                    ElevenDesign(p.getString("generated_voice_id"), file)
+                }
+            }
+
+        /** Garde une proposition dans le compte ; renvoie l'identifiant de la nouvelle voix. */
+        suspend fun saveDesign(key: String, design: ElevenDesign, name: String, description: String): String =
+            withContext(Dispatchers.IO) {
+                val body = JSONObject()
+                    .put("voice_name", name)
+                    .put("voice_description", description)
+                    .put("generated_voice_id", design.generatedVoiceId)
+                    .toString()
+                val raw = try {
+                    request("POST", "/v1/text-to-voice", key, body)
+                } catch (e: IllegalStateException) {
+                    // Ancienne adresse de l'API, au cas où.
+                    if (e.message?.startsWith("HTTP 404") == true || e.message?.startsWith("HTTP 405") == true) {
+                        request("POST", "/v1/text-to-voice/create-voice-from-preview", key, body)
+                    } else {
+                        throw e
+                    }
+                }
+                JSONObject(String(raw, Charsets.UTF_8)).getString("voice_id")
+            }
 
         suspend fun quota(key: String): ElevenQuota = withContext(Dispatchers.IO) {
             val o = getJson("/v1/user/subscription", key)
