@@ -13,7 +13,20 @@ data class Child(
     val interests: String = "",
     /** Cadeau souhaité, facultatif. Le Père Noël n'en promet jamais un précis. */
     val wish: String = "",
+    /** Orthographe lue par la voix si elle prononce mal le prénom (ex. « Lilyan »). Vide = le prénom tel quel. */
+    val pronunciation: String = "",
 )
+
+/** Remplace les prénoms par leur prononciation, juste avant la synthèse vocale. */
+fun respellNames(text: String, children: List<Child>): String {
+    var out = text
+    for (c in children) {
+        val say = c.pronunciation.trim()
+        if (c.name.isBlank() || say.isBlank()) continue
+        out = Regex("(?<![\\p{L}])" + Regex.escape(c.name.trim()) + "(?![\\p{L}])", RegexOption.IGNORE_CASE).replace(out, say)
+    }
+    return out
+}
 
 data class AppSettings(
     val children: List<Child> = listOf(

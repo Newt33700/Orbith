@@ -7,6 +7,7 @@ import fr.famille.appelperenoel.audio.PcmPlayer
 import fr.famille.appelperenoel.models.ModelRepository
 import fr.famille.appelperenoel.settings.AppSettings
 import fr.famille.appelperenoel.settings.papyVoice
+import fr.famille.appelperenoel.settings.respellNames
 
 /** Permet aux parents d'écouter et comparer les voix depuis l'espace parents. */
 class VoicePreview(private val context: Context, private val models: ModelRepository) {
@@ -75,7 +76,7 @@ class VoicePreview(private val context: Context, private val models: ModelReposi
             ).also { it.load() }
             else -> loadAndroid(settings)
         }
-        val speech = SantaVoice.render(engine, text, settings.papyVoice())
+        val speech = SantaVoice.render(engine, respellNames(text, settings.children), settings.papyVoice())
         player.play(speech.samples, speech.sampleRate, settings.santaVolume)
     }
 

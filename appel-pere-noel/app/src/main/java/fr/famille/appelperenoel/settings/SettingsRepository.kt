@@ -37,6 +37,7 @@ class SettingsRepository(context: Context) {
                     put("gender", c.gender.name)
                     put("interests", c.interests)
                     put("wish", c.wish)
+                    put("pronunciation", c.pronunciation)
                 })
             }
         })
@@ -85,6 +86,7 @@ class SettingsRepository(context: Context) {
                     gender = runCatching { Gender.valueOf(c.optString("gender")) }.getOrDefault(Gender.UNSPECIFIED),
                     interests = c.optString("interests"),
                     wish = c.optString("wish"),
+                    pronunciation = c.optString("pronunciation"),
                 )
             }
         } ?: d.children

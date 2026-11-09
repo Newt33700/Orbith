@@ -20,6 +20,7 @@ import fr.famille.appelperenoel.scenario.TurnMetrics
 import fr.famille.appelperenoel.settings.AppSettings
 import fr.famille.appelperenoel.settings.Child
 import fr.famille.appelperenoel.settings.papyVoice
+import fr.famille.appelperenoel.settings.respellNames
 import fr.famille.appelperenoel.stt.SttResult
 import fr.famille.appelperenoel.stt.VoskStt
 import fr.famille.appelperenoel.tts.AndroidTts
@@ -109,7 +110,9 @@ class CallController(
     /** Moteur de voix effectivement chargé (Android ou Piper). */
     @Volatile
     private var activeSynth: SpeechSynth? = null
-    private val voice = SantaVoice(context, { activeSynth }, settings.papyVoice(), speechPlayer)
+    private val voice = SantaVoice(context, { activeSynth }, settings.papyVoice(), speechPlayer) {
+        respellNames(it, settings.children)
+    }
     private val gemini = GeminiLlm(apiKey = { settings.geminiKey }, model = { settings.geminiModel })
     private val brain = SantaBrain(
         llm,

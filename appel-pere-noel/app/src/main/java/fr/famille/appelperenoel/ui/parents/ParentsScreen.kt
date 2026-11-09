@@ -757,6 +757,7 @@ private fun ChildDialog(initial: Child?, onDismiss: () -> Unit, onSave: (Child) 
     var gender by remember { mutableStateOf(initial?.gender ?: Gender.UNSPECIFIED) }
     var interests by remember { mutableStateOf(initial?.interests ?: "") }
     var wish by remember { mutableStateOf(initial?.wish ?: "") }
+    var pronunciation by remember { mutableStateOf(initial?.pronunciation ?: "") }
     val ageValue = age.toIntOrNull()
     val valid = name.isNotBlank() && ageValue != null && ageValue in 2..14
 
@@ -784,6 +785,17 @@ private fun ChildDialog(initial: Child?, onDismiss: () -> Unit, onSave: (Child) 
                 }
                 OutlinedTextField(interests, { interests = it.take(120) }, label = { Text("Centres d'intérêt (facultatif)") })
                 OutlinedTextField(wish, { wish = it.take(120) }, label = { Text("Cadeau souhaité (facultatif)") })
+                OutlinedTextField(
+                    pronunciation,
+                    { pronunciation = it.take(40) },
+                    label = { Text("Prononciation (si la voix dit mal le prénom)") },
+                    singleLine = true,
+                )
+                Text(
+                    "Écris le prénom comme il se prononce, par ex. « Lilyan ». Teste ensuite avec « Écouter » " +
+                        "dans la section Voix (le premier enfant de la liste est utilisé).",
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         },
         confirmButton = {
@@ -796,6 +808,7 @@ private fun ChildDialog(initial: Child?, onDismiss: () -> Unit, onSave: (Child) 
                         gender = gender,
                         interests = interests.trim(),
                         wish = wish.trim(),
+                        pronunciation = pronunciation.trim(),
                     ),
                 )
             }) { Text("Enregistrer") }

@@ -33,6 +33,8 @@ class SantaVoice(
     private val synth: () -> SpeechSynth?,
     private val papy: PapyVoiceSettings,
     private val player: PcmPlayer,
+    /** Corrige l'orthographe des prénoms pour la voix (voir [fr.famille.appelperenoel.settings.respellNames]). */
+    private val respell: (String) -> String = { it },
 ) {
     private val cache = ConcurrentHashMap<String, PlayableSpeech>()
 
@@ -41,7 +43,7 @@ class SantaVoice(
     /** Pré-calcule des phrases (pendant la sonnerie) pour qu'elles partent instantanément. */
     suspend fun warmUp(texts: List<String>) {
         if (!ready) return
-        for (t in texts) runCatching { prepare(t) }
+        for (t in texts) runCatching { prepare(respell(t)) }
     }
 
     /** Synthèses lancées à l'avance ([prefetch]) et pas encore utilisées. */
@@ -63,8 +65,9 @@ class SantaVoice(
     }
 
     /** Lance la synthèse d'une phrase en arrière-plan, pour qu'elle parte sans attendre le moment venu. */
-    fun prefetch(scope: CoroutineScope, text: String) {
+    fun prefetch(scope: CoroutineScope, original: String) {
         if (!ready) return
+        val text = respell(original)
         val withHo = HomeRecordings.file(context, HomeRecording.HOHOHO) != null
         val segments = if (withHo) splitHoHoHo(text).filter { !it.first }.map { it.second } else listOf(text)
         for (seg in segments) {
@@ -77,7 +80,8 @@ class SantaVoice(
      * Dit une phrase. Les « Ho ho ho ! » sont remplacés par l'enregistrement maison s'il existe ;
      * [goodbye] = vrai pour la phrase d'au revoir (remplacée en entier par l'enregistrement « Au revoir »).
      */
-    suspend fun speak(text: String, volume: Float, goodbye: Boolean = false): SpeechTiming {
+    suspend fun speak(original: String, volume: Float, goodbye: Boolean = false): SpeechTiming {
+        val text = respell(original)
         if (goodbye) {
             HomeRecordings.file(context, HomeRecording.GOODBYE)?.let {
                 val start = SystemClock.elapsedRealtime()
