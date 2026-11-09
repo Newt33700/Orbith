@@ -57,6 +57,9 @@ class SantaBrain(
         if (child != null) {
             appendLine("Tu parles au téléphone avec $name, $who de ${child.age} ans.")
             if (child.interests.isNotBlank()) appendLine("$name aime : ${child.interests}.")
+            if (child.avoidName) {
+                appendLine("Important : n'écris jamais le prénom « $name » dans tes réponses ; appelle-le plutôt « ${child.endearment} ».")
+            }
         } else {
             appendLine("Tu parles au téléphone avec un enfant.")
         }
@@ -138,7 +141,7 @@ class SantaBrain(
             val prompt = buildPrompt(child, step, transcript, mode, maxLines = 16)
             lastPrompt = system + "\n\n" + prompt
             lastSource = "Gemini"
-            val c = SentenceCollector(maxSentences, allowQuestion) { emitted++; onSentence(it) }
+            val c = SentenceCollector(maxSentences, allowQuestion) { emitted++; onSentence(withoutName(it, child)) }
             try {
                 val full = online.generate(
                     system,
@@ -162,7 +165,7 @@ class SantaBrain(
         val prompt = if (manualTemplate()) "<start_of_turn>user\n$body<end_of_turn>\n<start_of_turn>model\n" else body
         lastPrompt = prompt
         lastSource = "Gemma"
-        val c = SentenceCollector(maxSentences, allowQuestion) { emitted++; onSentence(it) }
+        val c = SentenceCollector(maxSentences, allowQuestion) { emitted++; onSentence(withoutName(it, child)) }
         val full = llm.generate(
             prompt,
             temperature = 0.8f,
@@ -171,6 +174,13 @@ class SantaBrain(
         )
         lastRaw = full
         c.feed(full, final = true)
+    }
+
+    /** Filet de sécurité : si le cerveau écrit quand même le prénom, on le remplace par le mot affectueux. */
+    private fun withoutName(sentence: String, child: Child?): String {
+        if (child == null || !child.avoidName || child.name.isBlank()) return sentence
+        val re = Regex("(?<![\\p{L}])" + Regex.escape(child.name.trim()) + "(?![\\p{L}])", RegexOption.IGNORE_CASE)
+        return re.replace(sentence) { m -> if (m.range.first == 0) child.endearment.replaceFirstChar { it.uppercase() } else child.endearment }
     }
 
     /** Découpe le texte reçu en flux en phrases complètes, vérifiées une par une. */

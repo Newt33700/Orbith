@@ -38,6 +38,7 @@ class SettingsRepository(context: Context) {
                     put("interests", c.interests)
                     put("wish", c.wish)
                     put("pronunciation", c.pronunciation)
+                    put("avoidName", c.avoidName)
                 })
             }
         })
@@ -87,6 +88,7 @@ class SettingsRepository(context: Context) {
                     interests = c.optString("interests"),
                     wish = c.optString("wish"),
                     pronunciation = c.optString("pronunciation"),
+                    avoidName = c.optBoolean("avoidName", false),
                 )
             }
         } ?: d.children

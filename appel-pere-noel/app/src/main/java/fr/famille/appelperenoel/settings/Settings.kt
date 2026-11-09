@@ -15,7 +15,17 @@ data class Child(
     val wish: String = "",
     /** Orthographe lue par la voix si elle prononce mal le prénom (ex. « Lilyan »). Vide = le prénom tel quel. */
     val pronunciation: String = "",
-)
+    /** La voix prononce mal ce prénom : le cerveau ne l'écrit pas et dit « mon grand » / « ma grande » à la place. */
+    val avoidName: Boolean = false,
+) {
+    /** Petit mot affectueux utilisé à la place du prénom. */
+    val endearment: String
+        get() = when (gender) {
+            Gender.BOY -> "mon grand"
+            Gender.GIRL -> "ma grande"
+            else -> "mon petit"
+        }
+}
 
 /** Remplace les prénoms par leur prononciation, juste avant la synthèse vocale. */
 fun respellNames(text: String, children: List<Child>): String {

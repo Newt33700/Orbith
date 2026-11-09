@@ -758,6 +758,7 @@ private fun ChildDialog(initial: Child?, onDismiss: () -> Unit, onSave: (Child) 
     var interests by remember { mutableStateOf(initial?.interests ?: "") }
     var wish by remember { mutableStateOf(initial?.wish ?: "") }
     var pronunciation by remember { mutableStateOf(initial?.pronunciation ?: "") }
+    var avoidName by remember { mutableStateOf(initial?.avoidName ?: false) }
     val ageValue = age.toIntOrNull()
     val valid = name.isNotBlank() && ageValue != null && ageValue in 2..14
 
@@ -791,6 +792,9 @@ private fun ChildDialog(initial: Child?, onDismiss: () -> Unit, onSave: (Child) 
                     label = { Text("Prononciation (si la voix dit mal le prénom)") },
                     singleLine = true,
                 )
+                SwitchRow("Prénom mal prononcé dans la discussion : dire « mon grand / ma grande » à la place", avoidName) {
+                    avoidName = it
+                }
                 Text(
                     "Écris le prénom comme il se prononce, par ex. « Lilyan ». Teste ensuite avec « Écouter » " +
                         "dans la section Voix (le premier enfant de la liste est utilisé).",
@@ -809,6 +813,7 @@ private fun ChildDialog(initial: Child?, onDismiss: () -> Unit, onSave: (Child) 
                         interests = interests.trim(),
                         wish = wish.trim(),
                         pronunciation = pronunciation.trim(),
+                        avoidName = avoidName,
                     ),
                 )
             }) { Text("Enregistrer") }
