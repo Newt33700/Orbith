@@ -51,7 +51,6 @@ class SettingsRepository(context: Context) {
         put("ringSeconds", s.ringSeconds.toDouble())
         put("silenceMs2", s.silenceMs)
         put("followUps", s.followUps)
-        put("extendChat", s.extendChat)
         put("onlineBrain", s.onlineBrain)
         put("geminiKey", s.geminiKey)
         put("geminiModel", s.geminiModel)
@@ -105,7 +104,6 @@ class SettingsRepository(context: Context) {
             // « silenceMs2 » : l'ancien réglage (1,5 s, trop lent) est ignoré.
             silenceMs = o.optInt("silenceMs2", d.silenceMs),
             followUps = o.optBoolean("followUps", d.followUps),
-            extendChat = o.optBoolean("extendChat", d.extendChat),
             onlineBrain = o.optBoolean("onlineBrain", d.onlineBrain),
             geminiKey = o.optString("geminiKey", d.geminiKey),
             geminiModel = o.optString("geminiModel", d.geminiModel).ifBlank { d.geminiModel },

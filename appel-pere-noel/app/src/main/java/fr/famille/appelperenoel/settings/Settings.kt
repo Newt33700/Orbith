@@ -58,8 +58,6 @@ data class AppSettings(
     val silenceMs: Int = 1000,
     /** Le Père Noël rebondit sur les réponses par une petite question de relance. */
     val followUps: Boolean = true,
-    /** Le Père Noël continue à discuter tant que la durée max n'est pas atteinte. */
-    val extendChat: Boolean = true,
     /** Cerveau en ligne (Gemini, clé gratuite) à la place du petit modèle local. */
     val onlineBrain: Boolean = false,
     /** Clé API Gemini (aistudio.google.com/apikey). */
