@@ -249,6 +249,7 @@ class CallController(
                 llmTimeoutMs = { settings.llmTimeoutMs.toLong() },
                 askSiblings = settings.askSiblings,
                 followUps = { settings.followUps },
+                extendChat = { settings.extendChat },
             ).run()
         } catch (e: CancellationException) {
             throw e
@@ -345,6 +346,9 @@ class CallController(
     }
 
     override fun endingSoon(): Boolean = _state.value.endingSoon
+
+    override fun secondsLeft(): Int =
+        settings.maxCallMinutes * 60 - ((SystemClock.elapsedRealtime() - segmentStart) / 1000).toInt()
 
     override fun onChildIdentified(child: Child?) {
         _state.update { it.copy(childName = child?.name) }

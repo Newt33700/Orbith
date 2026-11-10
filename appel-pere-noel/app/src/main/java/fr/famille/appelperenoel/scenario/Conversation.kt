@@ -38,6 +38,8 @@ interface CallIo {
     /** Démarre le compteur de durée max pour un nouvel enfant. */
     fun startChildSegment()
     fun endingSoon(): Boolean
+    /** Secondes restantes avant la durée max de l'enfant en cours. */
+    fun secondsLeft(): Int = Int.MAX_VALUE
     fun onChildIdentified(child: Child?)
     fun onTurn(metrics: TurnMetrics)
     fun log(line: String)
@@ -61,6 +63,8 @@ class Conversation(
     private val askSiblings: Boolean = true,
     /** Le Père Noël rebondit sur les réponses par une petite question de relance. */
     private val followUps: () -> Boolean = { true },
+    /** S'il reste du temps, le Père Noël continue à discuter avant de parler du cadeau. */
+    private val extendChat: () -> Boolean = { true },
 ) {
     /** Fil de l'appel avec l'enfant en cours (donné au cerveau pour qu'il ne se répète pas). */
     private val transcript = ArrayList<Line>()
@@ -113,10 +117,27 @@ class Conversation(
         val questions = steps.associateWith { Phrases.question(it, child) }
         questions.values.forEach { io.prefetch(it) }
         for (step in steps) {
+            if (step == CallStep.WISH) extraChat(child)
             if (io.endingSoon()) break
             askAndReact(step, child, questions.getValue(step))
         }
         if (io.endingSoon()) io.say(Phrases.WRAP_UP)
+    }
+
+    /**
+     * Discussion en plus, tant qu'il reste assez de temps pour la suite (le cadeau et l'au revoir).
+     * La question suivante est tirée d'avance pour que sa voix soit prête.
+     */
+    private suspend fun extraChat(child: Child?) {
+        if (!extendChat()) return
+        var next = Phrases.question(CallStep.CHAT, child).also { io.prefetch(it) }
+        var count = 0
+        while (count < MAX_EXTRA_CHATS && io.secondsLeft() > EXTRA_CHAT_MIN_SECONDS && !io.endingSoon()) {
+            val question = next
+            next = Phrases.question(CallStep.CHAT, child).also { io.prefetch(it) }
+            askAndReact(CallStep.CHAT, child, question)
+            count++
+        }
     }
 
     /**
@@ -311,6 +332,9 @@ class Conversation(
 
     private companion object {
         const val FILLER_DELAY_MS = 1200L
+        /** Temps à garder pour une discussion de plus, puis le cadeau et l'au revoir. */
+        const val EXTRA_CHAT_MIN_SECONDS = 100
+        const val MAX_EXTRA_CHATS = 10
         const val NEXT_SENTENCE_WAIT_MS = 2500L
     }
 }

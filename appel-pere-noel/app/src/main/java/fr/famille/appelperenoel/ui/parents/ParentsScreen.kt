@@ -202,6 +202,9 @@ fun ParentsScreen(onBack: () -> Unit, onOpenModels: () -> Unit) {
                 SwitchRow("Le Père Noël rebondit sur les réponses (petites questions de relance)", s.followUps) { v ->
                     update { it.copy(followUps = v) }
                 }
+                SwitchRow("Discuter jusqu'à la durée maximale (plus de sujets avant le cadeau)", s.extendChat) { v ->
+                    update { it.copy(extendChat = v) }
+                }
             }
 
             Section("Cerveau du Père Noël") {
